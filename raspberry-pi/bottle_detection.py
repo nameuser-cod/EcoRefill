@@ -1,6 +1,14 @@
 import cv2
-from picamera2 import Picamera2
 import time
+from picamera2 import Picamera2
+from ultralytics import YOLO
+
+# Load YOLO model
+# This will download the model the first time you run it
+model = YOLO("yolov8n.pt")
+
+# COCO class name for bottle is "bottle"
+TARGET_CLASS = "bottle"
 
 # Start Raspberry Pi camera
 picam2 = Picamera2()
@@ -14,79 +22,65 @@ picam2.start()
 
 time.sleep(2)
 
-print("EcoRefill Bottle Detection Started")
+print("EcoRefill YOLO Bottle Detection Started")
 print("Press Q to quit.")
 
 while True:
     frame = picam2.capture_array()
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
-    # Resize for smoother processing
-    frame = cv2.resize(frame, (640, 480))
-
-    # Convert to grayscale
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    # Blur to reduce noise
-    blur = cv2.GaussianBlur(gray, (5, 5), 0)
-
-    # Detect edges
-    edges = cv2.Canny(blur, 50, 150)
-
-    # Find object outlines
-    contours, _ = cv2.findContours(
-        edges,
-        cv2.RETR_EXTERNAL,
-        cv2.CHAIN_APPROX_SIMPLE
-    )
+    # Run YOLO detection
+    results = model(frame, imgsz=320, conf=0.35, verbose=False)
 
     bottle_detected = False
 
-    for contour in contours:
-        area = cv2.contourArea(contour)
+    for result in results:
+        for box in result.boxes:
+            class_id = int(box.cls[0])
+            confidence = float(box.conf[0])
+            class_name = model.names[class_id]
 
-        # Ignore small objects/noise
-        if area < 3000:
-            continue
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-        x, y, w, h = cv2.boundingRect(contour)
+            if class_name == TARGET_CLASS:
+                bottle_detected = True
 
-        # Bottle is usually taller than wide
-        aspect_ratio = h / float(w)
+                cv2.rectangle(
+                    frame,
+                    (x1, y1),
+                    (x2, y2),
+                    (0, 255, 0),
+                    3
+                )
 
-        if aspect_ratio > 1.8 and h > 150:
-            bottle_detected = True
+                cv2.putText(
+                    frame,
+                    f"Bottle {confidence:.2f}",
+                    (x1, y1 - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 255, 0),
+                    2
+                )
 
-            cv2.rectangle(
-                frame,
-                (x, y),
-                (x + w, y + h),
-                (0, 255, 0),
-                3
-            )
+    if bottle_detected:
+        status_text = "ACCEPTED: Bottle Detected"
+        status_color = (0, 255, 0)
+    else:
+        status_text = "REJECTED: No Bottle"
+        status_color = (0, 0, 255)
 
-            cv2.putText(
-                frame,
-                "Plastic Bottle Detected",
-                (x, y - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 255, 0),
-                2
-            )
+    cv2.putText(
+        frame,
+        status_text,
+        (30, 40),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.8,
+        status_color,
+        2
+    )
 
-    if not bottle_detected:
-        cv2.putText(
-            frame,
-            "No Bottle Detected",
-            (30, 40),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.8,
-            (0, 0, 255),
-            2
-        )
-
-    cv2.imshow("EcoRefill Bottle Detection", frame)
+    cv2.imshow("EcoRefill YOLO Detection", frame)
 
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
