@@ -1,34 +1,28 @@
 import cv2
-import time
+from picamera2 import Picamera2
 from ultralytics import YOLO
 
-# Load your trained EcoRefill model
+# Load EcoRefill trained YOLO model
 model = YOLO("models/ecorefill_best.pt")
 
-# Open camera
-# Try 0 first. If not working, try 1.
-cap = cv2.VideoCapture(0)
+# Start OV5647 Raspberry Pi camera using Picamera2
+picam2 = Picamera2()
 
-# Set camera size
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+camera_config = picam2.create_preview_configuration(
+    main={"size": (640, 480), "format": "RGB888"}
+)
 
-if not cap.isOpened():
-    print("Camera not detected. Try changing VideoCapture(0) to VideoCapture(1).")
-    exit()
+picam2.configure(camera_config)
+picam2.start()
 
 print("EcoRefill live detection started.")
 print("Press Q to quit.")
 
 last_detected = "None"
-last_time = time.time()
 
 while True:
-    ret, frame = cap.read()
-
-    if not ret:
-        print("Failed to read camera frame.")
-        break
+    # Capture frame from Raspberry Pi camera
+    frame = picam2.capture_array()
 
     # Run YOLO detection
     results = model.predict(
@@ -38,7 +32,7 @@ while True:
         verbose=False
     )
 
-    # Draw detection boxes
+    # Draw bounding boxes
     annotated_frame = results[0].plot()
 
     detected_items = []
@@ -52,12 +46,13 @@ while True:
 
     if detected_items:
         last_detected = ", ".join(detected_items)
-        last_time = time.time()
+        status = f"Accepted: {last_detected}"
+    else:
+        status = "Rejected / No valid item"
 
-    # Display simple status
     cv2.putText(
         annotated_frame,
-        f"Detected: {last_detected}",
+        status,
         (20, 40),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.8,
@@ -70,6 +65,6 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
-cap.release()
+picam2.stop()
 cv2.destroyAllWindows()
 print("Detection stopped.")
