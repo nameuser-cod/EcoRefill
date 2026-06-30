@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">EcoRefill</string>
+    <string name="title_activity_main">EcoRefill</string>
+    <string name="package_name">com.ecorefill.app</string>
+    <string name="custom_url_scheme">com.ecorefill.app</string>
+</resources>
