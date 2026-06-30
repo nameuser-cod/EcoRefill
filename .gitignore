@@ -22,3 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Python / YOLO
+yolo-env/
+runs/
+*.pt
+__pycache__/
+*.pyc
+
+# EcoRefill datasets
+aluminum_can_dataset/
+plastic_bottle_dataset/
+ecorefill_dataset/
