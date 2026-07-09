@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { auth, db } from "../../firebase/firebase";
 import {
   collection,
@@ -12,6 +13,8 @@ import {
 import "../../styles/theme.css";
 
 function BuyPoints() {
+  const navigate = useNavigate();
+
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -71,7 +74,6 @@ function BuyPoints() {
         return;
       }
 
-      // Save purchase transaction
       await addDoc(collection(db, "pointPurchases"), {
         userId: user.uid,
         userEmail: user.email,
@@ -83,7 +85,6 @@ function BuyPoints() {
         createdAt: serverTimestamp(),
       });
 
-      // Add points to user account
       await updateDoc(userRef, {
         points: increment(selectedPackage.points),
       });
@@ -102,7 +103,12 @@ function BuyPoints() {
   };
 
   return (
-    <div className="page-container">
+  <div className="user-dashboard-page">
+    <div className="user-dashboard-container">
+      <button className="back-btn" onClick={() => navigate(-1)}>
+        ← Back
+      </button>
+
       <div className="page-header">
         <h1>Buy Points</h1>
         <p>Purchase EcoRefill points and use them for rewards.</p>
@@ -114,8 +120,8 @@ function BuyPoints() {
             key={item.id}
             className={
               selectedPackage?.id === item.id
-                ? "points-card selected-points-card"
-                : "points-card"
+                ? "buy-points-card selected-points-card"
+                : "buy-points-card"
             }
             onClick={() => setSelectedPackage(item)}
           >
@@ -155,7 +161,8 @@ function BuyPoints() {
         </button>
       </div>
     </div>
-  );
+  </div>
+);
 }
 
 export default BuyPoints;
