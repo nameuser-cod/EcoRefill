@@ -8,6 +8,7 @@ import time
 import qrcode
 import uuid
 import serial
+import os
 
 
 # =============================
@@ -17,33 +18,71 @@ import serial
 MODEL_PATH = "models/ecorefill_best.pt"
 
 BUTTON_PIN = 17
-CONFIDENCE_LIMIT = 0.50
+
+# Lowered from 0.50 for better testing
+CONFIDENCE_LIMIT = 0.25
 
 SERIAL_BAUD_RATE = 115200
 SERIAL_TIMEOUT = 2
 
-BOTTLE_ITEMS = [
-    "plastic bottle",
+
+# All class names are normalized:
+# lowercase, spaces changed to underscores,
+# and hyphens changed to underscores.
+
+BOTTLE_ITEMS = {
+    "plastic_bottle",
     "bottle",
-    "plastic_bottle"
-]
+    "pet_bottle"
+}
 
-CAN_ITEMS = [
+CAN_ITEMS = {
     "can",
-    "aluminum can",
-    "aluminum_can"
-]
-
-ACCEPTED_ITEMS = BOTTLE_ITEMS + CAN_ITEMS
+    "aluminum_can",
+    "aluminium_can",
+    "tin_can",
+    "metal_can"
+}
 
 POINTS = {
-    "plastic bottle": 5,
-    "bottle": 5,
     "plastic_bottle": 5,
+    "bottle": 5,
+    "pet_bottle": 5,
     "can": 3,
-    "aluminum can": 3,
-    "aluminum_can": 3
+    "aluminum_can": 3,
+    "aluminium_can": 3,
+    "tin_can": 3,
+    "metal_can": 3
 }
+
+
+# =============================
+# HELPER FUNCTIONS
+# =============================
+
+def normalize_class_name(class_name):
+    """
+    Makes YOLO class names easier to compare.
+
+    Examples:
+    aluminum can  -> aluminum_can
+    aluminum-can  -> aluminum_can
+    Plastic Bottle -> plastic_bottle
+    """
+
+    return (
+        str(class_name)
+        .lower()
+        .strip()
+        .replace("-", "_")
+        .replace(" ", "_")
+    )
+
+
+def display_message(message):
+    print("\n==============================")
+    print(message)
+    print("==============================")
 
 
 # =============================
@@ -66,7 +105,6 @@ def find_esp32_port():
     for port in available_ports:
         print(f"  {port.device} - {port.description}")
 
-    # First, try to identify a likely ESP32 device
     keywords = [
         "cp210",
         "ch340",
@@ -110,10 +148,9 @@ def connect_to_esp32():
             timeout=SERIAL_TIMEOUT
         )
 
-        # Opening a serial connection may restart the ESP32
+        # Opening the serial connection may restart the ESP32
         time.sleep(2)
 
-        # Remove old startup messages
         connection.reset_input_buffer()
         connection.reset_output_buffer()
 
@@ -145,7 +182,10 @@ def send_to_esp32(command):
         return False
 
     if esp32 is None:
-        print(f"Servo command not sent because ESP32 is disconnected: {command}")
+        print(
+            "Servo command was not sent because "
+            f"ESP32 is disconnected: {command}"
+        )
         return False
 
     try:
@@ -165,6 +205,8 @@ def send_to_esp32(command):
 
         if response:
             print(f"ESP32 response: {response}")
+        else:
+            print("No response received from ESP32.")
 
         return True
 
@@ -174,17 +216,46 @@ def send_to_esp32(command):
 
 
 # =============================
-# SETUP
+# MODEL SETUP
 # =============================
 
 print("Loading EcoRefill YOLO model...")
+
+print("Model path:")
+print(os.path.abspath(MODEL_PATH))
+
+if not os.path.exists(MODEL_PATH):
+    raise FileNotFoundError(
+        f"YOLO model was not found: {os.path.abspath(MODEL_PATH)}"
+    )
+
 model = YOLO(MODEL_PATH)
 
-print("Model classes:")
+print("\nOriginal model classes:")
 print(model.names)
+
+print("\nNormalized model classes:")
+
+for class_id, class_name in model.names.items():
+    normalized_name = normalize_class_name(class_name)
+
+    print(
+        f"Class ID {class_id}: "
+        f"{class_name} -> {normalized_name}"
+    )
+
+
+# =============================
+# ESP32 SETUP
+# =============================
 
 print("\nConnecting to ESP32...")
 esp32 = connect_to_esp32()
+
+
+# =============================
+# BUTTON SETUP
+# =============================
 
 button = Button(
     BUTTON_PIN,
@@ -192,29 +263,37 @@ button = Button(
     bounce_time=0.1
 )
 
+
+# =============================
+# CAMERA SETUP
+# =============================
+
+print("\nStarting Raspberry Pi camera...")
+
 picam2 = Picamera2()
 
-picam2.preview_configuration.main.size = (640, 480)
-picam2.preview_configuration.main.format = "RGB888"
+camera_config = picam2.create_preview_configuration(
+    main={
+        "size": (640, 480),
+        "format": "RGB888"
+    }
+)
 
-picam2.configure("preview")
+picam2.configure(camera_config)
 picam2.start()
 
-time.sleep(2)
+# Allow camera exposure and white balance to stabilize
+time.sleep(3)
+
+print("Camera started successfully.")
 
 print("\nEcoRefill Machine Started")
 print("Press the button to insert a bottle or can")
 
 
 # =============================
-# FUNCTIONS
+# MACHINE FUNCTIONS
 # =============================
-
-def display_message(message):
-    print("\n==============================")
-    print(message)
-    print("==============================")
-
 
 def wait_for_button():
     display_message(
@@ -225,20 +304,34 @@ def wait_for_button():
 
     print("Button pressed.")
 
+    # Small debounce delay
     time.sleep(0.5)
 
 
 def capture_image():
     display_message("Screen: Capturing item image...")
 
-    frame = picam2.capture_array()
+    # Capture several frames so exposure can adjust
+    frame = None
 
-    cv2.imwrite(
+    for _ in range(3):
+        frame = picam2.capture_array()
+        time.sleep(0.15)
+
+    if frame is None:
+        raise RuntimeError("Camera failed to capture an image.")
+
+    success = cv2.imwrite(
         "captured_item.jpg",
         frame
     )
 
-    print("Image saved as captured_item.jpg")
+    if success:
+        print("Original image saved as captured_item.jpg")
+    else:
+        print("Warning: Could not save captured_item.jpg")
+
+    print(f"Captured image shape: {frame.shape}")
 
     return frame
 
@@ -249,29 +342,13 @@ def verify_item(frame):
     results = model.predict(
         source=frame,
         conf=CONFIDENCE_LIMIT,
-        imgsz=416,
-        verbose=False
+        imgsz=640,
+        verbose=True
     )
 
-    best_item = None
-    best_confidence = 0
+    if not results:
+        print("YOLO returned no results.")
 
-    for result in results:
-        for box in result.boxes:
-            class_id = int(box.cls[0])
-            class_name = str(model.names[class_id]).lower().strip()
-            confidence = float(box.conf[0])
-
-            print(
-                f"Detected: {class_name} | "
-                f"Confidence: {confidence:.2f}"
-            )
-
-            if confidence > best_confidence:
-                best_item = class_name
-                best_confidence = confidence
-
-    if best_item is None:
         return {
             "accepted": False,
             "category": "reject",
@@ -280,7 +357,81 @@ def verify_item(frame):
             "confidence": 0
         }
 
+    # Save the image with YOLO bounding boxes
+    annotated_frame = results[0].plot()
+
+    annotated_saved = cv2.imwrite(
+        "detection_result.jpg",
+        annotated_frame
+    )
+
+    if annotated_saved:
+        print(
+            "Annotated detection image saved "
+            "as detection_result.jpg"
+        )
+    else:
+        print(
+            "Warning: Could not save detection_result.jpg"
+        )
+
+    best_item = None
+    best_original_name = None
+    best_confidence = 0
+
+    total_detections = 0
+
+    print("\nDetection results:")
+
+    for result in results:
+        if result.boxes is None or len(result.boxes) == 0:
+            continue
+
+        for box in result.boxes:
+            total_detections += 1
+
+            class_id = int(box.cls[0])
+            confidence = float(box.conf[0])
+
+            original_name = str(model.names[class_id])
+            normalized_name = normalize_class_name(original_name)
+
+            print(
+                f"Detection {total_detections}: "
+                f"{original_name} | "
+                f"Normalized: {normalized_name} | "
+                f"Confidence: {confidence:.2f}"
+            )
+
+            if confidence > best_confidence:
+                best_item = normalized_name
+                best_original_name = original_name
+                best_confidence = confidence
+
+    if best_item is None:
+        print("\nNo item was detected by the YOLO model.")
+
+        print(
+            "Try checking detection_result.jpg, "
+            "camera lighting, item position, and model training."
+        )
+
+        return {
+            "accepted": False,
+            "category": "reject",
+            "item": "unknown",
+            "points": 0,
+            "confidence": 0
+        }
+
+    print("\nBest detection:")
+    print(f"Original class: {best_original_name}")
+    print(f"Normalized class: {best_item}")
+    print(f"Confidence: {best_confidence:.2f}")
+
     if best_item in BOTTLE_ITEMS:
+        print("The detected item matches the bottle class list.")
+
         return {
             "accepted": True,
             "category": "bottle",
@@ -290,6 +441,8 @@ def verify_item(frame):
         }
 
     if best_item in CAN_ITEMS:
+        print("The detected item matches the can class list.")
+
         return {
             "accepted": True,
             "category": "can",
@@ -297,6 +450,11 @@ def verify_item(frame):
             "points": POINTS.get(best_item, 3),
             "confidence": best_confidence
         }
+
+    print(
+        f"The class '{best_item}' is not included "
+        "in BOTTLE_ITEMS or CAN_ITEMS."
+    )
 
     return {
         "accepted": False,
@@ -341,7 +499,7 @@ def generate_qr(session_id):
     qr_img = qrcode.make(qr_data)
     qr_img.save("session_qr.png")
 
-    print("QR generated:", qr_data)
+    print(f"QR generated: {qr_data}")
 
     return qr_data
 
@@ -350,18 +508,24 @@ def show_qr():
     qr_image = cv2.imread("session_qr.png")
 
     if qr_image is None:
-        print("QR image not found.")
+        print("QR image was not found.")
         return
 
     window_name = "EcoRefill QR Code - Scan to Claim Points"
 
-    cv2.imshow(
-        window_name,
-        qr_image
-    )
+    try:
+        cv2.imshow(
+            window_name,
+            qr_image
+        )
 
-    cv2.waitKey(15000)
-    cv2.destroyWindow(window_name)
+        # Display QR for 15 seconds
+        cv2.waitKey(15000)
+        cv2.destroyWindow(window_name)
+
+    except cv2.error as error:
+        print(f"Could not display the QR window: {error}")
+        print("The QR image is still saved as session_qr.png")
 
 
 def save_local_session(
@@ -404,7 +568,7 @@ try:
 
         display_message("Screen: Insert item now")
 
-        # Give the user time to position the item
+        # Give user time to position the item
         time.sleep(2)
 
         frame = capture_image()
@@ -423,13 +587,14 @@ try:
                 f"{result['confidence']:.2f}"
             )
 
-            # Move the servos before generating the QR
-            sorting_success = operate_sorting_servos(result)
+            sorting_success = operate_sorting_servos(
+                result
+            )
 
             if not sorting_success:
                 print(
-                    "Warning: Item was detected, but the "
-                    "servo command was not completed."
+                    "Warning: The item was detected, "
+                    "but the servo command was not completed."
                 )
 
             qr_data = generate_qr(session_id)
@@ -457,7 +622,6 @@ try:
 
             print("No points added.")
 
-            # Move rejected item to the reject container
             operate_sorting_servos(result)
 
             save_local_session(
@@ -465,15 +629,26 @@ try:
                 result
             )
 
+        print(
+            "\nReady for the next item in 2 seconds..."
+        )
+
         time.sleep(2)
 
 except KeyboardInterrupt:
     print("\nMachine stopped by user.")
 
-finally:
-    print("Cleaning up...")
+except Exception as error:
+    print(f"\nUnexpected program error: {error}")
 
-    picam2.stop()
+finally:
+    print("\nCleaning up...")
+
+    try:
+        picam2.stop()
+    except Exception as error:
+        print(f"Camera cleanup warning: {error}")
+
     cv2.destroyAllWindows()
 
     if esp32 is not None and esp32.is_open:
