@@ -1,39 +1,36 @@
+from flask import Flask, jsonify
+from flask_cors import CORS
 from picamera2 import Picamera2
 from ultralytics import YOLO
 from gpiozero import Button
 from serial.tools import list_ports
 
 import cv2
-import time
-import qrcode
-import uuid
-import serial
 import os
+import serial
+import threading
+import time
+import uuid
 
 
-# =============================
+# =========================================================
 # CONFIG
-# =============================
+# =========================================================
 
 MODEL_PATH = "models/ecorefill_best.pt"
-
 BUTTON_PIN = 17
 
-# Lowered from 0.50 for better testing
 CONFIDENCE_LIMIT = 0.25
-
 SERIAL_BAUD_RATE = 115200
 SERIAL_TIMEOUT = 2
 
-
-# All class names are normalized:
-# lowercase, spaces changed to underscores,
-# and hyphens changed to underscores.
+API_HOST = "0.0.0.0"
+API_PORT = 5000
 
 BOTTLE_ITEMS = {
     "plastic_bottle",
     "bottle",
-    "pet_bottle"
+    "pet_bottle",
 }
 
 CAN_ITEMS = {
@@ -41,7 +38,7 @@ CAN_ITEMS = {
     "aluminum_can",
     "aluminium_can",
     "tin_can",
-    "metal_can"
+    "metal_can",
 }
 
 POINTS = {
@@ -52,24 +49,65 @@ POINTS = {
     "aluminum_can": 3,
     "aluminium_can": 3,
     "tin_can": 3,
-    "metal_can": 3
+    "metal_can": 3,
 }
 
 
-# =============================
-# HELPER FUNCTIONS
-# =============================
+# =========================================================
+# SHARED MACHINE STATE
+# =========================================================
+
+state_lock = threading.Lock()
+session_requested = threading.Event()
+shutdown_event = threading.Event()
+
+machine_state = {
+    "machineId": "machine_001",
+    "phase": "idle",
+    "message": "Ready to recycle",
+    "accepted": False,
+    "materialType": None,
+    "category": None,
+    "pointsEarned": 0,
+    "confidence": 0,
+    "sessionId": None,
+    "qrCode": None,
+    "error": None,
+    "updatedAt": time.time(),
+}
+
+
+def update_state(**changes):
+    with state_lock:
+        machine_state.update(changes)
+        machine_state["updatedAt"] = time.time()
+
+
+def get_state():
+    with state_lock:
+        return dict(machine_state)
+
+
+def reset_state():
+    update_state(
+        phase="idle",
+        message="Ready to recycle",
+        accepted=False,
+        materialType=None,
+        category=None,
+        pointsEarned=0,
+        confidence=0,
+        sessionId=None,
+        qrCode=None,
+        error=None,
+    )
+
+
+# =========================================================
+# HELPERS
+# =========================================================
 
 def normalize_class_name(class_name):
-    """
-    Makes YOLO class names easier to compare.
-
-    Examples:
-    aluminum can  -> aluminum_can
-    aluminum-can  -> aluminum_can
-    Plastic Bottle -> plastic_bottle
-    """
-
     return (
         str(class_name)
         .lower()
@@ -79,31 +117,8 @@ def normalize_class_name(class_name):
     )
 
 
-def display_message(message):
-    print("\n==============================")
-    print(message)
-    print("==============================")
-
-
-# =============================
-# ESP32 SERIAL CONNECTION
-# =============================
-
 def find_esp32_port():
-    """
-    Automatically searches for the ESP32 USB serial port.
-    """
-
-    available_ports = list(list_ports.comports())
-
-    if not available_ports:
-        print("No USB serial devices were found.")
-        return None
-
-    print("\nAvailable serial devices:")
-
-    for port in available_ports:
-        print(f"  {port.device} - {port.description}")
+    ports = list(list_ports.comports())
 
     keywords = [
         "cp210",
@@ -111,17 +126,16 @@ def find_esp32_port():
         "ch910",
         "usb serial",
         "uart",
-        "esp32"
+        "esp32",
     ]
 
-    for port in available_ports:
-        description = port.description.lower()
+    for port in ports:
+        description = (port.description or "").lower()
 
         if any(keyword in description for keyword in keywords):
             return port.device
 
-    # Linux fallback
-    for port in available_ports:
+    for port in ports:
         if (
             port.device.startswith("/dev/ttyUSB")
             or port.device.startswith("/dev/ttyACM")
@@ -135,183 +149,92 @@ def connect_to_esp32():
     port = find_esp32_port()
 
     if port is None:
-        print("\nWARNING: ESP32 was not detected.")
-        print("Detection will continue, but the servos will not move.")
+        print("ESP32 not detected. Detection will still work.")
         return None
 
     try:
-        print(f"\nConnecting to ESP32 on {port}...")
-
         connection = serial.Serial(
             port=port,
             baudrate=SERIAL_BAUD_RATE,
-            timeout=SERIAL_TIMEOUT
+            timeout=SERIAL_TIMEOUT,
         )
-
-        # Opening the serial connection may restart the ESP32
         time.sleep(2)
-
         connection.reset_input_buffer()
         connection.reset_output_buffer()
-
-        print("ESP32 connected successfully.")
-
+        print(f"ESP32 connected on {port}")
         return connection
-
     except serial.SerialException as error:
-        print(f"Could not connect to ESP32: {error}")
+        print(f"ESP32 connection failed: {error}")
         return None
 
 
 def send_to_esp32(command):
-    """
-    Sends BOTTLE, CAN, REJECT, or RESET to the ESP32.
-    """
-
-    valid_commands = {
-        "BOTTLE",
-        "CAN",
-        "REJECT",
-        "RESET"
-    }
-
     command = command.upper().strip()
 
-    if command not in valid_commands:
-        print(f"Invalid ESP32 command: {command}")
+    if command not in {"BOTTLE", "CAN", "REJECT", "RESET"}:
         return False
 
     if esp32 is None:
-        print(
-            "Servo command was not sent because "
-            f"ESP32 is disconnected: {command}"
-        )
+        print(f"ESP32 unavailable. Skipping command: {command}")
         return False
 
     try:
         esp32.reset_input_buffer()
-
-        message = f"{command}\n"
-
-        esp32.write(message.encode("utf-8"))
+        esp32.write(f"{command}\n".encode("utf-8"))
         esp32.flush()
-
-        print(f"Command sent to ESP32: {command}")
 
         response = esp32.readline().decode(
             "utf-8",
-            errors="ignore"
+            errors="ignore",
         ).strip()
 
         if response:
-            print(f"ESP32 response: {response}")
-        else:
-            print("No response received from ESP32.")
+            print(f"ESP32: {response}")
 
         return True
-
     except serial.SerialException as error:
-        print(f"Serial communication error: {error}")
+        print(f"Serial error: {error}")
         return False
 
 
-# =============================
-# MODEL SETUP
-# =============================
-
-print("Loading EcoRefill YOLO model...")
-
-print("Model path:")
-print(os.path.abspath(MODEL_PATH))
+# =========================================================
+# MODEL, CAMERA, BUTTON, ESP32
+# =========================================================
 
 if not os.path.exists(MODEL_PATH):
     raise FileNotFoundError(
-        f"YOLO model was not found: {os.path.abspath(MODEL_PATH)}"
+        f"Model not found: {os.path.abspath(MODEL_PATH)}"
     )
 
+print("Loading EcoRefill model...")
 model = YOLO(MODEL_PATH)
-
-print("\nOriginal model classes:")
-print(model.names)
-
-print("\nNormalized model classes:")
-
-for class_id, class_name in model.names.items():
-    normalized_name = normalize_class_name(class_name)
-
-    print(
-        f"Class ID {class_id}: "
-        f"{class_name} -> {normalized_name}"
-    )
-
-
-# =============================
-# ESP32 SETUP
-# =============================
-
-print("\nConnecting to ESP32...")
-esp32 = connect_to_esp32()
-
-
-# =============================
-# BUTTON SETUP
-# =============================
+print("Model classes:", model.names)
 
 button = Button(
     BUTTON_PIN,
     pull_up=True,
-    bounce_time=0.1
+    bounce_time=0.15,
 )
 
-
-# =============================
-# CAMERA SETUP
-# =============================
-
-print("\nStarting Raspberry Pi camera...")
-
 picam2 = Picamera2()
-
 camera_config = picam2.create_preview_configuration(
     main={
         "size": (640, 480),
-        "format": "RGB888"
+        "format": "RGB888",
     }
 )
-
 picam2.configure(camera_config)
 picam2.start()
-
-# Allow camera exposure and white balance to stabilize
 time.sleep(3)
 
-print("Camera started successfully.")
-
-print("\nEcoRefill Machine Started")
-print("Press the button to insert a bottle or can")
+esp32 = connect_to_esp32()
 
 
-# =============================
-# MACHINE FUNCTIONS
-# =============================
-
-def wait_for_button():
-    display_message(
-        "Screen: Press button to insert bottle/can"
-    )
-
-    button.wait_for_press()
-
-    print("Button pressed.")
-
-    # Small debounce delay
-    time.sleep(0.5)
-
+# =========================================================
+# DETECTION
+# =========================================================
 
 def capture_image():
-    display_message("Screen: Capturing item image...")
-
-    # Capture several frames so exposure can adjust
     frame = None
 
     for _ in range(3):
@@ -321,218 +244,84 @@ def capture_image():
     if frame is None:
         raise RuntimeError("Camera failed to capture an image.")
 
-    success = cv2.imwrite(
-        "captured_item.jpg",
-        frame
-    )
-
-    if success:
-        print("Original image saved as captured_item.jpg")
-    else:
-        print("Warning: Could not save captured_item.jpg")
-
-    print(f"Captured image shape: {frame.shape}")
-
+    cv2.imwrite("captured_item.jpg", frame)
     return frame
 
 
 def verify_item(frame):
-    display_message("Screen: Verifying item...")
-
     results = model.predict(
         source=frame,
         conf=CONFIDENCE_LIMIT,
         imgsz=640,
-        verbose=True
+        verbose=False,
     )
 
     if not results:
-        print("YOLO returned no results.")
-
         return {
             "accepted": False,
             "category": "reject",
             "item": "unknown",
             "points": 0,
-            "confidence": 0
+            "confidence": 0,
         }
 
-    # Save the image with YOLO bounding boxes
     annotated_frame = results[0].plot()
-
-    annotated_saved = cv2.imwrite(
-        "detection_result.jpg",
-        annotated_frame
-    )
-
-    if annotated_saved:
-        print(
-            "Annotated detection image saved "
-            "as detection_result.jpg"
-        )
-    else:
-        print(
-            "Warning: Could not save detection_result.jpg"
-        )
+    cv2.imwrite("detection_result.jpg", annotated_frame)
 
     best_item = None
-    best_original_name = None
     best_confidence = 0
 
-    total_detections = 0
-
-    print("\nDetection results:")
-
     for result in results:
-        if result.boxes is None or len(result.boxes) == 0:
+        if result.boxes is None:
             continue
 
         for box in result.boxes:
-            total_detections += 1
-
             class_id = int(box.cls[0])
             confidence = float(box.conf[0])
-
-            original_name = str(model.names[class_id])
-            normalized_name = normalize_class_name(original_name)
-
-            print(
-                f"Detection {total_detections}: "
-                f"{original_name} | "
-                f"Normalized: {normalized_name} | "
-                f"Confidence: {confidence:.2f}"
-            )
+            item = normalize_class_name(model.names[class_id])
 
             if confidence > best_confidence:
-                best_item = normalized_name
-                best_original_name = original_name
+                best_item = item
                 best_confidence = confidence
 
-    if best_item is None:
-        print("\nNo item was detected by the YOLO model.")
-
-        print(
-            "Try checking detection_result.jpg, "
-            "camera lighting, item position, and model training."
-        )
-
-        return {
-            "accepted": False,
-            "category": "reject",
-            "item": "unknown",
-            "points": 0,
-            "confidence": 0
-        }
-
-    print("\nBest detection:")
-    print(f"Original class: {best_original_name}")
-    print(f"Normalized class: {best_item}")
-    print(f"Confidence: {best_confidence:.2f}")
-
     if best_item in BOTTLE_ITEMS:
-        print("The detected item matches the bottle class list.")
-
         return {
             "accepted": True,
             "category": "bottle",
-            "item": best_item,
+            "item": "plastic_bottle",
             "points": POINTS.get(best_item, 5),
-            "confidence": best_confidence
+            "confidence": best_confidence,
         }
 
     if best_item in CAN_ITEMS:
-        print("The detected item matches the can class list.")
-
         return {
             "accepted": True,
             "category": "can",
-            "item": best_item,
+            "item": "aluminum_can",
             "points": POINTS.get(best_item, 3),
-            "confidence": best_confidence
+            "confidence": best_confidence,
         }
-
-    print(
-        f"The class '{best_item}' is not included "
-        "in BOTTLE_ITEMS or CAN_ITEMS."
-    )
 
     return {
         "accepted": False,
         "category": "reject",
-        "item": best_item,
+        "item": best_item or "unknown",
         "points": 0,
-        "confidence": best_confidence
+        "confidence": best_confidence,
     }
 
 
-def operate_sorting_servos(result):
-    """
-    Tells the ESP32 how to sort the detected item.
-    """
-
-    category = result["category"]
-
-    if category == "bottle":
-        display_message(
-            "Sorting item into the bottle container..."
-        )
-
+def sort_item(result):
+    if result["category"] == "bottle":
         return send_to_esp32("BOTTLE")
 
-    if category == "can":
-        display_message(
-            "Sorting item into the can container..."
-        )
-
+    if result["category"] == "can":
         return send_to_esp32("CAN")
-
-    display_message(
-        "Moving item to the reject container..."
-    )
 
     return send_to_esp32("REJECT")
 
 
-def generate_qr(session_id):
-    qr_data = f"ecorefill://claim/{session_id}"
-
-    qr_img = qrcode.make(qr_data)
-    qr_img.save("session_qr.png")
-
-    print(f"QR generated: {qr_data}")
-
-    return qr_data
-
-
-def show_qr():
-    qr_image = cv2.imread("session_qr.png")
-
-    if qr_image is None:
-        print("QR image was not found.")
-        return
-
-    window_name = "EcoRefill QR Code - Scan to Claim Points"
-
-    try:
-        cv2.imshow(
-            window_name,
-            qr_image
-        )
-
-        # Display QR for 15 seconds
-        cv2.waitKey(15000)
-        cv2.destroyWindow(window_name)
-
-    except cv2.error as error:
-        print(f"Could not display the QR window: {error}")
-        print("The QR image is still saved as session_qr.png")
-
-
-def save_local_session(
-    session_id,
-    result,
-    qr_data=None
-):
+def save_local_session(session_id, result, qr_code=None):
     session_text = f"""
 Session ID: {session_id}
 Status: {"accepted" if result["accepted"] else "rejected"}
@@ -540,126 +329,202 @@ Category: {result["category"]}
 Item Type: {result["item"]}
 Points: {result["points"]}
 Confidence: {result["confidence"]:.2f}
-Claimed: false
-QR Data: {qr_data}
+QR Data: {qr_code}
 Created At: {time.time()}
+-----------------------------
 """
 
     with open(
         "sessions_log.txt",
         "a",
-        encoding="utf-8"
+        encoding="utf-8",
     ) as file:
         file.write(session_text)
-        file.write("\n-----------------------------\n")
-
-    print(
-        "Session saved locally in sessions_log.txt"
-    )
 
 
-# =============================
-# MAIN LOOP
-# =============================
+def machine_worker():
+    while not shutdown_event.is_set():
+        session_requested.wait(timeout=0.5)
 
-try:
-    while True:
-        wait_for_button()
+        if shutdown_event.is_set():
+            break
 
-        display_message("Screen: Insert item now")
+        if not session_requested.is_set():
+            continue
 
-        # Give user time to position the item
-        time.sleep(2)
-
-        frame = capture_image()
-        result = verify_item(frame)
-
-        session_id = str(uuid.uuid4())
-
-        if result["accepted"]:
-            display_message("Screen: Item Accepted")
-
-            print(f"Accepted item: {result['item']}")
-            print(f"Category: {result['category']}")
-            print(f"Points: {result['points']}")
-            print(
-                f"Confidence: "
-                f"{result['confidence']:.2f}"
+        try:
+            update_state(
+                phase="waiting_for_item",
+                message="Insert an item, then press the machine button.",
+                error=None,
             )
 
-            sorting_success = operate_sorting_servos(
-                result
-            )
+            button.wait_for_press()
 
-            if not sorting_success:
-                print(
-                    "Warning: The item was detected, "
-                    "but the servo command was not completed."
+            if shutdown_event.is_set():
+                break
+
+            update_state(
+                phase="capturing",
+                message="Capturing item image...",
+            )
+            time.sleep(0.5)
+            frame = capture_image()
+
+            update_state(
+                phase="verifying",
+                message="Checking the recyclable material...",
+            )
+            result = verify_item(frame)
+
+            session_id = str(uuid.uuid4())
+
+            update_state(
+                phase="sorting",
+                message="Sorting the item...",
+            )
+            sort_item(result)
+
+            if result["accepted"]:
+                qr_code = f"ecorefill://claim/{session_id}"
+
+                save_local_session(
+                    session_id,
+                    result,
+                    qr_code,
                 )
 
-            qr_data = generate_qr(session_id)
+                update_state(
+                    phase="accepted",
+                    message="Item accepted. Scan the QR code.",
+                    accepted=True,
+                    materialType=result["item"],
+                    category=result["category"],
+                    pointsEarned=result["points"],
+                    confidence=round(result["confidence"], 4),
+                    sessionId=session_id,
+                    qrCode=qr_code,
+                    error=None,
+                )
+            else:
+                save_local_session(session_id, result)
 
-            save_local_session(
-                session_id,
-                result,
-                qr_data
+                update_state(
+                    phase="rejected",
+                    message="Item rejected. Use a clean plastic bottle or aluminum can.",
+                    accepted=False,
+                    materialType=result["item"],
+                    category="reject",
+                    pointsEarned=0,
+                    confidence=round(result["confidence"], 4),
+                    sessionId=session_id,
+                    qrCode=None,
+                    error=None,
+                )
+
+        except Exception as error:
+            print("Machine worker error:", error)
+            update_state(
+                phase="error",
+                message="The machine encountered an error.",
+                error=str(error),
             )
+        finally:
+            session_requested.clear()
 
-            display_message(
-                "Screen: Scan QR code to claim points"
-            )
 
-            show_qr()
+worker_thread = threading.Thread(
+    target=machine_worker,
+    daemon=True,
+)
+worker_thread.start()
 
-        else:
-            display_message("Screen: Item Rejected")
 
-            print(f"Rejected item: {result['item']}")
-            print(
-                f"Confidence: "
-                f"{result['confidence']:.2f}"
-            )
+# =========================================================
+# LOCAL API FOR THE REACT MACHINE SCREEN
+# =========================================================
 
-            print("No points added.")
+app = Flask(__name__)
+CORS(app)
 
-            operate_sorting_servos(result)
 
-            save_local_session(
-                session_id,
-                result
-            )
+@app.get("/api/machine/state")
+def api_machine_state():
+    return jsonify(get_state())
 
-        print(
-            "\nReady for the next item in 2 seconds..."
-        )
 
-        time.sleep(2)
+@app.post("/api/machine/start")
+def api_machine_start():
+    current_state = get_state()
 
-except KeyboardInterrupt:
-    print("\nMachine stopped by user.")
+    if current_state["phase"] not in {
+        "idle",
+        "rejected",
+        "error",
+    }:
+        return jsonify({
+            "ok": False,
+            "message": "A recycling session is already active.",
+            "state": current_state,
+        }), 409
 
-except Exception as error:
-    print(f"\nUnexpected program error: {error}")
+    reset_state()
+    update_state(
+        phase="starting",
+        message="Preparing the machine...",
+    )
+    session_requested.set()
 
-finally:
-    print("\nCleaning up...")
+    return jsonify({
+        "ok": True,
+        "state": get_state(),
+    })
 
+
+@app.post("/api/machine/reset")
+def api_machine_reset():
+    session_requested.clear()
+    reset_state()
+
+    return jsonify({
+        "ok": True,
+        "state": get_state(),
+    })
+
+
+# =========================================================
+# START SERVER
+# =========================================================
+
+if __name__ == "__main__":
     try:
-        picam2.stop()
-    except Exception as error:
-        print(f"Camera cleanup warning: {error}")
+        print(
+            f"EcoRefill API running at "
+            f"http://127.0.0.1:{API_PORT}"
+        )
+        app.run(
+            host=API_HOST,
+            port=API_PORT,
+            debug=False,
+            threaded=True,
+            use_reloader=False,
+        )
+    finally:
+        shutdown_event.set()
 
-    cv2.destroyAllWindows()
-
-    if esp32 is not None and esp32.is_open:
         try:
-            send_to_esp32("RESET")
-            time.sleep(0.5)
+            picam2.stop()
         except Exception:
             pass
 
-        esp32.close()
+        cv2.destroyAllWindows()
 
-    button.close()
+        if esp32 is not None and esp32.is_open:
+            try:
+                send_to_esp32("RESET")
+            except Exception:
+                pass
 
-    print("EcoRefill machine safely stopped.")
+            esp32.close()
+
+        button.close()

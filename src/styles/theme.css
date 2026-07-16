@@ -1333,3 +1333,55 @@ button:disabled {
   cursor: pointer;
   box-shadow: 4px 4px 0 #14532d;
 }
+
+
+
+.machine-primary-btn:disabled,
+.machine-secondary-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+.machine-spin {
+  animation: machine-spin 0.9s linear infinite;
+}
+
+@keyframes machine-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.machine-offline {
+  background: #ffd9d4;
+  border-color: #a32920;
+  color: #7a1e17;
+}
+
+.machine-offline span {
+  background: #c7382d;
+}
+
+.machine-result-summary {
+  width: min(100%, 520px);
+  margin: 18px auto 0;
+  padding: 16px 18px;
+  border: 3px solid #0f2a1d;
+  border-radius: 14px;
+  text-align: left;
+  line-height: 1.7;
+  background: #f8f1d4;
+}
+
+.machine-result-summary.rejected {
+  background: #ffe3df;
+  border-color: #a32920;
+  color: #681912;
+}
+
+.qr-save-error {
+  margin-top: 8px;
+  color: #a32920;
+  font-weight: 700;
+}

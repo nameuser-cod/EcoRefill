@@ -1,0 +1,7 @@
+flask
+flask-cors
+ultralytics
+opencv-python
+gpiozero
+pyserial
+picamera2
