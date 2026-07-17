@@ -14,7 +14,7 @@ import {
 import "../../styles/theme.css";
 
 const API_BASE_URL =
-  import.meta.env.VITE_MACHINE_API_URL || "http://127.0.0.1:5000";
+  import.meta.env.VITE_MACHINE_API_URL || "http://192.168.1.60:5000";
 
 function MachineHome() {
   const navigate = useNavigate();
