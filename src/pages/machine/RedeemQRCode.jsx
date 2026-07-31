@@ -21,7 +21,7 @@ import { db } from "../../firebase/firebase";
 import "../../styles/theme.css";
 
 const API_BASE_URL =
-  import.meta.env.VITE_MACHINE_API_URL || "http://127.0.0.1:5000";
+  import.meta.env.VITE_MACHINE_API_URL || "http://192.168.101.23:5000";
 
 function RedeemQRCode() {
   const navigate = useNavigate();
