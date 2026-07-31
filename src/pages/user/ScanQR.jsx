@@ -24,7 +24,6 @@ import {
   AlertTriangle,
   ArrowLeft,
   CheckCircle2,
-  Keyboard,
   LoaderCircle,
   QrCode,
   ScanLine,
@@ -42,7 +41,6 @@ function ScanQR() {
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  const [manualCode, setManualCode] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [redeeming, setRedeeming] = useState(false);
@@ -83,7 +81,7 @@ function ScanQR() {
 
       if (!cleanCode) {
         setError(
-          "Please  scan the QR code."
+          "Please scan the QR code."
         );
 
         return;
@@ -140,9 +138,6 @@ function ScanQR() {
         const result = await runTransaction(
           db,
           async (transaction) => {
-            /*
-             * Perform all transaction reads first.
-             */
             const qrSnap =
               await transaction.get(qrRef);
 
@@ -264,14 +259,12 @@ function ScanQR() {
           }
         );
 
-        setManualCode("");
         setEarnedPoints(result.pointsEarned);
 
         setMessage(
           `Success! ${result.pointsEarned} points were added. Your new balance is ${result.totalPoints} points.`
         );
 
-        // Remove scanned data after successful redemption.
         navigate(location.pathname, {
           replace: true,
           state: {},
@@ -340,7 +333,6 @@ function ScanQR() {
     handledScannedCodeRef.current =
       scannedCode;
 
-    setManualCode(scannedCode);
     redeemQRCode(scannedCode);
   }, [
     authLoading,
@@ -348,13 +340,6 @@ function ScanQR() {
     scannedCode,
     redeemQRCode,
   ]);
-
-  const handleManualRedeem = async (
-    event
-  ) => {
-    event.preventDefault();
-    await redeemQRCode(manualCode);
-  };
 
   const openCameraScanner = () => {
     if (redeeming || authLoading) {
@@ -423,8 +408,8 @@ function ScanQR() {
               <h3>Camera Scanner</h3>
 
               <p>
-                Use your phone's rear camera to scan
-                the reward code.
+                Use your phone&apos;s rear camera to
+                scan the reward code.
               </p>
             </div>
           </div>
@@ -453,82 +438,34 @@ function ScanQR() {
           </div>
         </section>
 
-        <section className="manual-card">
-          <div className="manual-title">
-            <Keyboard size={24} />
-            <h2>Enter Code Manually</h2>
-          </div>
-
-          <p>
-            Enter the complete code shown by the
-            EcoRefill machine.
-          </p>
-
-          <form
-            onSubmit={handleManualRedeem}
-            className="manual-form"
-          >
-            <input
-              type="text"
-              placeholder="Example: ECO-1790000000000-123"
-              value={manualCode}
-              onChange={(event) =>
-                setManualCode(
-                  event.target.value
-                )
-              }
-              disabled={
-                redeeming || authLoading
-              }
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-              autoComplete="off"
-            />
-
-            <button
-              type="submit"
-              disabled={
-                redeeming ||
-                authLoading ||
-                !manualCode.trim()
-              }
-            >
-              {redeeming
-                ? "Redeeming..."
-                : "Redeem Points"}
-            </button>
-          </form>
-        </section>
-
         {message && (
-  <div className="redeem-success-overlay">
-    <div className="redeem-success-modal">
-      <div className="redeem-success-icon">
-        <CheckCircle2 size={72} />
-      </div>
+          <div className="redeem-success-overlay">
+            <div className="redeem-success-modal">
+              <div className="redeem-success-icon">
+                <CheckCircle2 size={72} />
+              </div>
 
-      <p className="small-title">
-        Reward Claimed
-      </p>
+              <p className="small-title">
+                Reward Claimed
+              </p>
 
-      <h2>+{earnedPoints} Points</h2>
+              <h2>+{earnedPoints} Points</h2>
 
-      <p>{message}</p>
+              <p>{message}</p>
 
-      <button
-        type="button"
-        onClick={() =>
-          navigate("/user/dashboard", {
-            replace: true,
-          })
-        }
-      >
-        Return to Dashboard
-      </button>
-    </div>
-  </div>
-)}
+              <button
+                type="button"
+                onClick={() =>
+                  navigate("/user/dashboard", {
+                    replace: true,
+                  })
+                }
+              >
+                Return to Dashboard
+              </button>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="scan-error-message">
