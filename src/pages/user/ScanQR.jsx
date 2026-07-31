@@ -83,7 +83,7 @@ function ScanQR() {
 
       if (!cleanCode) {
         setError(
-          "Please enter or scan a QR code."
+          "Please  scan the QR code."
         );
 
         return;
@@ -502,35 +502,33 @@ function ScanQR() {
         </section>
 
         {message && (
-          <div className="success-message">
-            <CheckCircle2 size={28} />
+  <div className="redeem-success-overlay">
+    <div className="redeem-success-modal">
+      <div className="redeem-success-icon">
+        <CheckCircle2 size={72} />
+      </div>
 
-            <div>
-              <h3>Reward Claimed</h3>
-              <p>{message}</p>
+      <p className="small-title">
+        Reward Claimed
+      </p>
 
-              {earnedPoints > 0 && (
-                <strong>
-                  +{earnedPoints} points
-                </strong>
-              )}
+      <h2>+{earnedPoints} Points</h2>
 
-              <button
-                type="button"
-                onClick={() =>
-                  navigate(
-                    "/user/dashboard",
-                    {
-                      replace: true,
-                    }
-                  )
-                }
-              >
-                Return to Dashboard
-              </button>
-            </div>
-          </div>
-        )}
+      <p>{message}</p>
+
+      <button
+        type="button"
+        onClick={() =>
+          navigate("/user/dashboard", {
+            replace: true,
+          })
+        }
+      >
+        Return to Dashboard
+      </button>
+    </div>
+  </div>
+)}
 
         {error && (
           <div className="scan-error-message">

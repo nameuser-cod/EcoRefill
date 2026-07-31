@@ -1962,3 +1962,42 @@ button:disabled {
   align-items: flex-start;
   gap: 10px;
 }
+
+.camera-detected-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+  background: rgba(15, 42, 29, 0.96);
+  color: #ffffff;
+}
+
+.camera-detected-icon {
+  width: 110px;
+  height: 110px;
+  border: 4px solid #07150e;
+  border-radius: 50%;
+  background: #35d454;
+  color: #07150e;
+  display: grid;
+  place-items: center;
+  box-shadow: 8px 8px 0 #07150e;
+}
+
+.camera-detected-overlay h2 {
+  margin: 10px 0 0;
+  font-size: 26px;
+}
+
+.camera-detected-overlay p {
+  margin: 0;
+  max-width: 300px;
+  line-height: 1.5;
+  opacity: 0.85;
+}

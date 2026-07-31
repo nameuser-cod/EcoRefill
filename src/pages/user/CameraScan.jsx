@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Camera,
+  CheckCircle2,
   LoaderCircle,
   ScanLine,
 } from "lucide-react";
@@ -19,15 +20,45 @@ function CameraScan() {
   const mountedRef = useRef(true);
 
   const [starting, setStarting] = useState(true);
+  const [qrDetected, setQrDetected] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     mountedRef.current = true;
     scanHandledRef.current = false;
 
+    const stopAndClearScanner = async () => {
+      const scanner = scannerRef.current;
+
+      if (!scanner) return;
+
+      try {
+        if (scanner.isScanning) {
+          await scanner.stop();
+        }
+      } catch (stopError) {
+        console.warn(
+          "Scanner stop warning:",
+          stopError
+        );
+      }
+
+      try {
+        await scanner.clear();
+      } catch (clearError) {
+        console.warn(
+          "Scanner clear warning:",
+          clearError
+        );
+      }
+
+      scannerRef.current = null;
+    };
+
     const startScanner = async () => {
       try {
         setStarting(true);
+        setQrDetected(false);
         setError("");
 
         const scanner = new Html5Qrcode(
@@ -43,7 +74,11 @@ function CameraScan() {
           },
           {
             fps: 10,
-            qrbox: (viewfinderWidth, viewfinderHeight) => {
+
+            qrbox: (
+              viewfinderWidth,
+              viewfinderHeight
+            ) => {
               const minimumSize = Math.min(
                 viewfinderWidth,
                 viewfinderHeight
@@ -58,9 +93,11 @@ function CameraScan() {
                 height: boxSize,
               };
             },
+
             aspectRatio: 1,
             disableFlip: false,
           },
+
           async (decodedText) => {
             if (
               scanHandledRef.current ||
@@ -71,40 +108,38 @@ function CameraScan() {
 
             scanHandledRef.current = true;
 
-            try {
-              if (
-                scannerRef.current?.isScanning
-              ) {
-                await scannerRef.current.stop();
-              }
-            } catch (stopError) {
-              console.warn(
-                "Scanner stop warning:",
-                stopError
-              );
-            }
+            const cleanCode = String(
+              decodedText
+            ).trim();
 
-            try {
-              await scannerRef.current?.clear();
-            } catch (clearError) {
-              console.warn(
-                "Scanner clear warning:",
-                clearError
-              );
-            }
+            setStarting(false);
+            setQrDetected(true);
 
-            scannerRef.current = null;
+            await stopAndClearScanner();
 
-            navigate("/user/scan-qr", {
-              replace: true,
-              state: {
-                scannedCode: decodedText.trim(),
-              },
-            });
+            /*
+             * Give the user enough time to see that
+             * the QR was detected before going to
+             * the redemption page.
+             */
+            window.setTimeout(() => {
+              if (!mountedRef.current) return;
+
+              navigate("/user/scan-qr", {
+                replace: true,
+                state: {
+                  scannedCode: cleanCode,
+                },
+              });
+            }, 800);
           },
+
           () => {
-            // This callback runs repeatedly while no QR is found.
-            // Do not display these normal scan errors.
+            /*
+             * This callback is repeatedly triggered
+             * when no QR is detected.
+             * These are normal scanning attempts.
+             */
           }
         );
 
@@ -136,7 +171,9 @@ function CameraScan() {
           );
         } else if (
           errorText.includes("notfound") ||
-          errorText.includes("requested device not found")
+          errorText.includes(
+            "requested device not found"
+          )
         ) {
           setError(
             "No available camera was found on this device."
@@ -161,63 +198,39 @@ function CameraScan() {
 
     return () => {
       mountedRef.current = false;
-
-      const closeScanner = async () => {
-        const scanner = scannerRef.current;
-
-        if (!scanner) return;
-
-        try {
-          if (scanner.isScanning) {
-            await scanner.stop();
-          }
-        } catch (stopError) {
-          console.warn(
-            "Unable to stop scanner:",
-            stopError
-          );
-        }
-
-        try {
-          await scanner.clear();
-        } catch (clearError) {
-          console.warn(
-            "Unable to clear scanner:",
-            clearError
-          );
-        }
-
-        scannerRef.current = null;
-      };
-
-      closeScanner();
+      stopAndClearScanner();
     };
   }, [navigate]);
 
   const cancelScanner = async () => {
     scanHandledRef.current = true;
 
-    try {
-      if (scannerRef.current?.isScanning) {
-        await scannerRef.current.stop();
-      }
-    } catch (stopError) {
-      console.warn(
-        "Unable to stop scanner:",
-        stopError
-      );
-    }
+    const scanner = scannerRef.current;
 
-    try {
-      await scannerRef.current?.clear();
-    } catch (clearError) {
-      console.warn(
-        "Unable to clear scanner:",
-        clearError
-      );
+    if (scanner) {
+      try {
+        if (scanner.isScanning) {
+          await scanner.stop();
+        }
+      } catch (stopError) {
+        console.warn(
+          "Unable to stop scanner:",
+          stopError
+        );
+      }
+
+      try {
+        await scanner.clear();
+      } catch (clearError) {
+        console.warn(
+          "Unable to clear scanner:",
+          clearError
+        );
+      }
     }
 
     scannerRef.current = null;
+
     navigate("/user/scan-qr", {
       replace: true,
     });
@@ -233,6 +246,7 @@ function CameraScan() {
         <button
           type="button"
           onClick={cancelScanner}
+          disabled={qrDetected}
           aria-label="Close camera scanner"
         >
           <ArrowLeft size={24} />
@@ -249,10 +263,16 @@ function CameraScan() {
           <ScanLine size={30} />
 
           <div>
-            <h2>Position the QR inside the frame</h2>
+            <h2>
+              {qrDetected
+                ? "QR code detected"
+                : "Position the QR inside the frame"}
+            </h2>
+
             <p>
-              Scan only the reward QR displayed by the
-              EcoRefill machine.
+              {qrDetected
+                ? "Please wait while EcoRefill verifies and redeems your reward."
+                : "Scan only the reward QR displayed by the EcoRefill machine."}
             </p>
           </div>
         </div>
@@ -263,7 +283,7 @@ function CameraScan() {
             className="camera-reader"
           />
 
-          {starting && !error && (
+          {starting && !error && !qrDetected && (
             <div className="camera-loading">
               <LoaderCircle
                 size={42}
@@ -271,6 +291,25 @@ function CameraScan() {
               />
 
               <p>Opening camera...</p>
+            </div>
+          )}
+
+          {qrDetected && (
+            <div className="camera-detected-overlay">
+              <div className="camera-detected-icon">
+                <CheckCircle2 size={72} />
+              </div>
+
+              <h2>QR Code Detected!</h2>
+
+              <p>
+                Verifying your recycling reward...
+              </p>
+
+              <LoaderCircle
+                size={34}
+                className="machine-spin"
+              />
             </div>
           )}
         </div>
@@ -293,13 +332,15 @@ function CameraScan() {
           </div>
         )}
 
-        <button
-          type="button"
-          className="camera-cancel-button"
-          onClick={cancelScanner}
-        >
-          Cancel Scanning
-        </button>
+        {!qrDetected && (
+          <button
+            type="button"
+            className="camera-cancel-button"
+            onClick={cancelScanner}
+          >
+            Cancel Scanning
+          </button>
+        )}
       </main>
     </div>
   );
