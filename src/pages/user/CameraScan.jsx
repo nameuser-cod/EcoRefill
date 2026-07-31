@@ -1,50 +1,40 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Camera, ScanLine } from "lucide-react";
+import {
+  ArrowLeft,
+  Camera,
+  LoaderCircle,
+  ScanLine,
+} from "lucide-react";
 import "../../styles/theme.css";
+
+const SCANNER_ELEMENT_ID = "ecorefill-qr-reader";
 
 function CameraScan() {
   const navigate = useNavigate();
 
   const scannerRef = useRef(null);
-  const processingRef = useRef(false);
+  const scanHandledRef = useRef(false);
   const mountedRef = useRef(true);
 
-  const [cameraError, setCameraError] = useState("");
-  const [startingCamera, setStartingCamera] = useState(true);
-
-  const stopScanner = async () => {
-    const scanner = scannerRef.current;
-    scannerRef.current = null;
-
-    if (!scanner) return;
-
-    try {
-      if (scanner.isScanning) {
-        await scanner.stop();
-      }
-
-      await scanner.clear();
-    } catch (error) {
-      console.error("Scanner stop error:", error);
-    }
-  };
+  const [starting, setStarting] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     mountedRef.current = true;
+    scanHandledRef.current = false;
 
     const startScanner = async () => {
       try {
-        setCameraError("");
-        setStartingCamera(true);
+        setStarting(true);
+        setError("");
 
-        // Small delay so the qr-reader element is already rendered.
-        await new Promise((resolve) => setTimeout(resolve, 300));
+        const scanner = new Html5Qrcode(
+          SCANNER_ELEMENT_ID,
+          false
+        );
 
-        if (!mountedRef.current) return;
-
-        const scanner = new Html5Qrcode("camera-qr-reader");
         scannerRef.current = scanner;
 
         await scanner.start(
@@ -54,12 +44,14 @@ function CameraScan() {
           {
             fps: 10,
             qrbox: (viewfinderWidth, viewfinderHeight) => {
-              const minimumEdge = Math.min(
+              const minimumSize = Math.min(
                 viewfinderWidth,
                 viewfinderHeight
               );
 
-              const boxSize = Math.floor(minimumEdge * 0.7);
+              const boxSize = Math.floor(
+                minimumSize * 0.72
+              );
 
               return {
                 width: boxSize,
@@ -67,38 +59,99 @@ function CameraScan() {
               };
             },
             aspectRatio: 1,
+            disableFlip: false,
           },
           async (decodedText) => {
-            if (processingRef.current) return;
+            if (
+              scanHandledRef.current ||
+              !decodedText
+            ) {
+              return;
+            }
 
-            processingRef.current = true;
+            scanHandledRef.current = true;
 
-            await stopScanner();
+            try {
+              if (
+                scannerRef.current?.isScanning
+              ) {
+                await scannerRef.current.stop();
+              }
+            } catch (stopError) {
+              console.warn(
+                "Scanner stop warning:",
+                stopError
+              );
+            }
+
+            try {
+              await scannerRef.current?.clear();
+            } catch (clearError) {
+              console.warn(
+                "Scanner clear warning:",
+                clearError
+              );
+            }
+
+            scannerRef.current = null;
 
             navigate("/user/scan-qr", {
               replace: true,
               state: {
-                scannedCode: decodedText,
+                scannedCode: decodedText.trim(),
               },
             });
           },
           () => {
-            // Ignore normal frame-by-frame scanning errors.
+            // This callback runs repeatedly while no QR is found.
+            // Do not display these normal scan errors.
           }
         );
 
         if (mountedRef.current) {
-          setStartingCamera(false);
+          setStarting(false);
         }
-      } catch (error) {
-        console.error("Camera start error:", error);
+      } catch (scannerError) {
+        console.error(
+          "Unable to start QR scanner:",
+          scannerError
+        );
 
-        scannerRef.current = null;
+        if (!mountedRef.current) return;
 
-        if (mountedRef.current) {
-          setStartingCamera(false);
-          setCameraError(
-            "Camera could not start. Please allow camera permission and try again."
+        setStarting(false);
+
+        const errorText = String(
+          scannerError?.message ||
+            scannerError ||
+            ""
+        ).toLowerCase();
+
+        if (
+          errorText.includes("permission") ||
+          errorText.includes("notallowed")
+        ) {
+          setError(
+            "Camera permission was denied. Allow camera access in your browser or phone settings."
+          );
+        } else if (
+          errorText.includes("notfound") ||
+          errorText.includes("requested device not found")
+        ) {
+          setError(
+            "No available camera was found on this device."
+          );
+        } else if (
+          window.location.protocol !== "https:" &&
+          window.location.hostname !== "localhost" &&
+          window.location.hostname !== "127.0.0.1"
+        ) {
+          setError(
+            "Camera access requires HTTPS. Open the app through HTTPS or install it as an Android app."
+          );
+        } else {
+          setError(
+            "The camera could not be opened. Check camera permission and try again."
           );
         }
       }
@@ -108,18 +161,69 @@ function CameraScan() {
 
     return () => {
       mountedRef.current = false;
-      stopScanner();
+
+      const closeScanner = async () => {
+        const scanner = scannerRef.current;
+
+        if (!scanner) return;
+
+        try {
+          if (scanner.isScanning) {
+            await scanner.stop();
+          }
+        } catch (stopError) {
+          console.warn(
+            "Unable to stop scanner:",
+            stopError
+          );
+        }
+
+        try {
+          await scanner.clear();
+        } catch (clearError) {
+          console.warn(
+            "Unable to clear scanner:",
+            clearError
+          );
+        }
+
+        scannerRef.current = null;
+      };
+
+      closeScanner();
     };
   }, [navigate]);
 
-  const handleBack = async () => {
-    await stopScanner();
+  const cancelScanner = async () => {
+    scanHandledRef.current = true;
+
+    try {
+      if (scannerRef.current?.isScanning) {
+        await scannerRef.current.stop();
+      }
+    } catch (stopError) {
+      console.warn(
+        "Unable to stop scanner:",
+        stopError
+      );
+    }
+
+    try {
+      await scannerRef.current?.clear();
+    } catch (clearError) {
+      console.warn(
+        "Unable to clear scanner:",
+        clearError
+      );
+    }
+
+    scannerRef.current = null;
     navigate("/user/scan-qr", {
       replace: true,
     });
   };
 
-  const retryCamera = async () => {
+  const retryScanner = () => {
     window.location.reload();
   };
 
@@ -128,15 +232,14 @@ function CameraScan() {
       <header className="camera-scan-header">
         <button
           type="button"
-          className="camera-back-button"
-          onClick={handleBack}
-          aria-label="Return to QR redemption"
+          onClick={cancelScanner}
+          aria-label="Close camera scanner"
         >
           <ArrowLeft size={24} />
         </button>
 
         <div>
-          <p className="small-title">EcoRefill</p>
+          <p>EcoRefill</p>
           <h1>Scan Machine QR</h1>
         </div>
       </header>
@@ -146,49 +249,57 @@ function CameraScan() {
           <ScanLine size={30} />
 
           <div>
-            <h2>Position the QR code inside the frame</h2>
+            <h2>Position the QR inside the frame</h2>
             <p>
-              Hold your phone steady while scanning the code shown
-              on the EcoRefill machine.
+              Scan only the reward QR displayed by the
+              EcoRefill machine.
             </p>
           </div>
         </div>
 
-        <div className="camera-viewfinder">
+        <div className="camera-reader-wrapper">
           <div
-            id="camera-qr-reader"
-            className="camera-qr-reader"
+            id={SCANNER_ELEMENT_ID}
+            className="camera-reader"
           />
 
-          {startingCamera && (
+          {starting && !error && (
             <div className="camera-loading">
-              <Camera size={40} />
-              <p>Starting camera...</p>
+              <LoaderCircle
+                size={42}
+                className="machine-spin"
+              />
+
+              <p>Opening camera...</p>
             </div>
           )}
-
-          <div className="scanner-corner scanner-corner-top-left" />
-          <div className="scanner-corner scanner-corner-top-right" />
-          <div className="scanner-corner scanner-corner-bottom-left" />
-          <div className="scanner-corner scanner-corner-bottom-right" />
         </div>
 
-        {cameraError && (
+        {error && (
           <div className="camera-error-card">
-            <p>{cameraError}</p>
+            <Camera size={34} />
+
+            <div>
+              <h3>Camera unavailable</h3>
+              <p>{error}</p>
+            </div>
 
             <button
               type="button"
-              onClick={retryCamera}
+              onClick={retryScanner}
             >
               Try Again
             </button>
           </div>
         )}
 
-        <p className="camera-security-note">
-          The camera is only used to scan the EcoRefill QR code.
-        </p>
+        <button
+          type="button"
+          className="camera-cancel-button"
+          onClick={cancelScanner}
+        >
+          Cancel Scanning
+        </button>
       </main>
     </div>
   );

@@ -1771,3 +1771,194 @@ button:disabled {
     min-height: calc(100dvh - 255px);
   }
 }
+
+.camera-scan-page {
+  min-height: 100vh;
+  background: #0f2a1d;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.camera-scan-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: #153d2b;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.12);
+}
+
+.camera-scan-header button {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: #e3eed4;
+  color: #0f2a1d;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.camera-scan-header p {
+  margin: 0;
+  opacity: 0.75;
+  font-size: 13px;
+}
+
+.camera-scan-header h1 {
+  margin: 2px 0 0;
+  font-size: 22px;
+}
+
+.camera-scan-content {
+  width: min(100%, 520px);
+  margin: 0 auto;
+  padding: 22px;
+  flex: 1;
+}
+
+.camera-instruction {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.camera-instruction h2 {
+  margin: 0 0 5px;
+  font-size: 18px;
+}
+
+.camera-instruction p {
+  margin: 0;
+  opacity: 0.75;
+  line-height: 1.5;
+}
+
+.camera-reader-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 360px;
+  overflow: hidden;
+  border: 3px solid #9cff57;
+  border-radius: 22px;
+  background: #07150e;
+}
+
+.camera-reader {
+  width: 100%;
+  min-height: 360px;
+}
+
+.camera-reader video {
+  width: 100% !important;
+  min-height: 360px;
+  object-fit: cover;
+  border-radius: 18px;
+}
+
+.camera-reader img {
+  display: none;
+}
+
+.camera-reader-wrapper #qr-shaded-region {
+  border-color: rgba(
+    156,
+    255,
+    87,
+    0.7
+  ) !important;
+}
+
+.camera-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  background: #07150e;
+}
+
+.camera-error-card {
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 16px;
+  background: #ffe6e6;
+  color: #7d1717;
+  display: grid;
+  gap: 12px;
+}
+
+.camera-error-card h3 {
+  margin: 0 0 4px;
+}
+
+.camera-error-card p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.camera-error-card button,
+.camera-cancel-button {
+  min-height: 48px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.camera-error-card button {
+  background: #7d1717;
+  color: #ffffff;
+}
+
+.camera-cancel-button {
+  width: 100%;
+  margin-top: 20px;
+  background: #e3eed4;
+  color: #0f2a1d;
+}
+
+.success-message {
+  display: flex;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 16px;
+  background: #dfffd2;
+  color: #143b20;
+}
+
+.success-message h3 {
+  margin: 0 0 5px;
+}
+
+.success-message p {
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
+.success-message strong {
+  display: block;
+  margin-bottom: 14px;
+  font-size: 20px;
+}
+
+.success-message button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 10px;
+  background: #143b20;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.scan-error-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
