@@ -15,7 +15,7 @@ import UserWaterRefill from "./pages/user/UserWaterRefill";
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/machine" />} />
+      <Route path="/" element={<Navigate to="/login" />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/user/dashboard" element={<UserDashboard />} />

@@ -47,14 +47,14 @@ CAN_ITEMS = {
 }
 
 POINTS = {
-    "plastic_bottle": 5,
-    "bottle": 5,
-    "pet_bottle": 5,
-    "can": 3,
-    "aluminum_can": 3,
-    "aluminium_can": 3,
-    "tin_can": 3,
-    "metal_can": 3,
+    "plastic_bottle": 1,
+    "bottle": 1,
+    "pet_bottle": 1,
+    "can": 1,
+    "aluminum_can": 1,
+    "aluminium_can": 1,
+    "tin_can": 1,
+    "metal_can": 1,
 }
 
 

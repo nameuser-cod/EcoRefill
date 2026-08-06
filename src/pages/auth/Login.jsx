@@ -2,6 +2,18 @@ import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  AlertCircle,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Leaf,
+  LoaderCircle,
+  LockKeyhole,
+  Mail,
+  Recycle,
+  ShieldCheck,
+} from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
 import "../../styles/theme.css";
 
@@ -10,45 +22,76 @@ function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const getFriendlyError = (errorCode) => {
+    switch (errorCode) {
+      case "auth/invalid-email":
+        return "Please enter a valid email address.";
+
+      case "auth/invalid-credential":
+      case "auth/user-not-found":
+      case "auth/wrong-password":
+        return "Incorrect email or password.";
+
+      case "auth/user-disabled":
+        return "This account has been disabled.";
+
+      case "auth/too-many-requests":
+        return "Too many login attempts. Please try again later.";
+
+      case "auth/network-request-failed":
+        return "Unable to connect. Please check your internet connection.";
+
+      default:
+        return "Login failed. Please check your information and try again.";
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    if (loading) return;
+
     setError("");
     setLoading(true);
 
     try {
+      const normalizedEmail = email.trim().toLowerCase();
+
       const userCredential = await signInWithEmailAndPassword(
         auth,
-        email,
+        normalizedEmail,
         password
       );
 
       const user = userCredential.user;
-
       const userDocRef = doc(db, "users", user.uid);
       const userDocSnap = await getDoc(userDocRef);
 
       if (!userDocSnap.exists()) {
-        setError("User record not found in Firestore.");
-        setLoading(false);
+        setError(
+          "Your account was authenticated, but its user record was not found."
+        );
         return;
       }
 
       const userData = userDocSnap.data();
 
       if (userData.role === "device_owner") {
-        navigate("/owner/dashboard");
+        navigate("/owner/dashboard", { replace: true });
       } else {
-        navigate("/user/dashboard");
+        navigate("/user/dashboard", { replace: true });
       }
     } catch (err) {
-      setError(err.message);
+      console.error("Login error:", err);
+      setError(getFriendlyError(err.code));
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -70,14 +113,32 @@ function Login() {
             required
           />
 
-          <label>Password</label>
-          <input
-            type="password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+<label>Password</label>
+
+<div className="password-field">
+  <input
+    type={showPassword ? "text" : "password"}
+    placeholder="Enter your password"
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+    required
+  />
+
+  <span
+    className="password-eye"
+    onClick={() => setShowPassword((current) => !current)}
+    role="button"
+    tabIndex={0}
+    aria-label={showPassword ? "Hide password" : "Show password"}
+    onKeyDown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        setShowPassword((current) => !current);
+      }
+    }}
+  >
+    {showPassword ? <Eye size={26} /> : <EyeOff size={26} />}
+  </span>
+</div>
 
           {error && <p className="error-message">{error}</p>}
 
