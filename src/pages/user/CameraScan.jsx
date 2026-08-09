@@ -105,50 +105,82 @@ function CameraScan() {
          */
 
         let qrPayload = null;
+let waterSessionId = null;
 
-        try {
-          qrPayload =
-            JSON.parse(cleanCode);
-        } catch {
-          qrPayload = null;
-        }
+// Try JSON QR first
+try {
+  qrPayload = JSON.parse(cleanCode);
 
-        if (
-          qrPayload &&
-          qrPayload.type ===
-            "water_refill" &&
-          qrPayload.sessionId
-        ) {
-          scanHandledRef.current =
-            true;
+  if (
+    qrPayload?.type === "water_refill" &&
+    qrPayload?.sessionId
+  ) {
+    waterSessionId =
+      String(
+        qrPayload.sessionId
+      ).trim();
+  }
+} catch {
+  qrPayload = null;
+}
 
-          setStarting(false);
-          setDetectedType(
-            "water_refill"
-          );
-          setQrDetected(true);
+// Also support EcoRefill deep-link format
+if (
+  !waterSessionId &&
+  cleanCode.startsWith(
+    "ecorefill://water-refill/"
+  )
+) {
+  waterSessionId =
+    cleanCode
+      .replace(
+        "ecorefill://water-refill/",
+        ""
+      )
+      .trim();
+}
 
-          await stopAndClearScanner();
+if (
+  !waterSessionId &&
+  cleanCode.startsWith(
+    "ecorefill://water_refill/"
+  )
+) {
+  waterSessionId =
+    cleanCode
+      .replace(
+        "ecorefill://water_refill/",
+        ""
+      )
+      .trim();
+}
 
-          window.setTimeout(() => {
-            if (
-              !mountedRef.current
-            ) {
-              return;
-            }
+if (waterSessionId) {
+  scanHandledRef.current = true;
 
-            navigate(
-              `/user/water-refill/${encodeURIComponent(
-                qrPayload.sessionId
-              )}`,
-              {
-                replace: true,
-              }
-            );
-          }, 700);
+  setStarting(false);
+  setDetectedType("water_refill");
+  setQrDetected(true);
 
-          return;
-        }
+  await stopAndClearScanner();
+
+  window.setTimeout(() => {
+    if (!mountedRef.current) {
+      return;
+    }
+
+    navigate(
+      `/user/water-refill/${encodeURIComponent(
+        waterSessionId
+      )}`,
+      {
+        replace: true,
+      }
+    );
+  }, 700);
+
+  return;
+}
 
         /*
          * =====================================

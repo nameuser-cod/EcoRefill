@@ -31,6 +31,61 @@ import {
 import { auth, db } from "../../firebase/firebase";
 import "../../styles/theme.css";
 
+const getWaterRefillSessionId = (rawCode) => {
+  const cleanCode = String(rawCode || "").trim();
+
+  if (!cleanCode) {
+    return null;
+  }
+
+  // Format 1:
+  // {"type":"water_refill","machineId":"machine_001","sessionId":"..."}
+  try {
+    const payload = JSON.parse(cleanCode);
+
+    if (
+      payload?.type === "water_refill" &&
+      payload?.sessionId
+    ) {
+      return String(payload.sessionId).trim();
+    }
+  } catch {
+    // Not JSON. Continue checking other supported formats.
+  }
+
+  // Format 2:
+  // ecorefill://water-refill/SESSION_ID
+  if (
+    cleanCode.startsWith(
+      "ecorefill://water-refill/"
+    )
+  ) {
+    return cleanCode
+      .replace(
+        "ecorefill://water-refill/",
+        ""
+      )
+      .trim();
+  }
+
+  // Format 3:
+  // ecorefill://water_refill/SESSION_ID
+  if (
+    cleanCode.startsWith(
+      "ecorefill://water_refill/"
+    )
+  ) {
+    return cleanCode
+      .replace(
+        "ecorefill://water_refill/",
+        ""
+      )
+      .trim();
+  }
+
+  return null;
+};
+
 function ScanQR() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -78,6 +133,30 @@ function ScanQR() {
       setError("");
       setMessage("");
       setEarnedPoints(0);
+
+      const waterSessionId =
+  getWaterRefillSessionId(cleanCode);
+
+if (waterSessionId) {
+  console.log(
+    "Water refill QR detected:",
+    waterSessionId
+  );
+
+  processingRef.current = false;
+  setRedeeming(false);
+
+  navigate(
+    `/user/water-refill/${encodeURIComponent(
+      waterSessionId
+    )}`,
+    {
+      replace: true,
+    }
+  );
+
+  return;
+}
 
       if (!cleanCode) {
         setError(
@@ -398,7 +477,7 @@ function ScanQR() {
           <p>
             {redeeming
               ? "Please do not close this page while your reward is being processed."
-              : "Scan the QR code displayed by the machine after your bottle or can is accepted."}
+              : "Scan an EcoRefill machine QR for recycling rewards or water refill."}
           </p>
 
           <div className="scan-preview-placeholder">
@@ -408,8 +487,8 @@ function ScanQR() {
               <h3>Camera Scanner</h3>
 
               <p>
-                Use your phone&apos;s rear camera to
-                scan the reward code.
+                Use your phone&apos;s rear camera to scan the
+                  EcoRefill machine QR code.
               </p>
             </div>
           </div>
