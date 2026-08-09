@@ -1,16 +1,23 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Camera,
   CheckCircle2,
+  Droplets,
   LoaderCircle,
+  Recycle,
   ScanLine,
 } from "lucide-react";
 import "../../styles/theme.css";
 
-const SCANNER_ELEMENT_ID = "ecorefill-qr-reader";
+const SCANNER_ELEMENT_ID =
+  "ecorefill-qr-reader";
 
 function CameraScan() {
   const navigate = useNavigate();
@@ -19,248 +26,419 @@ function CameraScan() {
   const scanHandledRef = useRef(false);
   const mountedRef = useRef(true);
 
-  const [starting, setStarting] = useState(true);
-  const [qrDetected, setQrDetected] = useState(false);
-  const [error, setError] = useState("");
+  const [starting, setStarting] =
+    useState(true);
+
+  const [qrDetected, setQrDetected] =
+    useState(false);
+
+  const [detectedType, setDetectedType] =
+    useState("");
+
+  const [error, setError] =
+    useState("");
 
   useEffect(() => {
     mountedRef.current = true;
     scanHandledRef.current = false;
 
-    const stopAndClearScanner = async () => {
-      const scanner = scannerRef.current;
+    const stopAndClearScanner =
+      async () => {
+        const scanner =
+          scannerRef.current;
 
-      if (!scanner) return;
+        if (!scanner) return;
 
-      try {
-        if (scanner.isScanning) {
-          await scanner.stop();
+        try {
+          if (scanner.isScanning) {
+            await scanner.stop();
+          }
+        } catch (stopError) {
+          console.warn(
+            "Scanner stop warning:",
+            stopError
+          );
         }
-      } catch (stopError) {
-        console.warn(
-          "Scanner stop warning:",
-          stopError
+
+        try {
+          await scanner.clear();
+        } catch (clearError) {
+          console.warn(
+            "Scanner clear warning:",
+            clearError
+          );
+        }
+
+        scannerRef.current = null;
+      };
+
+    const handleScannedQR =
+      async (decodedText) => {
+        if (
+          scanHandledRef.current ||
+          !decodedText
+        ) {
+          return;
+        }
+
+        const cleanCode = String(
+          decodedText
+        ).trim();
+
+        console.log(
+          "Scanned QR:",
+          cleanCode
         );
-      }
 
-      try {
-        await scanner.clear();
-      } catch (clearError) {
-        console.warn(
-          "Scanner clear warning:",
-          clearError
-        );
-      }
+        /*
+         * =====================================
+         * 1. TRY WATER REFILL QR
+         * =====================================
+         *
+         * Expected QR:
+         *
+         * {
+         *   "type": "water_refill",
+         *   "machineId": "machine_001",
+         *   "sessionId": "..."
+         * }
+         */
 
-      scannerRef.current = null;
-    };
+        let qrPayload = null;
 
-    const startScanner = async () => {
-      try {
-        setStarting(true);
-        setQrDetected(false);
-        setError("");
+        try {
+          qrPayload =
+            JSON.parse(cleanCode);
+        } catch {
+          qrPayload = null;
+        }
 
-        const scanner = new Html5Qrcode(
-          SCANNER_ELEMENT_ID,
-          false
-        );
+        if (
+          qrPayload &&
+          qrPayload.type ===
+            "water_refill" &&
+          qrPayload.sessionId
+        ) {
+          scanHandledRef.current =
+            true;
 
-        scannerRef.current = scanner;
+          setStarting(false);
+          setDetectedType(
+            "water_refill"
+          );
+          setQrDetected(true);
 
-        await scanner.start(
-          {
-            facingMode: "environment",
-          },
-          {
-            fps: 10,
+          await stopAndClearScanner();
 
-            qrbox: (
-              viewfinderWidth,
-              viewfinderHeight
-            ) => {
-              const minimumSize = Math.min(
-                viewfinderWidth,
-                viewfinderHeight
-              );
-
-              const boxSize = Math.floor(
-                minimumSize * 0.72
-              );
-
-              return {
-                width: boxSize,
-                height: boxSize,
-              };
-            },
-
-            aspectRatio: 1,
-            disableFlip: false,
-          },
-
-          async (decodedText) => {
+          window.setTimeout(() => {
             if (
-              scanHandledRef.current ||
-              !decodedText
+              !mountedRef.current
             ) {
               return;
             }
 
-            scanHandledRef.current = true;
-
-            const cleanCode = String(
-              decodedText
-            ).trim();
-
-            setStarting(false);
-            setQrDetected(true);
-
-            await stopAndClearScanner();
-
-            /*
-             * Give the user enough time to see that
-             * the QR was detected before going to
-             * the redemption page.
-             */
-            window.setTimeout(() => {
-              if (!mountedRef.current) return;
-
-              navigate("/user/scan-qr", {
+            navigate(
+              `/user/water-refill/${encodeURIComponent(
+                qrPayload.sessionId
+              )}`,
+              {
                 replace: true,
-                state: {
-                  scannedCode: cleanCode,
-                },
-              });
-            }, 800);
-          },
+              }
+            );
+          }, 700);
 
-          () => {
-            /*
-             * This callback is repeatedly triggered
-             * when no QR is detected.
-             * These are normal scanning attempts.
-             */
-          }
-        );
-
-        if (mountedRef.current) {
-          setStarting(false);
+          return;
         }
-      } catch (scannerError) {
-        console.error(
-          "Unable to start QR scanner:",
-          scannerError
-        );
 
-        if (!mountedRef.current) return;
+        /*
+         * =====================================
+         * 2. RECYCLING REWARD QR
+         * =====================================
+         *
+         * This stays compatible with your
+         * existing ScanQR.jsx.
+         *
+         * Example:
+         * ecorefill://claim/abc123
+         */
+
+        scanHandledRef.current =
+          true;
 
         setStarting(false);
+        setDetectedType(
+          "recycling"
+        );
+        setQrDetected(true);
 
-        const errorText = String(
-          scannerError?.message ||
-            scannerError ||
-            ""
-        ).toLowerCase();
+        await stopAndClearScanner();
 
-        if (
-          errorText.includes("permission") ||
-          errorText.includes("notallowed")
-        ) {
-          setError(
-            "Camera permission was denied. Allow camera access in your browser or phone settings."
+        window.setTimeout(() => {
+          if (
+            !mountedRef.current
+          ) {
+            return;
+          }
+
+          navigate(
+            "/user/scan-qr",
+            {
+              replace: true,
+
+              state: {
+                scannedCode:
+                  cleanCode,
+              },
+            }
           );
-        } else if (
-          errorText.includes("notfound") ||
-          errorText.includes(
-            "requested device not found"
-          )
-        ) {
-          setError(
-            "No available camera was found on this device."
+        }, 700);
+      };
+
+    const startScanner =
+      async () => {
+        try {
+          setStarting(true);
+          setQrDetected(false);
+          setDetectedType("");
+          setError("");
+
+          const scanner =
+            new Html5Qrcode(
+              SCANNER_ELEMENT_ID,
+              false
+            );
+
+          scannerRef.current =
+            scanner;
+
+          await scanner.start(
+            {
+              facingMode:
+                "environment",
+            },
+
+            {
+              fps: 10,
+
+              qrbox: (
+                viewfinderWidth,
+                viewfinderHeight
+              ) => {
+                const minimumSize =
+                  Math.min(
+                    viewfinderWidth,
+                    viewfinderHeight
+                  );
+
+                const boxSize =
+                  Math.floor(
+                    minimumSize *
+                      0.72
+                  );
+
+                return {
+                  width: boxSize,
+                  height: boxSize,
+                };
+              },
+
+              aspectRatio: 1,
+
+              disableFlip: false,
+            },
+
+            handleScannedQR,
+
+            () => {
+              /*
+               * Normal scan failures
+               * happen continuously while
+               * looking for a QR.
+               *
+               * Do not show an error here.
+               */
+            }
           );
-        } else if (
-          window.location.protocol !== "https:" &&
-          window.location.hostname !== "localhost" &&
-          window.location.hostname !== "127.0.0.1"
-        ) {
-          setError(
-            "Camera access requires HTTPS. Open the app through HTTPS or install it as an Android app."
+
+          if (
+            mountedRef.current
+          ) {
+            setStarting(false);
+          }
+        } catch (scannerError) {
+          console.error(
+            "Unable to start QR scanner:",
+            scannerError
           );
-        } else {
-          setError(
-            "The camera could not be opened. Check camera permission and try again."
-          );
+
+          if (
+            !mountedRef.current
+          ) {
+            return;
+          }
+
+          setStarting(false);
+
+          const errorText =
+            String(
+              scannerError?.message ||
+                scannerError ||
+                ""
+            ).toLowerCase();
+
+          if (
+            errorText.includes(
+              "permission"
+            ) ||
+            errorText.includes(
+              "notallowed"
+            )
+          ) {
+            setError(
+              "Camera permission was denied. Allow camera access in your browser or phone settings."
+            );
+          } else if (
+            errorText.includes(
+              "notfound"
+            ) ||
+            errorText.includes(
+              "requested device not found"
+            )
+          ) {
+            setError(
+              "No available camera was found on this device."
+            );
+          } else if (
+            window.location
+              .protocol !==
+              "https:" &&
+            window.location
+              .hostname !==
+              "localhost" &&
+            window.location
+              .hostname !==
+              "127.0.0.1"
+          ) {
+            setError(
+              "Camera access requires HTTPS. Open the app through HTTPS or install it as an Android app."
+            );
+          } else {
+            setError(
+              "The camera could not be opened. Check camera permission and try again."
+            );
+          }
         }
-      }
-    };
+      };
 
     startScanner();
 
     return () => {
-      mountedRef.current = false;
+      mountedRef.current =
+        false;
+
       stopAndClearScanner();
     };
   }, [navigate]);
 
-  const cancelScanner = async () => {
-    scanHandledRef.current = true;
+  const cancelScanner =
+    async () => {
+      scanHandledRef.current =
+        true;
 
-    const scanner = scannerRef.current;
+      const scanner =
+        scannerRef.current;
 
-    if (scanner) {
-      try {
-        if (scanner.isScanning) {
-          await scanner.stop();
+      if (scanner) {
+        try {
+          if (
+            scanner.isScanning
+          ) {
+            await scanner.stop();
+          }
+        } catch (stopError) {
+          console.warn(
+            "Unable to stop scanner:",
+            stopError
+          );
         }
-      } catch (stopError) {
-        console.warn(
-          "Unable to stop scanner:",
-          stopError
-        );
+
+        try {
+          await scanner.clear();
+        } catch (clearError) {
+          console.warn(
+            "Unable to clear scanner:",
+            clearError
+          );
+        }
       }
 
-      try {
-        await scanner.clear();
-      } catch (clearError) {
-        console.warn(
-          "Unable to clear scanner:",
-          clearError
-        );
-      }
-    }
+      scannerRef.current = null;
 
-    scannerRef.current = null;
-
-    navigate("/user/scan-qr", {
-      replace: true,
-    });
-  };
+      navigate(
+        "/user/scan-qr",
+        {
+          replace: true,
+        }
+      );
+    };
 
   const retryScanner = () => {
     window.location.reload();
   };
+
+  const getDetectedTitle = () => {
+    if (
+      detectedType ===
+      "water_refill"
+    ) {
+      return "Water Refill QR Detected!";
+    }
+
+    return "Recycling QR Detected!";
+  };
+
+  const getDetectedMessage =
+    () => {
+      if (
+        detectedType ===
+        "water_refill"
+      ) {
+        return "Opening the water refill options...";
+      }
+
+      return "Verifying your recycling reward...";
+    };
 
   return (
     <div className="camera-scan-page">
       <header className="camera-scan-header">
         <button
           type="button"
-          onClick={cancelScanner}
-          disabled={qrDetected}
-          aria-label="Close camera scanner"
+          className="back-button"
+          onClick={
+            cancelScanner
+          }
+          aria-label="Go back"
         >
-          <ArrowLeft size={24} />
+          <ArrowLeft
+            size={20}
+          />
         </button>
 
         <div>
           <p>EcoRefill</p>
-          <h1>Scan Machine QR</h1>
+
+          <h1>
+            Scan Machine QR
+          </h1>
         </div>
       </header>
 
       <main className="camera-scan-content">
         <div className="camera-instruction">
-          <ScanLine size={30} />
+          <ScanLine
+            size={30}
+          />
 
           <div>
             <h2>
@@ -271,39 +449,60 @@ function CameraScan() {
 
             <p>
               {qrDetected
-                ? "Please wait while EcoRefill verifies and redeems your reward."
-                : "Scan only the reward QR displayed by the EcoRefill machine."}
+                ? getDetectedMessage()
+                : "Scan the QR code displayed by the EcoRefill machine."}
             </p>
           </div>
         </div>
 
         <div className="camera-reader-wrapper">
           <div
-            id={SCANNER_ELEMENT_ID}
+            id={
+              SCANNER_ELEMENT_ID
+            }
             className="camera-reader"
           />
 
-          {starting && !error && !qrDetected && (
-            <div className="camera-loading">
-              <LoaderCircle
-                size={42}
-                className="machine-spin"
-              />
+          {starting &&
+            !error &&
+            !qrDetected && (
+              <div className="camera-loading">
+                <LoaderCircle
+                  size={42}
+                  className="machine-spin"
+                />
 
-              <p>Opening camera...</p>
-            </div>
-          )}
+                <p>
+                  Opening camera...
+                </p>
+              </div>
+            )}
 
           {qrDetected && (
             <div className="camera-detected-overlay">
               <div className="camera-detected-icon">
-                <CheckCircle2 size={72} />
+                {detectedType ===
+                "water_refill" ? (
+                  <Droplets
+                    size={72}
+                  />
+                ) : (
+                  <Recycle
+                    size={72}
+                  />
+                )}
               </div>
 
-              <h2>QR Code Detected!</h2>
+              <CheckCircle2
+                size={34}
+              />
+
+              <h2>
+                {getDetectedTitle()}
+              </h2>
 
               <p>
-                Verifying your recycling reward...
+                {getDetectedMessage()}
               </p>
 
               <LoaderCircle
@@ -316,16 +515,23 @@ function CameraScan() {
 
         {error && (
           <div className="camera-error-card">
-            <Camera size={34} />
+            <Camera
+              size={34}
+            />
 
             <div>
-              <h3>Camera unavailable</h3>
+              <h3>
+                Camera unavailable
+              </h3>
+
               <p>{error}</p>
             </div>
 
             <button
               type="button"
-              onClick={retryScanner}
+              onClick={
+                retryScanner
+              }
             >
               Try Again
             </button>
@@ -336,7 +542,9 @@ function CameraScan() {
           <button
             type="button"
             className="camera-cancel-button"
-            onClick={cancelScanner}
+            onClick={
+              cancelScanner
+            }
           >
             Cancel Scanning
           </button>
