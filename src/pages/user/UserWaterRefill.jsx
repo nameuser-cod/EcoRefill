@@ -26,9 +26,7 @@ import {
 } from "../../firebase/firebase";
 import "../../styles/theme.css";
 
-const API_BASE_URL =
-  import.meta.env.VITE_MACHINE_API_URL ||
-  "http://192.168.101.23:5000";
+const API_BASE_URL = "http://192.168.101.23:5000";
 
 const WATER_OPTIONS = [
   {
