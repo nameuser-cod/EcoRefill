@@ -14,7 +14,8 @@ import {
 import "../../styles/theme.css";
 
 const API_BASE_URL =
-  import.meta.env.VITE_MACHINE_API_URL || "http://192.168.101.23:5000";
+  import.meta.env.VITE_MACHINE_API_URL ||
+  "http://192.168.101.23:5000";
 
 function MachineHome() {
   const navigate = useNavigate();
@@ -44,11 +45,13 @@ function MachineHome() {
           `${API_BASE_URL}/api/machine/state`
         );
 
-        if (!response.ok) {
-          throw new Error("Unable to read machine status.");
-        }
-
         const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message || "Unable to read machine status."
+          );
+        }
 
         if (!active) return;
 
@@ -65,7 +68,16 @@ function MachineHome() {
         }
       } catch (error) {
         if (!active) return;
-        setConnectionError(error.message);
+
+        console.error(
+          "Machine status error:",
+          error
+        );
+
+        setConnectionError(
+          error.message ||
+            "Unable to connect to the machine."
+        );
       }
     };
 
@@ -102,9 +114,19 @@ function MachineHome() {
         );
       }
 
-      setMachineState(data.state);
+      if (data.state) {
+        setMachineState(data.state);
+      }
     } catch (error) {
-      setConnectionError(error.message);
+      console.error(
+        "Start recycling error:",
+        error
+      );
+
+      setConnectionError(
+        error.message ||
+          "Unable to start recycling."
+      );
     } finally {
       setStarting(false);
     }
@@ -112,6 +134,8 @@ function MachineHome() {
 
   const resetMachine = async () => {
     try {
+      setConnectionError("");
+
       const response = await fetch(
         `${API_BASE_URL}/api/machine/reset`,
         {
@@ -120,16 +144,35 @@ function MachineHome() {
       );
 
       const data = await response.json();
-      setMachineState(data.state);
-      setConnectionError("");
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Unable to reset the machine."
+        );
+      }
+
+      if (data.state) {
+        setMachineState(data.state);
+      }
     } catch (error) {
-      setConnectionError(error.message);
+      console.error(
+        "Reset machine error:",
+        error
+      );
+
+      setConnectionError(
+        error.message ||
+          "Unable to reset the machine."
+      );
     }
   };
 
   const renderStatusIcon = () => {
     if (machineState.phase === "rejected") {
-      return <AlertTriangle size={56} />;
+      return (
+        <AlertTriangle size={56} />
+      );
     }
 
     if (isBusy) {
@@ -148,28 +191,52 @@ function MachineHome() {
     return <CheckCircle2 size={56} />;
   };
 
+  const getPageTitle = () => {
+    if (machineState.phase === "idle") {
+      return "Welcome to EcoRefill";
+    }
+
+    if (machineState.phase === "rejected") {
+      return "Item Rejected";
+    }
+
+    if (machineState.phase === "accepted") {
+      return "Item Accepted";
+    }
+
+    return "Recycling in Progress";
+  };
+
   return (
     <div className="machine-page">
       <div className="machine-shell">
         <header className="machine-header">
           <div className="machine-brand">
-            <div className="machine-logo">
+            <div className="machine-brand-icon">
               <Leaf size={42} />
             </div>
 
             <div>
               <h1>EcoRefill</h1>
-              <p>Recycle. Earn Points. Refill Water.</p>
+
+              <p>
+                Recycle. Earn Points. Refill Water.
+              </p>
             </div>
           </div>
 
           <div
             className={`machine-online ${
-              connectionError ? "machine-offline" : ""
+              connectionError
+                ? "machine-offline"
+                : ""
             }`}
           >
             <span></span>
-            {connectionError ? "Offline" : "Online"}
+
+            {connectionError
+              ? "Offline"
+              : "Online"}
           </div>
         </header>
 
@@ -178,13 +245,7 @@ function MachineHome() {
             {renderStatusIcon()}
           </div>
 
-          <h2>
-            {machineState.phase === "idle"
-              ? "Welcome to EcoRefill"
-              : machineState.phase === "rejected"
-              ? "Item Rejected"
-              : "Recycling in Progress"}
-          </h2>
+          <h2>{getPageTitle()}</h2>
 
           <p>
             {connectionError ||
@@ -192,26 +253,35 @@ function MachineHome() {
               "Insert a clean plastic bottle or aluminum can."}
           </p>
 
-          {machineState.phase === "rejected" && (
+          {machineState.phase ===
+            "rejected" && (
             <div className="machine-result-summary rejected">
               <strong>Detected:</strong>{" "}
-              {machineState.materialType || "Unknown item"}
+              {machineState.materialType ||
+                "Unknown item"}
+
               <br />
-              <strong>Confidence:</strong>{" "}
+
+              <strong>
+                Confidence:
+              </strong>{" "}
               {Math.round(
-                (machineState.confidence || 0) * 100
+                (machineState.confidence ||
+                  0) * 100
               )}
               %
             </div>
           )}
 
           <div className="machine-actions">
-            {machineState.phase === "rejected" ? (
+            {machineState.phase ===
+            "rejected" ? (
               <button
                 className="machine-primary-btn"
                 onClick={resetMachine}
               >
                 <Recycle size={30} />
+
                 Try Another Item
               </button>
             ) : (
@@ -232,6 +302,7 @@ function MachineHome() {
                 ) : (
                   <Recycle size={30} />
                 )}
+
                 {isBusy
                   ? "Processing Item"
                   : "Start Recycling"}
@@ -241,11 +312,18 @@ function MachineHome() {
             <button
               className="machine-secondary-btn"
               onClick={() =>
-                navigate("/machine/water-refill")
+                navigate(
+                  "/machine/water-refill"
+                )
               }
-              disabled={isBusy}
+              disabled={
+                isBusy ||
+                starting ||
+                Boolean(connectionError)
+              }
             >
               <Droplets size={30} />
+
               Refill Water
             </button>
           </div>
@@ -254,38 +332,50 @@ function MachineHome() {
         <section className="machine-guide-grid">
           <div className="machine-guide-card">
             <ScanLine size={34} />
+
             <h3>1. Start</h3>
+
             <p>
-              Tap Start Recycling and place the item inside.
+              Tap Start Recycling and place
+              the item inside.
             </p>
           </div>
 
           <div className="machine-guide-card">
             <Gauge size={34} />
+
             <h3>2. Validate</h3>
+
             <p>
-              Press the machine button so the camera can inspect it.
+              Press the machine button so the
+              camera can inspect it.
             </p>
           </div>
 
           <div className="machine-guide-card">
             <ShieldCheck size={34} />
+
             <h3>3. Redeem</h3>
+
             <p>
-              Accepted items automatically open the QR reward screen.
+              Accepted items automatically
+              open the QR reward screen.
             </p>
           </div>
         </section>
 
         <footer className="machine-footer">
           <button
-            onClick={() => navigate("/machine/status")}
+            onClick={() =>
+              navigate("/machine/status")
+            }
           >
             View Machine Status
           </button>
 
           <p>
-            Please use clean, empty bottles or cans only.
+            Please use clean, empty bottles
+            or cans only.
           </p>
         </footer>
       </div>
