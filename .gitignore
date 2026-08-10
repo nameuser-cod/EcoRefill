@@ -33,4 +33,4 @@ __pycache__/
 # EcoRefill datasets
 aluminum_can_dataset/
 plastic_bottle_dataset/
-ecorefill_dataset/
+ecorefill_dataset/ecorefill-pi/ServiceAccountKey.json

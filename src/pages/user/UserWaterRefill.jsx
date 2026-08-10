@@ -9,12 +9,11 @@ import {
 } from "firebase/auth";
 
 import {
-  addDoc,
-  collection,
   doc,
   getDoc,
   onSnapshot,
   serverTimestamp,
+  setDoc,
 } from "firebase/firestore";
 
 import {
@@ -337,31 +336,33 @@ function UserWaterRefill() {
         setConfirming(true);
         setError("");
 
-        await addDoc(
-          collection(
-            db,
-            "water_refill_requests"
-          ),
-          {
-            sessionId,
+        const requestRef = doc(
+  db,
+  "water_refill_requests",
+  sessionId
+);
 
-            machineId:
-              session.machineId,
+await setDoc(requestRef, {
+  sessionId,
 
-            userId:
-              currentUser.uid,
+  machineId:
+    session.machineId,
 
-            waterAmountMl:
-              selectedOption
-                .waterAmountMl,
+  userId:
+    currentUser.uid,
 
-            status:
-              "pending",
+  waterAmountMl:
+    selectedOption.waterAmountMl,
 
-            createdAt:
-              serverTimestamp(),
-          }
-        );
+  status:
+    "pending",
+
+  createdAt:
+    serverTimestamp(),
+
+  updatedAt:
+    serverTimestamp(),
+});
 
         setPurchaseStarted(true);
 

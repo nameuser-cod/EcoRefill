@@ -1,0 +1,8 @@
+path: ./ecorefill_dataset
+train: train/images
+val: valid/images
+test: test/images
+
+names:
+  0: plastic_bottle
+  1: aluminum_can

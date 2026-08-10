@@ -186,64 +186,9 @@ def reset_state():
     )
 
 
-# =========================================================
-# WATER REFILL SESSION STATE
-# =========================================================
-
-water_session_lock = threading.Lock()
-water_sessions = {}
-
-WATER_SESSION_TTL_SECONDS = 5 * 60
 
 
-def public_water_session(session):
-    """Return only fields that are safe/useful for React."""
-    return {
-        "sessionId": session.get("sessionId"),
-        "machineId": session.get("machineId"),
-        "status": session.get("status"),
-        "qrPayload": session.get("qrPayload"),
-        "waterAmountMl": session.get("waterAmountMl"),
-        "pointsUsed": session.get("pointsUsed"),
-        "userId": session.get("userId"),
-        "message": session.get("message"),
-        "error": session.get("error"),
-        "createdAt": session.get("createdAt"),
-        "updatedAt": session.get("updatedAt"),
-        "expiresAt": session.get("expiresAt"),
-    }
 
-
-def get_water_session(session_id):
-    with water_session_lock:
-        session = water_sessions.get(session_id)
-
-        if session is None:
-            return None
-
-        # Expire only a QR that is still waiting to be claimed.
-        if (
-            session.get("status") == "waiting_for_user"
-            and time.time() > session.get("expiresAt", 0)
-        ):
-            session["status"] = "expired"
-            session["message"] = "This refill QR code has expired."
-            session["updatedAt"] = time.time()
-
-        return dict(session)
-
-
-def update_water_session(session_id, **changes):
-    with water_session_lock:
-        session = water_sessions.get(session_id)
-
-        if session is None:
-            return None
-
-        session.update(changes)
-        session["updatedAt"] = time.time()
-
-        return dict(session)
 
 
 # =========================================================
@@ -626,6 +571,789 @@ worker_thread = threading.Thread(
 )
 worker_thread.start()
 
+# =========================================================
+# FIRESTORE WATER REQUEST WORKER
+# =========================================================
+
+water_request_shutdown = threading.Event()
+
+
+def process_water_refill_request(request_doc):
+    """
+    Process one pending refill request coming from the phone.
+
+    Flow:
+    1. Verify request
+    2. Verify water session
+    3. Verify user points
+    4. Deduct points using Firestore transaction
+    5. Send command to ESP32
+    6. Update Firestore
+    """
+
+    if db is None:
+        return
+
+    request_data = (
+        request_doc.to_dict()
+        or {}
+    )
+
+    request_id = request_doc.id
+
+    session_id = str(
+        request_data.get(
+            "sessionId",
+            ""
+        )
+    ).strip()
+
+    user_id = str(
+        request_data.get(
+            "userId",
+            ""
+        )
+    ).strip()
+
+    machine_id = str(
+        request_data.get(
+            "machineId",
+            ""
+        )
+    ).strip()
+
+    try:
+        water_amount_ml = int(
+            request_data.get(
+                "waterAmountMl",
+                0
+            )
+        )
+    except (
+        TypeError,
+        ValueError,
+    ):
+        water_amount_ml = 0
+
+    # Request belongs to another machine.
+    if machine_id != MACHINE_ID:
+        return
+
+    if not session_id:
+        print(
+            "Water request has "
+            "no session ID:",
+            request_id,
+        )
+
+        request_doc.reference.update({
+            "status":
+                "failed",
+
+            "error":
+                "Missing session ID.",
+
+            "updatedAt":
+                firestore.SERVER_TIMESTAMP,
+        })
+
+        return
+
+    if not user_id:
+        request_doc.reference.update({
+            "status":
+                "failed",
+
+            "error":
+                "Missing user ID.",
+
+            "updatedAt":
+                firestore.SERVER_TIMESTAMP,
+        })
+
+        return
+
+    if (
+        water_amount_ml
+        not in WATER_OPTIONS
+    ):
+        request_doc.reference.update({
+            "status":
+                "failed",
+
+            "error":
+                "Invalid water amount.",
+
+            "updatedAt":
+                firestore.SERVER_TIMESTAMP,
+        })
+
+        return
+
+    points_required = (
+        WATER_OPTIONS[
+            water_amount_ml
+        ]
+    )
+
+    session_ref = (
+        db.collection(
+            "water_refill_sessions"
+        )
+        .document(
+            session_id
+        )
+    )
+
+    user_ref = (
+        db.collection(
+            "users"
+        )
+        .document(
+            user_id
+        )
+    )
+
+    request_ref = (
+        db.collection(
+            "water_refill_requests"
+        )
+        .document(
+            request_id
+        )
+    )
+
+    transaction_ref = (
+        db.collection(
+            "transactions"
+        )
+        .document()
+    )
+
+    transaction_id = (
+        transaction_ref.id
+    )
+
+    firestore_transaction = (
+        db.transaction()
+    )
+
+    @firestore.transactional
+    def reserve_refill(transaction):
+
+        # IMPORTANT:
+        # Firestore transaction reads first.
+        request_snapshot = (
+            request_ref.get(
+                transaction=transaction
+            )
+        )
+
+        session_snapshot = (
+            session_ref.get(
+                transaction=transaction
+            )
+        )
+
+        user_snapshot = (
+            user_ref.get(
+                transaction=transaction
+            )
+        )
+
+        if not request_snapshot.exists:
+            raise ValueError(
+                "Water refill request "
+                "does not exist."
+            )
+
+        current_request = (
+            request_snapshot.to_dict()
+            or {}
+        )
+
+        if (
+            current_request.get(
+                "status"
+            )
+            != "pending"
+        ):
+            # Already being processed.
+            return None
+
+        if not session_snapshot.exists:
+            raise ValueError(
+                "Water refill session "
+                "was not found."
+            )
+
+        session_data = (
+            session_snapshot.to_dict()
+            or {}
+        )
+
+        if (
+            session_data.get(
+                "machineId"
+            )
+            != MACHINE_ID
+        ):
+            raise ValueError(
+                "This QR belongs to "
+                "another EcoRefill machine."
+            )
+
+        if (
+            session_data.get(
+                "status"
+            )
+            != "waiting_for_user"
+        ):
+            raise ValueError(
+                "This refill QR is "
+                "already used, expired, "
+                "or unavailable."
+            )
+
+        expires_at = (
+            session_data.get(
+                "expiresAt"
+            )
+        )
+
+        if (
+            expires_at
+            and expires_at
+            < datetime.now(
+                timezone.utc
+            )
+        ):
+            transaction.update(
+                session_ref,
+                {
+                    "status":
+                        "expired",
+
+                    "message":
+                        "This refill QR "
+                        "has expired.",
+
+                    "updatedAt":
+                        firestore
+                        .SERVER_TIMESTAMP,
+                },
+            )
+
+            raise ValueError(
+                "This refill QR "
+                "has expired."
+            )
+
+        if not user_snapshot.exists:
+            raise ValueError(
+                "EcoRefill user "
+                "account was not found."
+            )
+
+        user_data = (
+            user_snapshot.to_dict()
+            or {}
+        )
+
+        current_points = int(
+            user_data.get(
+                "points",
+                0
+            )
+        )
+
+        if (
+            current_points
+            < points_required
+        ):
+            raise ValueError(
+                "You do not have enough "
+                "points for this refill."
+            )
+
+        remaining_points = (
+            current_points
+            - points_required
+        )
+
+        # ---------------------------------
+        # Deduct user points
+        # ---------------------------------
+
+        transaction.update(
+            user_ref,
+            {
+                "points":
+                    remaining_points,
+
+                "updatedAt":
+                    firestore
+                    .SERVER_TIMESTAMP,
+            },
+        )
+
+        # ---------------------------------
+        # Reserve water session
+        # ---------------------------------
+
+        transaction.update(
+            session_ref,
+            {
+                "status":
+                    "processing",
+
+                "userId":
+                    user_id,
+
+                "waterAmountMl":
+                    water_amount_ml,
+
+                "pointsUsed":
+                    points_required,
+
+                "remainingPoints":
+                    remaining_points,
+
+                "message":
+                    "Checking refill "
+                    "and starting dispenser.",
+
+                "error":
+                    None,
+
+                "updatedAt":
+                    firestore
+                    .SERVER_TIMESTAMP,
+            },
+        )
+
+        # ---------------------------------
+        # Mark request as processing
+        # ---------------------------------
+
+        transaction.update(
+            request_ref,
+            {
+                "status":
+                    "processing",
+
+                "pointsUsed":
+                    points_required,
+
+                "remainingPoints":
+                    remaining_points,
+
+                "transactionId":
+                    transaction_id,
+
+                "updatedAt":
+                    firestore
+                    .SERVER_TIMESTAMP,
+            },
+        )
+
+        # ---------------------------------
+        # Transaction history
+        # ---------------------------------
+
+        transaction.set(
+            transaction_ref,
+            {
+                "type":
+                    "water_refill",
+
+                "userId":
+                    user_id,
+
+                "machineId":
+                    MACHINE_ID,
+
+                "sessionId":
+                    session_id,
+
+                "waterAmountMl":
+                    water_amount_ml,
+
+                "pointsUsed":
+                    points_required,
+
+                "previousPoints":
+                    current_points,
+
+                "pointsAfter":
+                    remaining_points,
+
+                "status":
+                    "processing",
+
+                "createdAt":
+                    firestore
+                    .SERVER_TIMESTAMP,
+            },
+        )
+
+        return {
+            "remainingPoints":
+                remaining_points,
+
+            "currentPoints":
+                current_points,
+        }
+
+    try:
+        result = reserve_refill(
+            firestore_transaction
+        )
+
+        if result is None:
+            return
+
+    except Exception as error:
+        print(
+            "Water request validation failed:",
+            error,
+        )
+
+        try:
+            request_ref.update({
+                "status":
+                    "failed",
+
+                "error":
+                    str(error),
+
+                "updatedAt":
+                    firestore
+                    .SERVER_TIMESTAMP,
+            })
+
+            # Do not overwrite a session that
+            # may already belong to another user.
+            session_snapshot = (
+                session_ref.get()
+            )
+
+            if session_snapshot.exists:
+                session_data = (
+                    session_snapshot
+                    .to_dict()
+                    or {}
+                )
+
+                if (
+                    session_data.get(
+                        "status"
+                    )
+                    == "waiting_for_user"
+                ):
+                    session_ref.update({
+                        "message":
+                            str(error),
+
+                        "updatedAt":
+                            firestore
+                            .SERVER_TIMESTAMP,
+                    })
+
+        except Exception as update_error:
+            print(
+                "Could not save "
+                "request failure:",
+                update_error,
+            )
+
+        return
+
+    # =====================================================
+    # SEND COMMAND TO ESP32
+    # =====================================================
+
+    command = (
+        WATER_COMMANDS[
+            water_amount_ml
+        ]
+    )
+
+    print(
+        f"Water purchase accepted: "
+        f"{water_amount_ml} ml"
+    )
+
+    print(
+        f"Sending to ESP32: "
+        f"{command}"
+    )
+
+    session_ref.update({
+        "status":
+            "dispensing",
+
+        "message":
+            f"Dispensing "
+            f"{water_amount_ml} ml "
+            f"of water.",
+
+        "updatedAt":
+            firestore
+            .SERVER_TIMESTAMP,
+    })
+
+    request_ref.update({
+        "status":
+            "dispensing",
+
+        "updatedAt":
+            firestore
+            .SERVER_TIMESTAMP,
+    })
+
+    transaction_ref.update({
+        "status":
+            "dispensing",
+
+        "updatedAt":
+            firestore
+            .SERVER_TIMESTAMP,
+    })
+
+    command_sent = (
+        send_to_esp32(
+            command
+        )
+    )
+
+    # =====================================================
+    # ESP32 ERROR -> REFUND POINTS
+    # =====================================================
+
+    if not command_sent:
+
+        print(
+            "ESP32 command failed. "
+            "Refunding points..."
+        )
+
+        try:
+            refund_transaction = (
+                db.transaction()
+            )
+
+            @firestore.transactional
+            def refund_points(
+                transaction
+            ):
+
+                user_snapshot = (
+                    user_ref.get(
+                        transaction=
+                            transaction
+                    )
+                )
+
+                if (
+                    not
+                    user_snapshot.exists
+                ):
+                    return
+
+                user_data = (
+                    user_snapshot
+                    .to_dict()
+                    or {}
+                )
+
+                current_points = int(
+                    user_data.get(
+                        "points",
+                        0
+                    )
+                )
+
+                refunded_points = (
+                    current_points
+                    + points_required
+                )
+
+                transaction.update(
+                    user_ref,
+                    {
+                        "points":
+                            refunded_points,
+
+                        "updatedAt":
+                            firestore
+                            .SERVER_TIMESTAMP,
+                    },
+                )
+
+                transaction.update(
+                    session_ref,
+                    {
+                        "status":
+                            "failed",
+
+                        "remainingPoints":
+                            refunded_points,
+
+                        "message":
+                            "Water dispenser "
+                            "could not start.",
+
+                        "error":
+                            "ESP32 command failed.",
+
+                        "updatedAt":
+                            firestore
+                            .SERVER_TIMESTAMP,
+                    },
+                )
+
+                transaction.update(
+                    request_ref,
+                    {
+                        "status":
+                            "failed",
+
+                        "error":
+                            "ESP32 command failed.",
+
+                        "updatedAt":
+                            firestore
+                            .SERVER_TIMESTAMP,
+                    },
+                )
+
+                transaction.update(
+                    transaction_ref,
+                    {
+                        "status":
+                            "failed",
+
+                        "failureReason":
+                            "ESP32 command failed.",
+
+                        "updatedAt":
+                            firestore
+                            .SERVER_TIMESTAMP,
+                    },
+                )
+
+            refund_points(
+                refund_transaction
+            )
+
+        except Exception as refund_error:
+            print(
+                "CRITICAL: point "
+                "refund failed:",
+                refund_error,
+            )
+
+        return
+
+    print(
+        "ESP32 water command "
+        "sent successfully."
+    )
+
+    print(
+        f"Water refill session "
+        f"{session_id} is dispensing."
+    )
+
+
+def water_request_worker():
+    """
+    Raspberry Pi checks Firestore for
+    pending water requests.
+
+    The phone and Raspberry Pi do not
+    need to communicate directly.
+    """
+
+    print(
+        "Water refill Firestore "
+        "worker started."
+    )
+
+    while (
+        not
+        shutdown_event.is_set()
+    ):
+
+        if db is None:
+            time.sleep(3)
+            continue
+
+        try:
+            pending_requests = (
+                db.collection(
+                    "water_refill_requests"
+                )
+                .where(
+                    "status",
+                    "==",
+                    "pending"
+                )
+                .limit(10)
+                .stream()
+            )
+
+            for request_doc in (
+                pending_requests
+            ):
+                data = (
+                    request_doc
+                    .to_dict()
+                    or {}
+                )
+
+                if (
+                    data.get(
+                        "machineId"
+                    )
+                    != MACHINE_ID
+                ):
+                    continue
+
+                try:
+                    process_water_refill_request(
+                        request_doc
+                    )
+
+                except Exception as error:
+                    print(
+                        "Water request "
+                        "processing error:",
+                        error,
+                    )
+
+        except Exception as error:
+            print(
+                "Firestore water "
+                "worker error:",
+                error,
+            )
+
+        time.sleep(1)
+
+
+water_request_thread = (
+    threading.Thread(
+        target=
+            water_request_worker,
+
+        daemon=True,
+    )
+)
+
+water_request_thread.start()
+
 
 # =========================================================
 # FLASK API
@@ -985,337 +1713,237 @@ def api_get_water_refill_session(
         }), 500
 
 
-@app.post("/api/water-refill/session/<session_id>/cancel")
-def api_cancel_water_refill_session(session_id):
-    session = get_water_session(session_id)
-
-    if session is None:
-        return jsonify({
-            "ok": False,
-            "message": "Water refill session was not found.",
-        }), 404
-
-    if session["status"] in {
-        "dispensing",
-        "completed",
-    }:
-        return jsonify({
-            "ok": False,
-            "message": "This refill can no longer be cancelled.",
-            "session": public_water_session(session),
-        }), 409
-
-    session = update_water_session(
-        session_id,
-        status="cancelled",
-        message="Water refill session cancelled.",
-    )
-
-    return jsonify({
-        "ok": True,
-        "session": public_water_session(session),
-    })
-
-
-@app.post("/api/water-refill/confirm")
-def api_confirm_water_refill():
+@app.post(
+    "/api/water-refill/session/<session_id>/cancel"
+)
+def api_cancel_water_refill_session(
+    session_id
+):
     if db is None:
         return jsonify({
             "ok": False,
-            "message": (
-                "Firebase Admin is not configured on the "
-                "Raspberry Pi."
-            ),
+            "message":
+                "Firebase unavailable.",
         }), 503
 
     try:
-        decoded_token = require_firebase_user()
-        user_id = decoded_token["uid"]
+        session_ref = (
+            db.collection(
+                "water_refill_sessions"
+            )
+            .document(
+                session_id
+            )
+        )
 
-    except Exception as error:
-        print("Firebase token verification failed:", error)
+        snapshot = (
+            session_ref.get()
+        )
 
-        return jsonify({
-            "ok": False,
-            "message": "Your login session is invalid or expired.",
-        }), 401
-
-    body = request.get_json(silent=True) or {}
-
-    session_id = str(body.get("sessionId", "")).strip()
-
-    try:
-        water_amount_ml = int(body.get("waterAmountMl", 0))
-    except (TypeError, ValueError):
-        water_amount_ml = 0
-
-    if not session_id:
-        return jsonify({
-            "ok": False,
-            "message": "A refill session ID is required.",
-        }), 400
-
-    if water_amount_ml not in WATER_OPTIONS:
-        return jsonify({
-            "ok": False,
-            "message": (
-                "Invalid water amount. Choose 250 ml, "
-                "500 ml, or 1000 ml."
-            ),
-        }), 400
-
-    points_required = WATER_OPTIONS[water_amount_ml]
-
-    # Reserve the QR session first so two phones cannot confirm it.
-    with water_session_lock:
-        session = water_sessions.get(session_id)
-
-        if session is None:
+        if not snapshot.exists:
             return jsonify({
                 "ok": False,
-                "message": "Water refill session was not found.",
+                "message":
+                    "Water refill session "
+                    "was not found.",
             }), 404
 
-        if (
-            session.get("status") == "waiting_for_user"
-            and time.time() > session.get("expiresAt", 0)
-        ):
-            session["status"] = "expired"
-            session["updatedAt"] = time.time()
+        session = (
+            snapshot.to_dict()
+            or {}
+        )
 
-        if session.get("status") != "waiting_for_user":
+        if (
+            session.get("status")
+            in {
+                "processing",
+                "dispensing",
+                "completed",
+            }
+        ):
             return jsonify({
                 "ok": False,
-                "message": (
-                    "This refill QR code has already been used, "
-                    "cancelled, or expired."
-                ),
-                "session": public_water_session(session),
+                "message":
+                    "This refill can no "
+                    "longer be cancelled.",
             }), 409
 
-        session["status"] = "processing"
-        session["waterAmountMl"] = water_amount_ml
-        session["pointsUsed"] = points_required
-        session["userId"] = user_id
-        session["message"] = "Verifying user points."
-        session["error"] = None
-        session["updatedAt"] = time.time()
+        session_ref.update({
+            "status":
+                "cancelled",
 
-    user_ref = db.collection("users").document(user_id)
-    transaction_ref = db.collection("transactions").document()
+            "message":
+                "Water refill session "
+                "cancelled.",
 
-    firestore_transaction = db.transaction()
+            "updatedAt":
+                firestore
+                .SERVER_TIMESTAMP,
+        })
 
-    @firestore.transactional
-    def deduct_points(transaction):
-        user_snapshot = user_ref.get(transaction=transaction)
-
-        if not user_snapshot.exists:
-            raise ValueError("EcoRefill user account was not found.")
-
-        user_data = user_snapshot.to_dict() or {}
-        current_points = int(user_data.get("points", 0))
-
-        if current_points < points_required:
-            raise ValueError(
-                "You do not have enough points for this refill."
-            )
-
-        remaining_points = current_points - points_required
-
-        transaction.update(
-            user_ref,
-            {
-                "points": remaining_points,
-                "updatedAt": firestore.SERVER_TIMESTAMP,
+        return jsonify({
+            "ok": True,
+            "session": {
+                **session,
+                "status":
+                    "cancelled",
+                "message":
+                    "Water refill "
+                    "session cancelled.",
             },
-        )
-
-        transaction.set(
-            transaction_ref,
-            {
-                "type": "water_refill",
-                "userId": user_id,
-                "machineId": MACHINE_ID,
-                "sessionId": session_id,
-                "waterAmountMl": water_amount_ml,
-                "pointsUsed": points_required,
-                "status": "dispensing",
-                "createdAt": firestore.SERVER_TIMESTAMP,
-            },
-        )
-
-        return remaining_points
-
-    try:
-        remaining_points = deduct_points(firestore_transaction)
+        })
 
     except Exception as error:
-        print("Water refill point transaction failed:", error)
-
-        update_water_session(
-            session_id,
-            status="waiting_for_user",
-            waterAmountMl=None,
-            pointsUsed=0,
-            userId=None,
-            message="Waiting for a user to scan the QR code.",
-            error=None,
-        )
-
-        status_code = 400
-
-        if "not enough points" not in str(error).lower():
-            status_code = 500
-
-        return jsonify({
-            "ok": False,
-            "message": str(error),
-        }), status_code
-
-    command = WATER_COMMANDS[water_amount_ml]
-
-    update_water_session(
-        session_id,
-        status="dispensing",
-        message=f"Dispensing {water_amount_ml} ml of water.",
-    )
-
-    command_sent = send_to_esp32(command)
-
-    if not command_sent:
-        # Refund because the Raspberry Pi could not hand the
-        # dispensing command to the ESP32.
-        try:
-            refund_transaction = db.transaction()
-
-            @firestore.transactional
-            def refund_points(transaction):
-                user_snapshot = user_ref.get(transaction=transaction)
-
-                if not user_snapshot.exists:
-                    return
-
-                user_data = user_snapshot.to_dict() or {}
-                current_points = int(user_data.get("points", 0))
-
-                transaction.update(
-                    user_ref,
-                    {
-                        "points": current_points + points_required,
-                        "updatedAt": firestore.SERVER_TIMESTAMP,
-                    },
-                )
-
-                transaction.update(
-                    transaction_ref,
-                    {
-                        "status": "failed",
-                        "failureReason": "ESP32 command failed",
-                        "updatedAt": firestore.SERVER_TIMESTAMP,
-                    },
-                )
-
-            refund_points(refund_transaction)
-
-        except Exception as refund_error:
-            print("WARNING: automatic point refund failed:", refund_error)
-
-        update_water_session(
-            session_id,
-            status="failed",
-            message="The dispenser could not be started.",
-            error="ESP32 is unavailable or the serial command failed.",
+        print(
+            "Cancel water "
+            "session error:",
+            error,
         )
 
         return jsonify({
             "ok": False,
-            "message": (
-                "The dispenser could not start. "
-                "The point deduction was reversed when possible."
-            ),
-            "session": public_water_session(
-                get_water_session(session_id)
-            ),
+            "message":
+                str(error),
+        }), 500
+
+@app.post(
+    "/api/water-refill/session/<session_id>/complete"
+)
+def api_complete_water_refill_session(
+    session_id
+):
+    if db is None:
+        return jsonify({
+            "ok": False,
+            "message":
+                "Firebase unavailable.",
         }), 503
 
-    # IMPORTANT:
-    # This marks the command as successfully STARTED, not physically
-    # finished. When your ESP32 firmware is updated to report WATER_DONE,
-    # move the completed status update to that serial acknowledgement.
-    #
-    # For now, the frontend can show "dispensing". To manually test the
-    # full UI, use the /complete endpoint below after the pump finishes.
+    try:
+        session_ref = (
+            db.collection(
+                "water_refill_sessions"
+            )
+            .document(
+                session_id
+            )
+        )
 
-    session = get_water_session(session_id)
+        snapshot = (
+            session_ref.get()
+        )
 
-    return jsonify({
-        "ok": True,
-        "status": "dispensing",
-        "remainingPoints": remaining_points,
-        "session": public_water_session(session),
-    })
+        if not snapshot.exists:
+            return jsonify({
+                "ok": False,
+                "message":
+                    "Water refill session "
+                    "was not found.",
+            }), 404
 
+        session = (
+            snapshot.to_dict()
+            or {}
+        )
 
-@app.post("/api/water-refill/session/<session_id>/complete")
-def api_complete_water_refill_session(session_id):
-    """
-    Temporary completion endpoint.
+        if (
+            session.get("status")
+            != "dispensing"
+        ):
+            return jsonify({
+                "ok": False,
+                "message":
+                    "Only a dispensing "
+                    "session can be completed.",
+            }), 409
 
-    Use this only until the ESP32 sends a real WATER_DONE signal.
-    Once the ESP32 firmware reports completion over serial, call
-    update_water_session(... status="completed") from that serial
-    handler instead.
-    """
-    session = get_water_session(session_id)
+        session_ref.update({
+            "status":
+                "completed",
 
-    if session is None:
+            "message":
+                "Water refill completed.",
+
+            "updatedAt":
+                firestore
+                .SERVER_TIMESTAMP,
+        })
+
+        # Update request.
+        request_ref = (
+            db.collection(
+                "water_refill_requests"
+            )
+            .document(
+                session_id
+            )
+        )
+
+        request_snapshot = (
+            request_ref.get()
+        )
+
+        if request_snapshot.exists:
+            request_ref.update({
+                "status":
+                    "completed",
+
+                "updatedAt":
+                    firestore
+                    .SERVER_TIMESTAMP,
+            })
+
+        # Update transaction.
+        matches = (
+            db.collection(
+                "transactions"
+            )
+            .where(
+                "sessionId",
+                "==",
+                session_id
+            )
+            .limit(1)
+            .stream()
+        )
+
+        for transaction_doc in matches:
+            transaction_doc.reference.update({
+                "status":
+                    "completed",
+
+                "updatedAt":
+                    firestore
+                    .SERVER_TIMESTAMP,
+            })
+
+        return jsonify({
+            "ok": True,
+
+            "session": {
+                **session,
+
+                "status":
+                    "completed",
+
+                "message":
+                    "Water refill "
+                    "completed.",
+            },
+        })
+
+    except Exception as error:
+        print(
+            "Complete water "
+            "session error:",
+            error,
+        )
+
         return jsonify({
             "ok": False,
-            "message": "Water refill session was not found.",
-        }), 404
-
-    if session["status"] != "dispensing":
-        return jsonify({
-            "ok": False,
-            "message": (
-                "Only a dispensing session can be completed."
-            ),
-            "session": public_water_session(session),
-        }), 409
-
-    session = update_water_session(
-        session_id,
-        status="completed",
-        message="Water refill completed.",
-    )
-
-    # Update the matching Firestore transaction when available.
-    if db is not None:
-        try:
-            matches = (
-                db.collection("transactions")
-                .where("sessionId", "==", session_id)
-                .limit(1)
-                .stream()
-            )
-
-            for transaction_doc in matches:
-                transaction_doc.reference.update({
-                    "status": "completed",
-                    "updatedAt": firestore.SERVER_TIMESTAMP,
-                })
-
-        except Exception as error:
-            print(
-                "Could not update completed transaction:",
-                error,
-            )
-
-    return jsonify({
-        "ok": True,
-        "session": public_water_session(session),
-    })
+            "message":
+                str(error),
+        }), 500
 
 
 # =========================================================
