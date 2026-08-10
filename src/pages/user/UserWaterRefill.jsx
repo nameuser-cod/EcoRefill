@@ -3,30 +3,39 @@ import {
   useMemo,
   useState,
 } from "react";
+
 import {
   onAuthStateChanged,
 } from "firebase/auth";
+
 import {
+  addDoc,
+  collection,
   doc,
   getDoc,
+  onSnapshot,
+  serverTimestamp,
 } from "firebase/firestore";
+
 import {
   useNavigate,
   useParams,
 } from "react-router-dom";
+
 import {
   ArrowLeft,
   CheckCircle2,
   Droplets,
   LoaderCircle,
 } from "lucide-react";
+
 import {
   auth,
   db,
 } from "../../firebase/firebase";
+
 import "../../styles/theme.css";
 
-const API_BASE_URL = "http://192.168.101.23:5000";
 
 const WATER_OPTIONS = [
   {
@@ -45,6 +54,7 @@ const WATER_OPTIONS = [
     label: "Large",
   },
 ];
+
 
 function UserWaterRefill() {
   const navigate = useNavigate();
@@ -88,16 +98,10 @@ function UserWaterRefill() {
   ] = useState(false);
 
   const [
-    refillStatus,
-    setRefillStatus,
-  ] = useState(
-    "waiting_for_user"
-  );
-
-  const [
     error,
     setError,
   ] = useState("");
+
 
   const selectedOption =
     useMemo(
@@ -110,85 +114,51 @@ function UserWaterRefill() {
       [selectedAmount]
     );
 
+
   const hasEnoughPoints =
     userPoints >=
-    (selectedOption?.pointsRequired ||
-      0);
+    (selectedOption
+      ?.pointsRequired || 0);
+
+
+  // =====================================================
+  // AUTHENTICATION + USER POINTS
+  // =====================================================
 
   useEffect(() => {
-    let active = true;
-
     const unsubscribe =
       onAuthStateChanged(
         auth,
         async (user) => {
           if (!user) {
-            navigate("/login", {
-              replace: true,
-            });
+            navigate(
+              "/login",
+              {
+                replace: true,
+              }
+            );
 
             return;
           }
 
           try {
-            setLoading(true);
-            setError("");
             setCurrentUser(user);
 
-            if (!sessionId) {
-              throw new Error(
-                "No water refill session was provided."
+            const userSnapshot =
+              await getDoc(
+                doc(
+                  db,
+                  "users",
+                  user.uid
+                )
               );
-            }
-
-            const [
-              userSnapshot,
-              sessionResponse,
-            ] =
-              await Promise.all([
-                getDoc(
-                  doc(
-                    db,
-                    "users",
-                    user.uid
-                  )
-                ),
-
-                fetch(
-                  `${API_BASE_URL}/api/water-refill/session/${sessionId}`
-                ),
-              ]);
 
             if (
               !userSnapshot.exists()
             ) {
               throw new Error(
-                "Your EcoRefill account record could not be found."
+                "Your EcoRefill account could not be found."
               );
-            }
-
-            const sessionData =
-              await sessionResponse.json();
-
-            if (
-              !sessionResponse.ok
-            ) {
-              throw new Error(
-                sessionData.message ||
-                  "The refill session is unavailable."
-              );
-            }
-
-            if (
-              !sessionData.session
-            ) {
-              throw new Error(
-                "The refill session could not be found."
-              );
-            }
-
-            if (!active) {
-              return;
             }
 
             setUserPoints(
@@ -197,149 +167,147 @@ function UserWaterRefill() {
                   ?.points || 0
               )
             );
-
-            setSession(
-              sessionData.session
-            );
-
-            setRefillStatus(
-              sessionData.session
-                .status
-            );
-
-            if (
-              sessionData.session
-                .status !==
-              "waiting_for_user"
-            ) {
-              throw new Error(
-                "This refill QR code has already been used or expired."
-              );
-            }
           } catch (err) {
             console.error(
-              "Load refill page error:",
+              "Load user error:",
               err
             );
 
-            if (active) {
-              setError(
-                err.message ||
-                  "Unable to load the water refill session."
-              );
-            }
-          } finally {
-            if (active) {
-              setLoading(false);
-            }
+            setError(
+              err.message ||
+              "Unable to load your EcoRefill account."
+            );
           }
         }
       );
 
-    return () => {
-      active = false;
+    return unsubscribe;
+  }, [navigate]);
 
-      unsubscribe();
-    };
-  }, [
-    navigate,
-    sessionId,
-  ]);
+
+  // =====================================================
+  // REAL-TIME WATER SESSION LISTENER
+  // =====================================================
 
   useEffect(() => {
-    if (
-      !purchaseStarted ||
-      !sessionId
-    ) {
+    if (!sessionId) {
+      setError(
+        "No refill session was provided."
+      );
+
+      setLoading(false);
+
       return;
     }
 
-    let active = true;
-    let intervalId = null;
+    const sessionRef =
+      doc(
+        db,
+        "water_refill_sessions",
+        sessionId
+      );
 
-    const checkRefillStatus =
-      async () => {
-        try {
-          const response =
-            await fetch(
-              `${API_BASE_URL}/api/water-refill/session/${sessionId}`
-            );
+    const unsubscribe =
+      onSnapshot(
+        sessionRef,
 
-          const data =
-            await response.json();
-
-          if (!response.ok) {
-            throw new Error(
-              data.message ||
-                "Unable to read refill status."
-            );
-          }
+        (snapshot) => {
+          setLoading(false);
 
           if (
-            !active ||
-            !data.session
+            !snapshot.exists()
           ) {
+            setSession(null);
+
+            setError(
+              "This water refill session could not be found."
+            );
+
             return;
           }
 
-          setSession(
-            data.session
-          );
+          const data = {
+            sessionId:
+              snapshot.id,
 
-          setRefillStatus(
-            data.session.status
-          );
+            ...snapshot.data(),
+          };
+
+          setSession(data);
 
           if (
-            data.session.status ===
-              "completed" ||
-            data.session.status ===
-              "cancelled" ||
-            data.session.status ===
-              "failed"
+            [
+              "request_pending",
+              "processing",
+              "dispensing",
+              "completed",
+              "failed",
+            ].includes(
+              data.status
+            )
           ) {
-            if (intervalId) {
-              window.clearInterval(
-                intervalId
-              );
-            }
+            setPurchaseStarted(
+              true
+            );
           }
-        } catch (err) {
-          if (!active) return;
 
+          if (
+            data.remainingPoints !==
+            undefined
+          ) {
+            setUserPoints(
+              Number(
+                data.remainingPoints
+              )
+            );
+          }
+
+          if (
+            data.status ===
+            "expired"
+          ) {
+            setError(
+              "This refill QR code has expired."
+            );
+          }
+
+          if (
+            data.status ===
+            "cancelled"
+          ) {
+            setError(
+              "This refill session was cancelled."
+            );
+          }
+        },
+
+        (snapshotError) => {
           console.error(
-            "Refill status polling error:",
-            err
+            "Water session listener error:",
+            snapshotError
+          );
+
+          setLoading(false);
+
+          setError(
+            "Unable to read the water refill session."
           );
         }
-      };
-
-    checkRefillStatus();
-
-    intervalId =
-      window.setInterval(
-        checkRefillStatus,
-        1000
       );
 
-    return () => {
-      active = false;
+    return unsubscribe;
+  }, [sessionId]);
 
-      if (intervalId) {
-        window.clearInterval(
-          intervalId
-        );
-      }
-    };
-  }, [
-    purchaseStarted,
-    sessionId,
-  ]);
+
+  // =====================================================
+  // CREATE REFILL REQUEST
+  // =====================================================
 
   const confirmRefill =
     async () => {
       if (
         !currentUser ||
+        !session ||
         !selectedOption ||
         confirming
       ) {
@@ -354,153 +322,188 @@ function UserWaterRefill() {
         return;
       }
 
+      if (
+        session.status !==
+        "waiting_for_user"
+      ) {
+        setError(
+          "This water refill session is no longer available."
+        );
+
+        return;
+      }
+
       try {
         setConfirming(true);
         setError("");
 
-        const idToken =
-          await currentUser.getIdToken();
+        await addDoc(
+          collection(
+            db,
+            "water_refill_requests"
+          ),
+          {
+            sessionId,
 
-        const response =
-          await fetch(
-            `${API_BASE_URL}/api/water-refill/confirm`,
-            {
-              method: "POST",
+            machineId:
+              session.machineId,
 
-              headers: {
-                "Content-Type":
-                  "application/json",
+            userId:
+              currentUser.uid,
 
-                Authorization:
-                  `Bearer ${idToken}`,
-              },
+            waterAmountMl:
+              selectedOption
+                .waterAmountMl,
 
-              body: JSON.stringify(
-                {
-                  sessionId,
+            status:
+              "pending",
 
-                  waterAmountMl:
-                    selectedOption.waterAmountMl,
-                }
-              ),
-            }
-          );
-
-        const data =
-          await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.message ||
-              "Unable to start water refill."
-          );
-        }
-
-        if (
-          data.remainingPoints !==
-          undefined
-        ) {
-          setUserPoints(
-            Number(
-              data.remainingPoints
-            )
-          );
-        }
-
-        if (data.session) {
-          setSession(
-            data.session
-          );
-
-          setRefillStatus(
-            data.session.status ||
-              "processing"
-          );
-        } else {
-          setRefillStatus(
-            data.status ||
-              "processing"
-          );
-        }
+            createdAt:
+              serverTimestamp(),
+          }
+        );
 
         setPurchaseStarted(true);
+
       } catch (err) {
         console.error(
-          "Confirm refill error:",
+          "Create refill request error:",
           err
         );
 
-        setError(
-          err.message ||
-            "Unable to start the water refill."
-        );
+        if (
+          err?.code ===
+          "permission-denied"
+        ) {
+          setError(
+            "Firestore denied the refill request. Update your Firestore security rules."
+          );
+        } else {
+          setError(
+            err.message ||
+            "Unable to submit your refill request."
+          );
+        }
+
       } finally {
         setConfirming(false);
       }
     };
 
+
+  // =====================================================
+  // LOADING
+  // =====================================================
+
   if (loading) {
     return (
       <div className="user-dashboard-page">
+
         <div className="loading-text">
+
           <LoaderCircle
             size={28}
             className="machine-spin"
           />
 
-          Loading refill
-          session...
+          Loading refill session...
+
         </div>
+
       </div>
     );
   }
 
-  if (
-    purchaseStarted
-  ) {
+
+  // =====================================================
+  // PURCHASE STATUS
+  // =====================================================
+
+  if (purchaseStarted) {
+    const refillStatus =
+      session?.status ||
+      "request_pending";
+
     const isCompleted =
       refillStatus ===
       "completed";
 
     const isFailed =
       refillStatus ===
-        "failed" ||
-      refillStatus ===
-        "cancelled";
+      "failed";
 
     return (
       <div className="user-dashboard-page">
+
         <div className="user-dashboard-container">
+
           <section className="refill-success-card">
+
             {isCompleted ? (
               <CheckCircle2
-                size={70}
-              />
-            ) : isFailed ? (
-              <Droplets
                 size={70}
               />
             ) : (
               <LoaderCircle
                 size={70}
-                className="machine-spin"
+                className={
+                  isFailed
+                    ? ""
+                    : "machine-spin"
+                }
               />
             )}
+
+
+            {refillStatus ===
+              "waiting_for_user" && (
+              <>
+                <h1>
+                  Request Submitted
+                </h1>
+
+                <p>
+                  Waiting for the
+                  EcoRefill machine
+                  to receive your
+                  request.
+                </p>
+              </>
+            )}
+
+
+            {refillStatus ===
+              "request_pending" && (
+              <>
+                <h1>
+                  Request Sent
+                </h1>
+
+                <p>
+                  Your request is
+                  waiting for the
+                  machine.
+                </p>
+              </>
+            )}
+
 
             {refillStatus ===
               "processing" && (
               <>
                 <h1>
-                  Confirming Purchase
+                  Checking Points
                 </h1>
 
                 <p>
-                  Your points are
-                  being verified.
-                  Please wait.
+                  The machine is
+                  verifying your
+                  account and point
+                  balance.
                 </p>
               </>
             )}
+
 
             {refillStatus ===
               "dispensing" && (
@@ -510,90 +513,44 @@ function UserWaterRefill() {
                 </h1>
 
                 <p>
-                  The machine is
-                  dispensing{" "}
-                  <strong>
-                    {session
-                      ?.waterAmountMl ||
-                      selectedOption
-                        ?.waterAmountMl ||
-                      0}{" "}
-                    ml
-                  </strong>{" "}
-                  of water.
-                </p>
-
-                <p>
-                  Keep your
-                  container under
-                  the dispenser.
+                  Keep your container
+                  under the water
+                  dispenser.
                 </p>
               </>
             )}
+
 
             {isCompleted && (
               <>
                 <h1>
-                  Water Refill
-                  Complete
+                  Water Refill Complete
                 </h1>
 
                 <p>
-                  Your{" "}
-                  <strong>
-                    {session
-                      ?.waterAmountMl ||
-                      selectedOption
-                        ?.waterAmountMl ||
-                      0}{" "}
-                    ml
-                  </strong>{" "}
-                  water refill has
-                  been completed
-                  successfully.
+                  Your refill was
+                  completed successfully.
                 </p>
               </>
             )}
+
 
             {isFailed && (
               <>
                 <h1>
-                  Refill Stopped
+                  Refill Failed
                 </h1>
 
                 <p>
-                  The refill could
-                  not be completed.
-                  Please check the
-                  machine.
+                  {session?.error ||
+                    "The machine could not complete the refill."}
                 </p>
               </>
             )}
 
-            {![
-              "processing",
-              "dispensing",
-              "completed",
-              "failed",
-              "cancelled",
-            ].includes(
-              refillStatus
-            ) && (
-              <>
-                <h1>
-                  Preparing Refill
-                </h1>
-
-                <p>
-                  Please wait while
-                  the machine
-                  prepares your
-                  water.
-                </p>
-              </>
-            )}
 
             <div className="refill-success-details">
+
               <span>
                 Water amount
               </span>
@@ -606,9 +563,12 @@ function UserWaterRefill() {
                   0}{" "}
                 ml
               </strong>
+
             </div>
 
+
             <div className="refill-success-details">
+
               <span>
                 Points used
               </span>
@@ -620,9 +580,12 @@ function UserWaterRefill() {
                     ?.pointsRequired ||
                   0}
               </strong>
+
             </div>
 
+
             <div className="refill-success-details">
+
               <span>
                 Remaining points
               </span>
@@ -630,11 +593,15 @@ function UserWaterRefill() {
               <strong>
                 {userPoints}
               </strong>
+
             </div>
 
-            {isCompleted && (
+
+            {(isCompleted ||
+              isFailed) && (
               <button
                 className="primary-action-button"
+
                 onClick={() =>
                   navigate(
                     "/user/dashboard",
@@ -644,23 +611,30 @@ function UserWaterRefill() {
                   )
                 }
               >
-                <CheckCircle2
-                  size={24}
-                />
-
                 Return to Dashboard
               </button>
             )}
+
           </section>
+
         </div>
+
       </div>
     );
   }
 
+
+  // =====================================================
+  // WATER SELECTION
+  // =====================================================
+
   return (
     <div className="user-dashboard-page">
+
       <div className="user-dashboard-container">
+
         <header className="dashboard-header">
+
           <button
             className="icon-button"
             onClick={() =>
@@ -668,12 +642,11 @@ function UserWaterRefill() {
             }
             aria-label="Go back"
           >
-            <ArrowLeft
-              size={22}
-            />
+            <ArrowLeft size={22} />
           </button>
 
           <div>
+
             <p className="small-title">
               EcoRefill Machine
             </p>
@@ -681,8 +654,11 @@ function UserWaterRefill() {
             <h1>
               Choose Water Amount
             </h1>
+
           </div>
+
         </header>
+
 
         {error && (
           <div className="scan-error-message">
@@ -690,14 +666,19 @@ function UserWaterRefill() {
           </div>
         )}
 
+
         {session &&
-          !error && (
+          !error &&
+          session.status ===
+            "waiting_for_user" && (
             <>
+
               <section className="points-card">
+
                 <div>
+
                   <p>
-                    Available
-                    Points
+                    Available Points
                   </p>
 
                   <h2>
@@ -705,10 +686,10 @@ function UserWaterRefill() {
                   </h2>
 
                   <span>
-                    Select the
-                    amount of
-                    water you need.
+                    Select the amount
+                    of water you need.
                   </span>
+
                 </div>
 
                 <div className="points-icon">
@@ -716,18 +697,20 @@ function UserWaterRefill() {
                     size={42}
                   />
                 </div>
+
               </section>
 
+
               <section className="water-selection-section">
+
                 <h2>
                   Water Amount
                 </h2>
 
                 <div className="water-option-grid">
+
                   {WATER_OPTIONS.map(
-                    (
-                      option
-                    ) => {
+                    (option) => {
                       const selected =
                         selectedAmount ===
                         option.waterAmountMl;
@@ -737,26 +720,28 @@ function UserWaterRefill() {
                           key={
                             option.waterAmountMl
                           }
+
                           type="button"
+
                           className={`water-option-card ${
                             selected
                               ? "selected"
                               : ""
                           }`}
+
                           onClick={() =>
                             setSelectedAmount(
                               option.waterAmountMl
                             )
                           }
                         >
+
                           <Droplets
                             size={30}
                           />
 
                           <span>
-                            {
-                              option.label
-                            }
+                            {option.label}
                           </span>
 
                           <strong>
@@ -765,19 +750,22 @@ function UserWaterRefill() {
                           </strong>
 
                           <small>
-                            {
-                              option.pointsRequired
-                            }{" "}
+                            {option.pointsRequired}{" "}
                             points
                           </small>
+
                         </button>
                       );
                     }
                   )}
+
                 </div>
+
               </section>
 
+
               <section className="refill-order-summary">
+
                 <div>
                   <span>
                     Water amount
@@ -793,8 +781,7 @@ function UserWaterRefill() {
 
                 <div>
                   <span>
-                    Points
-                    required
+                    Points required
                   </span>
 
                   <strong>
@@ -806,14 +793,12 @@ function UserWaterRefill() {
 
                 <div>
                   <span>
-                    Points after
-                    refill
+                    Points after refill
                   </span>
 
                   <strong>
                     {Math.max(
                       0,
-
                       userPoints -
                         (selectedOption
                           ?.pointsRequired ||
@@ -821,10 +806,13 @@ function UserWaterRefill() {
                     )}
                   </strong>
                 </div>
+
               </section>
+
 
               {!hasEnoughPoints && (
                 <div className="scan-error-message">
+
                   <p>
                     You do not have
                     enough points
@@ -833,6 +821,7 @@ function UserWaterRefill() {
 
                   <button
                     type="button"
+
                     onClick={() =>
                       navigate(
                         "/user/buy-points"
@@ -841,8 +830,10 @@ function UserWaterRefill() {
                   >
                     Buy Points
                   </button>
+
                 </div>
               )}
+
 
               <button
                 type="button"
@@ -855,6 +846,7 @@ function UserWaterRefill() {
                   !hasEnoughPoints
                 }
               >
+
                 {confirming ? (
                   <LoaderCircle
                     size={24}
@@ -867,29 +859,30 @@ function UserWaterRefill() {
                 )}
 
                 {confirming
-                  ? "Starting Refill..."
+                  ? "Sending Request..."
                   : `Confirm ${
                       selectedOption
                         ?.waterAmountMl ||
                       0
                     } ml Refill`}
+
               </button>
 
+
               <p className="refill-safety-note">
-                Place your
-                container under
-                the dispenser
-                before
-                confirming.
-                Points cannot be
-                returned after
-                dispensing starts.
+                Place your container
+                under the dispenser
+                before confirming.
               </p>
+
             </>
           )}
+
       </div>
+
     </div>
   );
 }
+
 
 export default UserWaterRefill;

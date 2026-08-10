@@ -5,6 +5,7 @@ from ultralytics import YOLO
 from gpiozero import Button
 from serial.tools import list_ports
 
+
 import cv2
 import json
 import os
@@ -18,7 +19,11 @@ import firebase_admin
 from firebase_admin import auth as firebase_auth
 from firebase_admin import credentials
 from firebase_admin import firestore
-
+from datetime import (
+    datetime,
+    timedelta,
+    timezone,
+)
 
 # =========================================================
 # CONFIG
@@ -686,55 +691,298 @@ def api_machine_reset():
 
 @app.post("/api/water-refill/session")
 def api_create_water_refill_session():
-    session_id = str(uuid.uuid4())
-    now = time.time()
 
-    qr_data = {
-        "type": "water_refill",
-        "machineId": MACHINE_ID,
-        "sessionId": session_id,
-    }
-
-    session = {
-        "sessionId": session_id,
-        "machineId": MACHINE_ID,
-        "status": "waiting_for_user",
-        "qrPayload": json.dumps(qr_data),
-        "waterAmountMl": None,
-        "pointsUsed": 0,
-        "userId": None,
-        "message": "Waiting for a user to scan the QR code.",
-        "error": None,
-        "createdAt": now,
-        "updatedAt": now,
-        "expiresAt": now + WATER_SESSION_TTL_SECONDS,
-    }
-
-    with water_session_lock:
-        water_sessions[session_id] = session
-
-    print(f"Created water refill session: {session_id}")
-
-    return jsonify({
-        "ok": True,
-        "session": public_water_session(session),
-    }), 201
-
-
-@app.get("/api/water-refill/session/<session_id>")
-def api_get_water_refill_session(session_id):
-    session = get_water_session(session_id)
-
-    if session is None:
+    if db is None:
         return jsonify({
             "ok": False,
-            "message": "Water refill session was not found.",
-        }), 404
+            "message": (
+                "Firebase Admin is not configured."
+            ),
+        }), 503
 
-    return jsonify({
-        "ok": True,
-        "session": public_water_session(session),
-    })
+    session_id = str(uuid.uuid4())
+
+    now = datetime.now(
+        timezone.utc
+    )
+
+    expires_at = (
+        now +
+        timedelta(minutes=5)
+    )
+
+    qr_data = {
+        "type":
+            "water_refill",
+
+        "machineId":
+            MACHINE_ID,
+
+        "sessionId":
+            session_id,
+    }
+
+    qr_payload = json.dumps(
+        qr_data
+    )
+
+    session_data = {
+        "sessionId":
+            session_id,
+
+        "machineId":
+            MACHINE_ID,
+
+        "status":
+            "waiting_for_user",
+
+        "qrPayload":
+            qr_payload,
+
+        "waterAmountMl":
+            None,
+
+        "pointsUsed":
+            0,
+
+        "remainingPoints":
+            None,
+
+        "userId":
+            None,
+
+        "message":
+            (
+                "Waiting for a user "
+                "to scan the QR code."
+            ),
+
+        "error":
+            None,
+
+        "createdAt":
+            firestore.SERVER_TIMESTAMP,
+
+        "updatedAt":
+            firestore.SERVER_TIMESTAMP,
+
+        "expiresAt":
+            expires_at,
+    }
+
+    try:
+        session_ref = (
+            db.collection(
+                "water_refill_sessions"
+            )
+            .document(
+                session_id
+            )
+        )
+
+        session_ref.set(
+            session_data
+        )
+
+        print(
+            "Created Firestore "
+            f"water session: {session_id}"
+        )
+
+        return jsonify({
+            "ok":
+                True,
+
+            "session": {
+                "sessionId":
+                    session_id,
+
+                "machineId":
+                    MACHINE_ID,
+
+                "status":
+                    "waiting_for_user",
+
+                "qrPayload":
+                    qr_payload,
+
+                "waterAmountMl":
+                    None,
+
+                "pointsUsed":
+                    0,
+
+                "userId":
+                    None,
+
+                "message":
+                    (
+                        "Waiting for a user "
+                        "to scan the QR code."
+                    ),
+            },
+        }), 201
+
+    except Exception as error:
+        print(
+            "Create Firestore "
+            "water session error:",
+            error,
+        )
+
+        return jsonify({
+            "ok":
+                False,
+
+            "message":
+                str(error),
+        }), 500
+
+
+@app.get(
+    "/api/water-refill/session/<session_id>"
+)
+def api_get_water_refill_session(
+    session_id
+):
+
+    if db is None:
+        return jsonify({
+            "ok":
+                False,
+
+            "message":
+                "Firebase unavailable.",
+        }), 503
+
+    try:
+        session_ref = (
+            db.collection(
+                "water_refill_sessions"
+            )
+            .document(
+                session_id
+            )
+        )
+
+        snapshot = (
+            session_ref.get()
+        )
+
+        if not snapshot.exists:
+            return jsonify({
+                "ok":
+                    False,
+
+                "message":
+                    "Water refill session not found.",
+            }), 404
+
+        data = (
+            snapshot.to_dict()
+            or {}
+        )
+
+        expires_at = (
+            data.get(
+                "expiresAt"
+            )
+        )
+
+        if (
+            data.get("status") ==
+                "waiting_for_user"
+            and expires_at
+            and expires_at <
+                datetime.now(
+                    timezone.utc
+                )
+        ):
+            session_ref.update({
+                "status":
+                    "expired",
+
+                "message":
+                    "This refill QR has expired.",
+
+                "updatedAt":
+                    firestore.SERVER_TIMESTAMP,
+            })
+
+            data["status"] = (
+                "expired"
+            )
+
+        return jsonify({
+            "ok":
+                True,
+
+            "session": {
+                "sessionId":
+                    session_id,
+
+                "machineId":
+                    data.get(
+                        "machineId"
+                    ),
+
+                "status":
+                    data.get(
+                        "status"
+                    ),
+
+                "qrPayload":
+                    data.get(
+                        "qrPayload"
+                    ),
+
+                "waterAmountMl":
+                    data.get(
+                        "waterAmountMl"
+                    ),
+
+                "pointsUsed":
+                    data.get(
+                        "pointsUsed",
+                        0
+                    ),
+
+                "remainingPoints":
+                    data.get(
+                        "remainingPoints"
+                    ),
+
+                "userId":
+                    data.get(
+                        "userId"
+                    ),
+
+                "message":
+                    data.get(
+                        "message"
+                    ),
+
+                "error":
+                    data.get(
+                        "error"
+                    ),
+            },
+        })
+
+    except Exception as error:
+        print(
+            "Read water session "
+            "error:",
+            error,
+        )
+
+        return jsonify({
+            "ok":
+                False,
+
+            "message":
+                str(error),
+        }), 500
 
 
 @app.post("/api/water-refill/session/<session_id>/cancel")
