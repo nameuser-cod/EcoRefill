@@ -1266,32 +1266,35 @@ def process_water_refill_request(request_doc):
         f"{session_id} is dispensing."
     )
 
-
 def water_request_worker():
     """
-    Raspberry Pi checks Firestore for
-    pending water requests.
-
-    The phone and Raspberry Pi do not
-    need to communicate directly.
+    Continuously checks Firestore for pending
+    water refill requests for this machine.
     """
 
-    print(
-        "Water refill Firestore "
-        "worker started."
-    )
+    print("========================================")
+    print("Water refill Firestore worker started.")
+    print(f"Machine ID: {MACHINE_ID}")
+    print("========================================")
 
-    while (
-        not
-        shutdown_event.is_set()
-    ):
+    while not shutdown_event.is_set():
 
         if db is None:
+            print(
+                "Firebase database unavailable. "
+                "Retrying in 3 seconds..."
+            )
             time.sleep(3)
             continue
 
         try:
-            pending_requests = (
+            print(
+                "Checking Firestore for "
+                "pending water requests..."
+            )
+
+            # Do NOT limit to 10 while debugging.
+            pending_requests = list(
                 db.collection(
                     "water_refill_requests"
                 )
@@ -1300,26 +1303,60 @@ def water_request_worker():
                     "==",
                     "pending"
                 )
-                .limit(10)
                 .stream()
             )
 
-            for request_doc in (
-                pending_requests
-            ):
+            print(
+                f"Pending requests found: "
+                f"{len(pending_requests)}"
+            )
+
+            for request_doc in pending_requests:
+
                 data = (
-                    request_doc
-                    .to_dict()
+                    request_doc.to_dict()
                     or {}
                 )
 
+                print("--------------------------------")
+                print(
+                    "Request document:",
+                    request_doc.id
+                )
+
+                print(
+                    "Request data:",
+                    data
+                )
+
+                request_machine_id = (
+                    data.get("machineId")
+                )
+
+                print(
+                    "Request machineId:",
+                    request_machine_id
+                )
+
+                print(
+                    "This Raspberry Pi:",
+                    MACHINE_ID
+                )
+
                 if (
-                    data.get(
-                        "machineId"
-                    )
+                    request_machine_id
                     != MACHINE_ID
                 ):
+                    print(
+                        "Skipping request: "
+                        "machineId does not match."
+                    )
                     continue
+
+                print(
+                    "Matching request found. "
+                    "Processing..."
+                )
 
                 try:
                     process_water_refill_request(
@@ -1328,20 +1365,17 @@ def water_request_worker():
 
                 except Exception as error:
                     print(
-                        "Water request "
-                        "processing error:",
-                        error,
+                        "PROCESS REQUEST ERROR:",
+                        repr(error)
                     )
 
         except Exception as error:
             print(
-                "Firestore water "
-                "worker error:",
-                error,
+                "FIRESTORE WORKER ERROR:",
+                repr(error)
             )
 
         time.sleep(1)
-
 
 water_request_thread = (
     threading.Thread(
