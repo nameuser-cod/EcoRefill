@@ -166,17 +166,27 @@ function UserWaterRefill() {
                   ?.points || 0
               )
             );
-          } catch (err) {
-            console.error(
-              "Load user error:",
-              err
-            );
+          }  catch (err) {
+  console.error("LOAD USER ERROR:", err);
+  console.error("Firebase code:", err?.code);
+  console.error("Firebase message:", err?.message);
 
-            setError(
-              err.message ||
-              "Unable to load your EcoRefill account."
-            );
-          }
+  if (err?.code === "permission-denied") {
+    setError(
+      "Firestore denied access to your user account."
+    );
+  } else if (err?.code === "unavailable") {
+    setError(
+      "Firebase is currently unreachable. Check your internet connection."
+    );
+  } else {
+    setError(
+      `Firebase error: ${err?.code || "unknown"} - ${
+        err?.message || "Unable to load your account."
+      }`
+    );
+  }
+}
         }
       );
 
@@ -281,17 +291,32 @@ function UserWaterRefill() {
         },
 
         (snapshotError) => {
-          console.error(
-            "Water session listener error:",
-            snapshotError
-          );
+  console.error(
+    "WATER SESSION ERROR:",
+    snapshotError
+  );
 
-          setLoading(false);
+  console.error(
+    "Firebase code:",
+    snapshotError?.code
+  );
 
-          setError(
-            "Unable to read the water refill session."
-          );
-        }
+  console.error(
+    "Firebase message:",
+    snapshotError?.message
+  );
+
+  setLoading(false);
+
+  setError(
+    `Water session error: ${
+      snapshotError?.code || "unknown"
+    } - ${
+      snapshotError?.message ||
+      "Unable to read refill session."
+    }`
+  );
+}
       );
 
     return unsubscribe;
