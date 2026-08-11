@@ -1046,18 +1046,14 @@ def process_water_refill_request(request_doc):
                 )
 
                 if (
-                    session_data.get(
-                        "status"
-                    )
-                    == "waiting_for_user"
+                     session_data.get("status")
+    == "waiting_for_user"
                 ):
                     session_ref.update({
-                        "message":
-                            str(error),
-
-                        "updatedAt":
-                            firestore
-                            .SERVER_TIMESTAMP,
+        "status": "failed",
+        "message": str(error),
+        "error": str(error),
+        "updatedAt": firestore.SERVER_TIMESTAMP,
                     })
 
         except Exception as update_error:
