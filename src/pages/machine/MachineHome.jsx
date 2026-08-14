@@ -1,21 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
+  PackageOpen,
   CheckCircle2,
+  ChevronRight,
   Droplets,
-  Gauge,
   Leaf,
   LoaderCircle,
   Recycle,
-  ScanLine,
-  ShieldCheck,
+  RotateCcw,
+  Sparkles,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
-import "../../styles/theme.css";
+import "../../styles/machine.css";
 
 const API_BASE_URL =
   import.meta.env.VITE_MACHINE_API_URL ||
-  "http://192.168.101.23:5000";
+  "http://127.0.0.1:5000"
 
 function MachineHome() {
   const navigate = useNavigate();
@@ -26,15 +29,20 @@ function MachineHome() {
   });
 
   const [starting, setStarting] = useState(false);
-  const [connectionError, setConnectionError] = useState("");
+  const [connectionError, setConnectionError] =
+    useState("");
 
-  const isBusy = [
+  const busyPhases = [
     "starting",
     "waiting_for_item",
     "capturing",
     "verifying",
     "sorting",
-  ].includes(machineState.phase);
+  ];
+
+  const isBusy = busyPhases.includes(
+    machineState.phase
+  );
 
   useEffect(() => {
     let active = true;
@@ -49,7 +57,8 @@ function MachineHome() {
 
         if (!response.ok) {
           throw new Error(
-            data.message || "Unable to read machine status."
+            data.message ||
+              "Unable to read machine status."
           );
         }
 
@@ -110,7 +119,8 @@ function MachineHome() {
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Unable to start recycling."
+          data.message ||
+            "Unable to start recycling."
         );
       }
 
@@ -168,215 +178,344 @@ function MachineHome() {
     }
   };
 
-  const renderStatusIcon = () => {
-    if (machineState.phase === "rejected") {
-      return (
-        <AlertTriangle size={56} />
-      );
+  const screen = useMemo(() => {
+    if (connectionError) {
+      return {
+        eyebrow: "Connection problem",
+        title: "Machine is offline",
+        message:
+          "Please ask for assistance or try again in a moment.",
+        icon: <WifiOff size={62} />,
+        tone: "error",
+      };
     }
 
-    if (isBusy) {
-      return (
-        <LoaderCircle
-          size={56}
-          className="machine-spin"
-        />
-      );
+    switch (machineState.phase) {
+      case "waiting_for_item":
+        return {
+          eyebrow: "Step 1 of 3",
+          title: "Put your item inside",
+          message:
+            "Insert one clean, empty bottle or can, then press the machine button.",
+          icon: <PackageOpen size={62} />,
+          tone: "active",
+        };
+
+      case "capturing":
+        return {
+          eyebrow: "Step 2 of 3",
+          title: "Smile, little bottle! 📸",
+          message:
+            "The camera is checking your item.",
+          icon: (
+            <LoaderCircle
+              size={62}
+              className="machine-spin"
+            />
+          ),
+          tone: "active",
+        };
+
+      case "verifying":
+        return {
+          eyebrow: "Step 2 of 3",
+          title: "Checking your item",
+          message:
+            "EcoRefill is deciding whether your item can be recycled.",
+          icon: (
+            <LoaderCircle
+              size={62}
+              className="machine-spin"
+            />
+          ),
+          tone: "active",
+        };
+
+      case "sorting":
+        return {
+          eyebrow: "Step 3 of 3",
+          title: "Sorting it now!",
+          message:
+            "Almost done — your item is being placed in the correct bin.",
+          icon: (
+            <LoaderCircle
+              size={62}
+              className="machine-spin"
+            />
+          ),
+          tone: "active",
+        };
+
+      case "rejected":
+        return {
+          eyebrow: "Try again",
+          title:
+            "Oops! We can't accept that item",
+          message:
+            machineState.message ||
+            "Please try a clean, empty plastic bottle or aluminum can.",
+          icon: (
+            <AlertTriangle size={62} />
+          ),
+          tone: "error",
+        };
+
+      case "accepted":
+        return {
+          eyebrow: "Nice work! 🎉",
+          title: "Item accepted",
+          message:
+            "Preparing your reward QR code...",
+          icon: (
+            <CheckCircle2 size={62} />
+          ),
+          tone: "success",
+        };
+
+      default:
+        return {
+          eyebrow: "Ready when you are",
+          title: "Recycle or refill?",
+          message:
+            "Choose what you want to do.",
+          icon: <Recycle size={62} />,
+          tone: "idle",
+        };
     }
+  }, [machineState, connectionError]);
 
-    if (machineState.phase === "idle") {
-      return <Recycle size={56} />;
-    }
-
-    return <CheckCircle2 size={56} />;
-  };
-
-  const getPageTitle = () => {
-    if (machineState.phase === "idle") {
-      return "Welcome to EcoRefill";
-    }
-
-    if (machineState.phase === "rejected") {
-      return "Item Rejected";
-    }
-
-    if (machineState.phase === "accepted") {
-      return "Item Accepted";
-    }
-
-    return "Recycling in Progress";
-  };
+  const showHomeChoices =
+    machineState.phase === "idle" &&
+    !connectionError &&
+    !starting;
 
   return (
-    <div className="machine-page">
-      <div className="machine-shell">
-        <header className="machine-header">
-          <div className="machine-brand">
+    <div className="machine-page machine-kiosk-page">
+      <div className="machine-kiosk-shell">
+        <header className="machine-kiosk-header">
+          <div className="machine-kiosk-brand">
             <div className="machine-brand-icon">
-              <Leaf size={42} />
+              <Leaf size={30} />
             </div>
 
             <div>
               <h1>EcoRefill</h1>
-
               <p>
-                Recycle. Earn Points. Refill Water.
+                Small action. Big impact. 🌱
               </p>
             </div>
           </div>
 
           <div
-            className={`machine-online ${
+            className={`machine-kiosk-status ${
               connectionError
-                ? "machine-offline"
-                : ""
+                ? "is-offline"
+                : "is-online"
             }`}
           >
-            <span></span>
+            {connectionError ? (
+              <WifiOff size={18} />
+            ) : (
+              <Wifi size={18} />
+            )}
 
             {connectionError
               ? "Offline"
-              : "Online"}
+              : "Ready"}
           </div>
         </header>
 
-        <main className="machine-main-card">
-          <div className="machine-hero-icon">
-            {renderStatusIcon()}
+        <main
+          className={`machine-kiosk-card tone-${screen.tone}`}
+        >
+          <div className="machine-kiosk-hero-icon">
+            {screen.icon}
           </div>
 
-          <h2>{getPageTitle()}</h2>
+          <div className="machine-kiosk-copy">
+            <span className="machine-kiosk-eyebrow">
+              {screen.eyebrow}
+            </span>
 
-          <p>
-            {connectionError ||
-              machineState.message ||
-              "Insert a clean plastic bottle or aluminum can."}
-          </p>
+            <h2>{screen.title}</h2>
 
-          {machineState.phase ===
-            "rejected" && (
-            <div className="machine-result-summary rejected">
-              <strong>Detected:</strong>{" "}
-              {machineState.materialType ||
-                "Unknown item"}
+            <p>{screen.message}</p>
+          </div>
 
-              <br />
+          {showHomeChoices && (
+            <div className="machine-choice-grid">
+              <button
+                className="machine-choice-card recycle-choice"
+                onClick={
+                  startRecycling
+                }
+              >
+                <div className="machine-choice-icon">
+                  <Recycle size={46} />
+                </div>
 
-              <strong>
-                Confidence:
-              </strong>{" "}
-              {Math.round(
-                (machineState.confidence ||
-                  0) * 100
-              )}
-              %
+                <div className="machine-choice-text">
+                  <span className="machine-choice-tag">
+                    <Sparkles
+                      size={16}
+                    />
+                    Earn points
+                  </span>
+
+                  <h3>
+                    Recycle an Item
+                  </h3>
+
+                  <p>
+                    Plastic bottles &
+                    aluminum cans
+                  </p>
+                </div>
+
+                <ChevronRight
+                  size={34}
+                  className="machine-choice-arrow"
+                />
+              </button>
+
+              <button
+                className="machine-choice-card water-choice"
+                onClick={() =>
+                  navigate(
+                    "/machine/water-refill"
+                  )
+                }
+              >
+                <div className="machine-choice-icon">
+                  <Droplets size={46} />
+                </div>
+
+                <div className="machine-choice-text">
+                  <span className="machine-choice-tag">
+                    Use your points
+                  </span>
+
+                  <h3>
+                    Refill Water
+                  </h3>
+
+                  <p>
+                    Scan, choose amount,
+                    then refill
+                  </p>
+                </div>
+
+                <ChevronRight
+                  size={34}
+                  className="machine-choice-arrow"
+                />
+              </button>
             </div>
           )}
 
-          <div className="machine-actions">
-            {machineState.phase ===
-            "rejected" ? (
+          {(starting || isBusy) && (
+            <div className="machine-progress">
+              <div
+                className={`machine-progress-step ${
+                  [
+                    "waiting_for_item",
+                    "capturing",
+                    "verifying",
+                    "sorting",
+                  ].includes(
+                    machineState.phase
+                  )
+                    ? "active"
+                    : ""
+                }`}
+              >
+                <span>1</span>
+                <p>Insert</p>
+              </div>
+
+              <div className="machine-progress-line" />
+
+              <div
+                className={`machine-progress-step ${
+                  [
+                    "capturing",
+                    "verifying",
+                    "sorting",
+                  ].includes(
+                    machineState.phase
+                  )
+                    ? "active"
+                    : ""
+                }`}
+              >
+                <span>2</span>
+                <p>Check</p>
+              </div>
+
+              <div className="machine-progress-line" />
+
+              <div
+                className={`machine-progress-step ${
+                  machineState.phase ===
+                  "sorting"
+                    ? "active"
+                    : ""
+                }`}
+              >
+                <span>3</span>
+                <p>Sort</p>
+              </div>
+            </div>
+          )}
+
+          {machineState.phase ===
+            "rejected" && (
+            <>
+              {(machineState.materialType ||
+                machineState.confidence) && (
+                <div className="machine-detection-pill">
+                  Detected:{" "}
+                  {machineState.materialType ||
+                    "Unknown"}{" "}
+                  ·{" "}
+                  {Math.round(
+                    (machineState.confidence ||
+                      0) * 100
+                  )}
+                  %
+                </div>
+              )}
+
               <button
-                className="machine-primary-btn"
+                className="machine-kiosk-primary"
                 onClick={resetMachine}
               >
-                <Recycle size={30} />
-
+                <RotateCcw size={28} />
                 Try Another Item
               </button>
-            ) : (
-              <button
-                className="machine-primary-btn"
-                onClick={startRecycling}
-                disabled={
-                  starting ||
-                  isBusy ||
-                  Boolean(connectionError)
-                }
-              >
-                {starting || isBusy ? (
-                  <LoaderCircle
-                    size={30}
-                    className="machine-spin"
-                  />
-                ) : (
-                  <Recycle size={30} />
-                )}
+            </>
+          )}
 
-                {isBusy
-                  ? "Processing Item"
-                  : "Start Recycling"}
-              </button>
-            )}
-
+          {connectionError && (
             <button
-              className="machine-secondary-btn"
-              onClick={() =>
-                navigate(
-                  "/machine/water-refill"
-                )
-              }
-              disabled={
-                isBusy ||
-                starting ||
-                Boolean(connectionError)
-              }
+              className="machine-kiosk-primary"
+              onClick={resetMachine}
             >
-              <Droplets size={30} />
-
-              Refill Water
+              <RotateCcw size={28} />
+              Retry Connection
             </button>
-          </div>
+          )}
         </main>
 
-        <section className="machine-guide-grid">
-          <div className="machine-guide-card">
-            <ScanLine size={34} />
+        <footer className="machine-kiosk-footer">
+          <span>
+            ♻ Clean & empty items only
+          </span>
 
-            <h3>1. Start</h3>
-
-            <p>
-              Tap Start Recycling and place
-              the item inside.
-            </p>
-          </div>
-
-          <div className="machine-guide-card">
-            <Gauge size={34} />
-
-            <h3>2. Validate</h3>
-
-            <p>
-              Press the machine button so the
-              camera can inspect it.
-            </p>
-          </div>
-
-          <div className="machine-guide-card">
-            <ShieldCheck size={34} />
-
-            <h3>3. Redeem</h3>
-
-            <p>
-              Accepted items automatically
-              open the QR reward screen.
-            </p>
-          </div>
-        </section>
-
-        <footer className="machine-footer">
-          <button
-            onClick={() =>
-              navigate("/machine/status")
-            }
-          >
-            View Machine Status
-          </button>
-
-          <p>
-            Please use clean, empty bottles
-            or cans only.
-          </p>
+          <span>
+            💧 Place your container before
+            water refill
+          </span>
         </footer>
       </div>
     </div>

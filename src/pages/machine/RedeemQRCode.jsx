@@ -1,4 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   Navigate,
   useLocation,
@@ -18,24 +22,31 @@ import {
   LoaderCircle,
   QrCode,
   Recycle,
+  ScanLine,
+  Sparkles,
   Timer,
 } from "lucide-react";
 import { db } from "../../firebase/firebase";
-import "../../styles/theme.css";
+import "../../styles/machine.css";
 
 const API_BASE_URL =
   import.meta.env.VITE_MACHINE_API_URL ||
-  "http://192.168.101.23:5000";
+  "http://127.0.0.1:5000";
 
 function RedeemQRCode() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const machineResult = location.state;
+  const machineResult =
+    location.state;
+
   const savedRef = useRef(false);
 
-  const [saving, setSaving] = useState(true);
-  const [saveError, setSaveError] = useState("");
+  const [saving, setSaving] =
+    useState(true);
+
+  const [saveError, setSaveError] =
+    useState("");
 
   useEffect(() => {
     if (
@@ -48,95 +59,106 @@ function RedeemQRCode() {
 
     savedRef.current = true;
 
-    const saveRedeemCode = async () => {
-      try {
-        setSaving(true);
-        setSaveError("");
+    const saveRedeemCode =
+      async () => {
+        try {
+          setSaving(true);
+          setSaveError("");
 
-        const pointsEarned = Number(
-          machineResult.pointsEarned || 0
-        );
+          const pointsEarned =
+            Number(
+              machineResult.pointsEarned ||
+                0
+            );
 
-        if (
-          !Number.isFinite(pointsEarned) ||
-          pointsEarned <= 0
-        ) {
-          throw new Error(
-            "The machine returned an invalid point value."
-          );
-        }
-
-        const expiresAt = Timestamp.fromMillis(
-          Date.now() + 5 * 60 * 1000
-        );
-
-        await setDoc(
-          doc(
-            db,
-            "redeem_qr_codes",
-            machineResult.sessionId
-          ),
-          {
-            code: String(
-              machineResult.qrCode
-            ).trim(),
-
-            sessionId:
-              machineResult.sessionId,
-
-            machineId:
-              machineResult.machineId ||
-              "machine_001",
-
-            materialType:
-              machineResult.materialType ||
-              "recyclable_item",
-
-            category:
-              machineResult.category || "",
-
-            pointsEarned,
-
-            confidence: Number(
-              machineResult.confidence || 0
-            ),
-
-            status: "unclaimed",
-
-            claimedBy: "",
-
-            claimedAt: null,
-
-            createdAt: serverTimestamp(),
-
-            expiresAt,
-          },
-          {
-            merge: false,
+          if (
+            !Number.isFinite(
+              pointsEarned
+            ) ||
+            pointsEarned <= 0
+          ) {
+            throw new Error(
+              "The machine returned an invalid point value."
+            );
           }
-        );
-      } catch (error) {
-        console.error(
-          "Error saving redeem QR code:",
-          error
-        );
 
-        if (
-          error?.code === "permission-denied"
-        ) {
-          setSaveError(
-            "Firestore denied the reward record. Check your Firestore security rules or machine authentication."
+          const expiresAt =
+            Timestamp.fromMillis(
+              Date.now() +
+                5 * 60 * 1000
+            );
+
+          await setDoc(
+            doc(
+              db,
+              "redeem_qr_codes",
+              machineResult.sessionId
+            ),
+            {
+              code: String(
+                machineResult.qrCode
+              ).trim(),
+
+              sessionId:
+                machineResult.sessionId,
+
+              machineId:
+                machineResult.machineId ||
+                "machine_001",
+
+              materialType:
+                machineResult.materialType ||
+                "recyclable_item",
+
+              category:
+                machineResult.category ||
+                "",
+
+              pointsEarned,
+
+              confidence: Number(
+                machineResult.confidence ||
+                  0
+              ),
+
+              status: "unclaimed",
+
+              claimedBy: "",
+
+              claimedAt: null,
+
+              createdAt:
+                serverTimestamp(),
+
+              expiresAt,
+            },
+            {
+              merge: false,
+            }
           );
-        } else {
-          setSaveError(
-            error?.message ||
-              "The reward record could not be saved. Please try again."
+        } catch (error) {
+          console.error(
+            "Error saving redeem QR code:",
+            error
           );
+
+          if (
+            error?.code ===
+            "permission-denied"
+          ) {
+            setSaveError(
+              "Reward saving is blocked. Please ask for assistance."
+            );
+          } else {
+            setSaveError(
+              error?.message ||
+                "The reward could not be saved. Please try again."
+            );
+          }
+        } finally {
+          setSaving(false);
         }
-      } finally {
-        setSaving(false);
-      }
-    };
+      };
 
     saveRedeemCode();
   }, [machineResult]);
@@ -154,12 +176,13 @@ function RedeemQRCode() {
     );
   }
 
-  const getMaterialLabel = (value) => {
-    const normalizedValue = String(
-      value || ""
-    )
-      .toLowerCase()
-      .trim();
+  const getMaterialLabel = (
+    value
+  ) => {
+    const normalizedValue =
+      String(value || "")
+        .toLowerCase()
+        .trim();
 
     if (
       normalizedValue ===
@@ -210,6 +233,7 @@ function RedeemQRCode() {
 
   const retrySaving = () => {
     savedRef.current = false;
+
     setSaveError("");
     setSaving(true);
 
@@ -217,173 +241,181 @@ function RedeemQRCode() {
   };
 
   return (
-    <div className="machine-page">
-      <div className="machine-shell qr-shell">
-        <header className="machine-header">
-          <div className="machine-brand">
-            <div className="machine-logo">
-              <Recycle size={42} />
+    <div className="machine-page machine-kiosk-page">
+      <div className="machine-kiosk-shell">
+        <header className="machine-kiosk-header">
+          <div className="machine-kiosk-brand">
+            <div className="machine-brand-icon">
+              <Recycle size={30} />
             </div>
 
             <div>
               <h1>EcoRefill</h1>
-              <p>QR Code Redemption</p>
+
+              <p>
+                Your recycling reward
+              </p>
             </div>
           </div>
 
-          <div
-            className={`machine-online ${
-              saveError
-                ? "machine-offline"
-                : ""
-            }`}
-          >
-            <span></span>
+          <div className="machine-kiosk-status is-online">
+            <CheckCircle2 size={18} />
 
-            {saveError
-              ? "Reward Error"
-              : "Online"}
+            Accepted
           </div>
         </header>
 
-        <main className="qr-main-card">
-          <div className="success-icon">
-            <CheckCircle2 size={72} />
-          </div>
+        <main className="reward-kiosk">
+          <section className="reward-celebration">
+            <div className="reward-success-badge">
+              <Sparkles size={28} />
 
-          <h2>Item Accepted!</h2>
-
-          <p className="qr-subtitle">
-            The machine successfully detected and
-            sorted your item.
-          </p>
-
-          <div className="qr-info-grid">
-            <div className="qr-info-card">
-              <Recycle size={34} />
-
-              <p>Material</p>
-
-              <h3>
-                {getMaterialLabel(
-                  machineResult.materialType
-                )}
-              </h3>
+              Great job!
             </div>
 
-            <div className="qr-info-card">
-              <QrCode size={34} />
+            <h2>
+              You helped the planet 🌍
+            </h2>
 
-              <p>Points Earned</p>
+            <p>
+              Your{" "}
+              {getMaterialLabel(
+                machineResult.materialType
+              ).toLowerCase()}{" "}
+              was successfully recycled.
+            </p>
 
-              <h3>
+            <div className="reward-points">
+              <span>YOU EARNED</span>
+
+              <strong>
                 +
                 {Number(
-                  machineResult.pointsEarned || 0
-                )}{" "}
-                Points
-              </h3>
+                  machineResult.pointsEarned ||
+                    0
+                )}
+              </strong>
+
+              <p>EcoPoints</p>
             </div>
-          </div>
+          </section>
 
-          {saveError ? (
-            <div className="scan-error-message">
-              <AlertTriangle size={28} />
+          <section className="reward-scan-panel">
+            {saveError ? (
+              <div className="reward-error-state">
+                <AlertTriangle
+                  size={52}
+                />
 
-              <div>
                 <h3>
-                  Reward could not be saved
+                  We couldn't prepare your
+                  reward
                 </h3>
 
                 <p>{saveError}</p>
 
                 <button
                   type="button"
-                  className="machine-primary-btn"
+                  className="machine-kiosk-primary"
                   onClick={retrySaving}
                 >
-                  Try Saving Again
+                  Try Again
                 </button>
               </div>
-            </div>
-          ) : (
-            <>
-              <div className="qr-code-box">
-                <QRCodeCanvas
-                  value={String(
-                    machineResult.qrCode
-                  ).trim()}
-                  size={280}
-                  bgColor="#E3EED4"
-                  fgColor="#0F2A1D"
-                  level="H"
-                  includeMargin
-                />
-
-                <p className="qr-code-value">
-                  {machineResult.sessionId}
-                </p>
-              </div>
-
-              <div className="qr-instruction-card">
-                {saving ? (
-                  <LoaderCircle
-                    size={30}
-                    className="machine-spin"
-                  />
-                ) : (
-                  <Timer size={30} />
-                )}
-
-                <div>
-                  <h3>
-                    {saving
-                      ? "Saving reward..."
-                      : "Scan this QR code"}
-                  </h3>
-
-                  <p>
-                    {saving
-                      ? "Please wait while the reward is being stored securely."
-                      : "Open the EcoRefill mobile app, tap Scan QR, and scan this code to redeem your points."}
-                  </p>
-
-                  {!saving && (
-                    <p>
-                      This QR reward expires after
-                      five minutes and can only be
-                      claimed once.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-
-          <div className="qr-actions">
-            <button
-              type="button"
-              className="machine-primary-btn"
-              onClick={returnHome}
-              disabled={saving || Boolean(saveError)}
-            >
-              {saving ? (
+            ) : saving ? (
+              <div className="reward-loading-state">
                 <LoaderCircle
-                  size={28}
+                  size={54}
                   className="machine-spin"
                 />
-              ) : (
-                <Home size={28} />
-              )}
 
-              {saving
-                ? "Saving Reward..."
-                : saveError
-                ? "Fix Reward Error"
-                : "Finish"}
-            </button>
-          </div>
+                <h3>
+                  Preparing your reward...
+                </h3>
+
+                <p>Just a moment.</p>
+              </div>
+            ) : (
+              <>
+                <div className="reward-scan-heading">
+                  <div>
+                    <span className="machine-kiosk-eyebrow">
+                      Final step
+                    </span>
+
+                    <h3>
+                      Scan to collect your
+                      points
+                    </h3>
+                  </div>
+
+                  <ScanLine size={38} />
+                </div>
+
+                <div className="reward-qr-frame">
+                  <QRCodeCanvas
+                    value={String(
+                      machineResult.qrCode
+                    ).trim()}
+                    size={250}
+                    bgColor="#ffffff"
+                    fgColor="#10281d"
+                    level="H"
+                    includeMargin
+                  />
+                </div>
+
+                <div className="reward-steps">
+                  <span>1</span>
+                  <p>
+                    Open the EcoRefill app
+                  </p>
+
+                  <span>2</span>
+                  <p>
+                    Tap{" "}
+                    <strong>
+                      Scan QR
+                    </strong>
+                  </p>
+
+                  <span>3</span>
+                  <p>
+                    Scan this code
+                  </p>
+                </div>
+
+                <div className="reward-expiry">
+                  <Timer size={20} />
+
+                  QR expires in 5 minutes
+                </div>
+              </>
+            )}
+          </section>
         </main>
+
+        <footer className="reward-footer">
+          <div>
+            <QrCode size={20} />
+
+            One-time reward
+          </div>
+
+          <button
+            type="button"
+            className="machine-kiosk-finish"
+            onClick={returnHome}
+            disabled={
+              saving ||
+              Boolean(saveError)
+            }
+          >
+            <Home size={22} />
+
+            Done
+          </button>
+        </footer>
       </div>
     </div>
   );

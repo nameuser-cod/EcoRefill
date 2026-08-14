@@ -11,13 +11,15 @@ import {
   Droplets,
   LoaderCircle,
   RefreshCw,
+  ScanLine,
+  ShieldCheck,
   XCircle,
 } from "lucide-react";
-import "../../styles/theme.css";
+import "../../styles/machine.css";
 
 const API_BASE_URL =
   import.meta.env.VITE_MACHINE_API_URL ||
-  "http://192.168.101.23:5000";
+  "http://127.0.0.1:5000";
 
 function MachineWaterRefill() {
   const navigate = useNavigate();
@@ -44,16 +46,18 @@ function MachineWaterRefill() {
         setError("");
         setSession(null);
 
-        const response = await fetch(
-          `${API_BASE_URL}/api/water-refill/session`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-          }
-        );
+        const response =
+          await fetch(
+            `${API_BASE_URL}/api/water-refill/session`,
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+            }
+          );
 
         const data =
           await response.json();
@@ -194,7 +198,9 @@ function MachineWaterRefill() {
               );
           }
         } catch (err) {
-          if (!active) return;
+          if (!active) {
+            return;
+          }
 
           console.error(
             "Session polling error:",
@@ -264,46 +270,87 @@ function MachineWaterRefill() {
     switch (session?.status) {
       case "processing":
         return {
+          eyebrow: "Step 2 of 3",
+
           title:
-            "Confirming Purchase",
+            "Checking your points",
+
           message:
-            "The user's account and points are being verified.",
+            "Please keep this screen open.",
+
+          icon: (
+            <ShieldCheck
+              size={58}
+            />
+          ),
         };
 
       case "dispensing":
         return {
+          eyebrow: "Step 3 of 3",
+
           title:
-            "Dispensing Water",
-          message: `Please wait while ${
+            "Water is flowing 💧",
+
+          message: `Dispensing ${
             session.waterAmountMl ||
             0
-          } ml of water is dispensed.`,
+          } ml. Please keep your container in place.`,
+
+          icon: (
+            <LoaderCircle
+              size={58}
+              className="machine-spin"
+            />
+          ),
         };
 
       case "completed":
         return {
+          eyebrow: "All done!",
+
           title:
-            "Refill Complete",
-          message: `Successfully dispensed ${
+            "Refill complete 🎉",
+
+          message: `You received ${
             session.waterAmountMl ||
             0
           } ml of water.`,
+
+          icon: (
+            <CheckCircle2
+              size={58}
+            />
+          ),
         };
 
       case "cancelled":
         return {
+          eyebrow: "Cancelled",
+
           title:
-            "Session Cancelled",
+            "Refill stopped",
+
           message:
-            "The water refill session has been cancelled.",
+            "No water will be dispensed.",
+
+          icon: (
+            <XCircle size={58} />
+          ),
         };
 
       default:
         return {
-          title:
-            "Scan to Refill Water",
+          eyebrow: "Step 1 of 3",
+
+          title: "Scan to refill",
+
           message:
-            "Open the EcoRefill app, scan this QR code, and select your water amount.",
+            "Use the EcoRefill app to scan the QR code.",
+
+          icon: (
+            <Droplets size={58} />
+          ),
         };
     }
   };
@@ -312,222 +359,260 @@ function MachineWaterRefill() {
     getStatusContent();
 
   return (
-    <div className="machine-page">
-      <div className="machine-shell">
-        <header className="machine-header">
-          <div className="machine-brand">
-            <div className="machine-brand-icon">
-              <Droplets size={42} />
+    <div className="machine-page machine-kiosk-page">
+      <div className="machine-kiosk-shell">
+        <header className="machine-kiosk-header">
+          <div className="machine-kiosk-brand">
+            <div className="machine-brand-icon water-brand-icon">
+              <Droplets size={30} />
             </div>
 
             <div>
-              <h1>
-                EcoRefill Water Station
-              </h1>
+              <h1>Water Refill</h1>
 
               <p>
-                Use your points to refill
-                drinking water.
+                Refill with EcoPoints
               </p>
             </div>
           </div>
 
           <button
-            className="machine-header-back"
+            className="machine-kiosk-back"
             onClick={cancelSession}
           >
-            <ArrowLeft size={24} />
+            <ArrowLeft size={22} />
 
             Back
           </button>
         </header>
 
-        <main className="machine-main-card">
+        <main className="water-kiosk-card">
           {creating && (
-            <>
-              <div className="machine-hero-icon">
-                <LoaderCircle
-                  size={58}
-                  className="machine-spin"
-                />
-              </div>
+            <div className="water-center-state">
+              <LoaderCircle
+                size={58}
+                className="machine-spin"
+              />
 
               <h2>
-                Preparing QR Code
+                Getting things ready...
               </h2>
 
               <p>
-                Please wait while the
-                refill session is being
-                created.
+                Creating your refill QR
+                code.
               </p>
-            </>
+            </div>
           )}
 
           {!creating &&
             error && (
-              <>
-                <div className="machine-hero-icon">
-                  <RefreshCw
-                    size={58}
-                  />
-                </div>
+              <div className="water-center-state error">
+                <RefreshCw
+                  size={58}
+                />
 
                 <h2>
-                  Unable to Create QR
-                  Code
+                  Couldn't start refill
                 </h2>
 
                 <p>{error}</p>
 
                 <button
-                  className="machine-primary-btn"
+                  className="machine-kiosk-primary"
                   onClick={
                     retrySession
                   }
                 >
                   <RefreshCw
-                    size={28}
+                    size={24}
                   />
 
                   Try Again
                 </button>
-              </>
+              </div>
             )}
 
           {!creating &&
             !error &&
             session && (
               <>
-                <div className="machine-hero-icon">
-                  {session.status ===
-                  "completed" ? (
-                    <CheckCircle2
-                      size={58}
-                    />
-                  ) : session.status ===
-                    "cancelled" ? (
-                    <XCircle
-                      size={58}
-                    />
-                  ) : session.status ===
-                      "dispensing" ||
-                    session.status ===
-                      "processing" ? (
-                    <LoaderCircle
-                      size={58}
-                      className="machine-spin"
-                    />
-                  ) : (
-                    <Droplets
-                      size={58}
-                    />
-                  )}
-                </div>
+                <section className="water-status-panel">
+                  <div className="water-status-icon">
+                    {
+                      statusContent.icon
+                    }
+                  </div>
 
-                <h2>
-                  {
-                    statusContent.title
-                  }
-                </h2>
+                  <div>
+                    <span className="machine-kiosk-eyebrow">
+                      {
+                        statusContent.eyebrow
+                      }
+                    </span>
 
-                <p>
-                  {
-                    statusContent.message
-                  }
-                </p>
+                    <h2>
+                      {
+                        statusContent.title
+                      }
+                    </h2>
+
+                    <p>
+                      {
+                        statusContent.message
+                      }
+                    </p>
+                  </div>
+                </section>
 
                 {session.status ===
                   "waiting_for_user" &&
                   session.qrPayload && (
-                    <div className="machine-qr-container">
-                      <div className="machine-qr-box">
+                    <section className="water-qr-layout">
+                      <div className="water-qr-frame">
                         <QRCodeSVG
                           value={
                             session.qrPayload
                           }
-                          size={280}
+                          size={245}
                           level="H"
                           includeMargin
                         />
                       </div>
 
-                      <p className="machine-session-code">
-                        Session code:{" "}
-                        <strong>
-                          {
-                            session.sessionId
-                          }
-                        </strong>
-                      </p>
-                    </div>
+                      <div className="water-scan-guide">
+                        <ScanLine
+                          size={42}
+                        />
+
+                        <h3>
+                          How to refill
+                        </h3>
+
+                        <div className="water-guide-step">
+                          <span>1</span>
+
+                          <p>
+                            Place your
+                            container under
+                            the dispenser.
+                          </p>
+                        </div>
+
+                        <div className="water-guide-step">
+                          <span>2</span>
+
+                          <p>
+                            Open the
+                            EcoRefill app
+                            and scan this
+                            QR.
+                          </p>
+                        </div>
+
+                        <div className="water-guide-step">
+                          <span>3</span>
+
+                          <p>
+                            Choose your
+                            water amount
+                            and confirm.
+                          </p>
+                        </div>
+                      </div>
+                    </section>
                   )}
 
                 {session.status ===
                   "processing" && (
-                  <div className="machine-result-summary">
-                    <strong>
-                      Verifying user
-                      account and
-                      points...
-                    </strong>
+                  <div className="water-big-message">
+                    <LoaderCircle
+                      size={44}
+                      className="machine-spin"
+                    />
+
+                    <div>
+                      <h3>
+                        Verifying your
+                        account
+                      </h3>
+
+                      <p>
+                        Checking available
+                        points...
+                      </p>
+                    </div>
                   </div>
                 )}
 
                 {session.status ===
                   "dispensing" && (
-                  <div className="machine-result-summary">
-                    <strong>
-                      Water amount:
-                    </strong>{" "}
-                    {session.waterAmountMl ||
-                      0}{" "}
-                    ml
-                    <br />
+                  <div className="water-dispense-display">
+                    <Droplets
+                      size={52}
+                    />
 
-                    <strong>
-                      Points used:
-                    </strong>{" "}
-                    {session.pointsUsed ||
-                      0}
+                    <div>
+                      <span>
+                        DISPENSING
+                      </span>
+
+                      <strong>
+                        {session.waterAmountMl ||
+                          0}{" "}
+                        ml
+                      </strong>
+
+                      <p>
+                        {session.pointsUsed ||
+                          0}{" "}
+                        points used
+                      </p>
+                    </div>
                   </div>
                 )}
 
                 {session.status ===
                   "completed" && (
-                  <div className="machine-result-summary">
-                    <strong>
-                      Dispensed:
-                    </strong>{" "}
-                    {session.waterAmountMl ||
-                      0}{" "}
-                    ml
-                    <br />
+                  <div className="water-complete-display">
+                    <CheckCircle2
+                      size={52}
+                    />
 
-                    <strong>
-                      Points used:
-                    </strong>{" "}
-                    {session.pointsUsed ||
-                      0}
+                    <div>
+                      <strong>
+                        {session.waterAmountMl ||
+                          0}{" "}
+                        ml
+                      </strong>
 
-                    <br />
-                    <br />
+                      <p>
+                        Refill completed ·{" "}
+                        {session.pointsUsed ||
+                          0}{" "}
+                        points used
+                      </p>
 
-                    Returning to the
-                    machine home
-                    screen...
+                      <small>
+                        Returning home
+                        automatically...
+                      </small>
+                    </div>
                   </div>
                 )}
               </>
             )}
         </main>
 
-        <footer className="machine-footer">
-          <p>
-            Make sure your container is
-            placed under the water
-            dispenser before confirming.
-          </p>
+        <footer className="machine-kiosk-footer">
+          <span>
+            💧 Use a clean container
+          </span>
+
+          <span>
+            ✋ Keep it under the nozzle
+            while dispensing
+          </span>
         </footer>
       </div>
     </div>
