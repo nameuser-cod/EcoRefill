@@ -33,6 +33,8 @@ MOTION_MIN_AREA = 4500
 MOTION_TRIGGER_FRAMES = 3
 STABLE_FRAMES_REQUIRED = 5
 MOTION_FRAME_DELAY = 0.08
+AUTO_REJECT_RESET_SECONDS = 3.0
+AUTO_REARM_DELAY = 1.0
 
 CONFIDENCE_LIMIT = 0.25
 SERIAL_BAUD_RATE = 115200
@@ -143,13 +145,13 @@ db = initialize_firebase()
 # =========================================================
 
 state_lock = threading.Lock()
-session_requested = threading.Event()
 shutdown_event = threading.Event()
+recycling_paused = threading.Event()
 
 machine_state = {
     "machineId": MACHINE_ID,
     "phase": "idle",
-    "message": "Ready to recycle",
+    "message": "Ready — insert a bottle or can",
     "accepted": False,
     "materialType": None,
     "category": None,
@@ -176,7 +178,7 @@ def get_state():
 def reset_state():
     update_state(
         phase="idle",
-        message="Ready to recycle",
+        message="Ready — insert a bottle or can",
         accepted=False,
         materialType=None,
         category=None,
@@ -326,7 +328,7 @@ def require_firebase_user():
 
 
 # =========================================================
-# MODEL, CAMERA, BUTTON, ESP32
+# MODEL, CAMERA, ESP32
 # =========================================================
 
 if not os.path.exists(MODEL_PATH):
@@ -403,9 +405,14 @@ def frame_has_motion(previous_gray, current_frame):
 
 def wait_for_item_motion():
     """
-    Wait until the camera sees real movement, then wait until the
-    object becomes still before returning the final frame to YOLO.
+    Continuously watch the camera opening.
+
+    Returns a stable frame after a real object moves into view.
+    Returns None if recycling is paused or the program is shutting down.
     """
+    # Give the camera/servo a moment to settle before building a baseline.
+    time.sleep(AUTO_REARM_DELAY)
+
     previous_frame = picam2.capture_array()
     previous_gray = prepare_motion_frame(previous_frame)
 
@@ -415,8 +422,7 @@ def wait_for_item_motion():
     latest_frame = previous_frame
 
     while not shutdown_event.is_set():
-        # Stop waiting if the recycling session was cancelled/reset.
-        if not session_requested.is_set():
+        if recycling_paused.is_set():
             return None
 
         current_frame = picam2.capture_array()
@@ -430,15 +436,17 @@ def wait_for_item_motion():
         if not motion_started:
             if has_motion:
                 motion_frames += 1
+
                 if motion_frames >= MOTION_TRIGGER_FRAMES:
                     motion_started = True
                     stable_frames = 0
                     update_state(
                         phase="motion_detected",
                         message="Item detected. Hold it still...",
+                        error=None,
                     )
                     print(
-                        f"Motion detected. Largest changed area: "
+                        f"Object motion detected. Largest changed area: "
                         f"{largest_area:.0f}"
                     )
             else:
@@ -449,6 +457,7 @@ def wait_for_item_motion():
                 stable_frames = 0
             else:
                 stable_frames += 1
+
                 if stable_frames >= STABLE_FRAMES_REQUIRED:
                     return latest_frame
 
@@ -552,33 +561,69 @@ Created At: {time.time()}
 
 
 def machine_worker():
+    """
+    Always-on recycling watcher.
+
+    While the machine is idle, the camera silently watches the opening.
+    Motion starts a recycling session automatically.
+
+    Accepted items stay on the result/QR screen until /api/machine/reset
+    is called. Rejected items automatically return to idle after a short
+    delay so the next item can be tried.
+    """
+    print("========================================")
+    print("Automatic camera recycling is ON.")
+    print("Insert a bottle or can — no button required.")
+    print("========================================")
+
     while not shutdown_event.is_set():
-        session_requested.wait(timeout=0.5)
+        # Pause recycling detection when explicitly requested.
+        if recycling_paused.is_set():
+            time.sleep(0.2)
+            continue
 
-        if shutdown_event.is_set():
-            break
+        current_state = get_state()
 
-        if not session_requested.is_set():
+        # Do not overwrite an accepted QR/result. The existing Finish/Reset
+        # action clears it, then this watcher automatically rearms.
+        if current_state["phase"] == "accepted":
+            time.sleep(0.2)
+            continue
+
+        # Recover automatically from rejected/error states.
+        if current_state["phase"] == "rejected":
+            time.sleep(AUTO_REJECT_RESET_SECONDS)
+            if get_state()["phase"] == "rejected":
+                reset_state()
+            continue
+
+        if current_state["phase"] == "error":
+            time.sleep(AUTO_REJECT_RESET_SECONDS)
+            if get_state()["phase"] == "error":
+                reset_state()
+            continue
+
+        # Keep the UI in idle while silently watching.
+        if current_state["phase"] not in {"idle", "motion_detected"}:
+            time.sleep(0.1)
             continue
 
         try:
-            update_state(
-                phase="waiting_for_item",
-                message="Insert a bottle or can in front of the camera.",
-                error=None,
-            )
+            if current_state["phase"] != "idle":
+                reset_state()
 
             frame = wait_for_item_motion()
 
             if frame is None:
                 continue
 
-            if shutdown_event.is_set():
-                break
+            if shutdown_event.is_set() or recycling_paused.is_set():
+                continue
 
             update_state(
                 phase="capturing",
                 message="Item is still. Capturing image...",
+                error=None,
             )
 
             cv2.imwrite("captured_item.jpg", frame)
@@ -640,15 +685,11 @@ def machine_worker():
 
         except Exception as error:
             print("Machine worker error:", error)
-
             update_state(
                 phase="error",
                 message="The machine encountered an error.",
                 error=str(error),
             )
-
-        finally:
-            session_requested.clear()
 
 
 worker_thread = threading.Thread(
@@ -1490,41 +1531,61 @@ def api_machine_state():
 
 @app.post("/api/machine/start")
 def api_machine_start():
+    """Compatibility endpoint. Automatic camera watching is already on."""
+    recycling_paused.clear()
+
     current_state = get_state()
-
-    if current_state["phase"] not in {
-        "idle",
-        "rejected",
-        "error",
-    }:
-        return jsonify({
-            "ok": False,
-            "message": "A recycling session is already active.",
-            "state": current_state,
-        }), 409
-
-    reset_state()
-
-    update_state(
-        phase="starting",
-        message="Preparing the machine...",
-    )
-
-    session_requested.set()
+    if current_state["phase"] in {"rejected", "error"}:
+        reset_state()
 
     return jsonify({
         "ok": True,
+        "automatic": True,
+        "message": "Automatic camera detection is active.",
         "state": get_state(),
     })
 
 
 @app.post("/api/machine/reset")
 def api_machine_reset():
-    session_requested.clear()
+    """Clear the current result and immediately re-arm auto detection."""
+    recycling_paused.clear()
     reset_state()
 
     return jsonify({
         "ok": True,
+        "automatic": True,
+        "state": get_state(),
+    })
+
+
+@app.post("/api/machine/pause-recycling")
+def api_machine_pause_recycling():
+    """Optional helper for screens such as water refill/maintenance."""
+    recycling_paused.set()
+
+    if get_state()["phase"] not in {"accepted", "sorting"}:
+        reset_state()
+
+    return jsonify({
+        "ok": True,
+        "automatic": False,
+        "message": "Automatic recycling detection paused.",
+        "state": get_state(),
+    })
+
+
+@app.post("/api/machine/resume-recycling")
+def api_machine_resume_recycling():
+    recycling_paused.clear()
+
+    if get_state()["phase"] not in {"accepted", "sorting"}:
+        reset_state()
+
+    return jsonify({
+        "ok": True,
+        "automatic": True,
+        "message": "Automatic recycling detection resumed.",
         "state": get_state(),
     })
 
@@ -2103,5 +2164,3 @@ if __name__ == "__main__":
                 pass
 
             esp32.close()
-
-        button.close()
