@@ -2,7 +2,6 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from picamera2 import Picamera2
 from ultralytics import YOLO
-from gpiozero import Button
 from serial.tools import list_ports
 
 
@@ -30,7 +29,10 @@ from datetime import (
 # =========================================================
 
 MODEL_PATH = "models/ecorefill_best.pt"
-BUTTON_PIN = 17
+MOTION_MIN_AREA = 4500
+MOTION_TRIGGER_FRAMES = 3
+STABLE_FRAMES_REQUIRED = 5
+MOTION_FRAME_DELAY = 0.08
 
 CONFIDENCE_LIMIT = 0.25
 SERIAL_BAUD_RATE = 115200
@@ -336,12 +338,6 @@ print("Loading EcoRefill model...")
 model = YOLO(MODEL_PATH)
 print("Model classes:", model.names)
 
-button = Button(
-    BUTTON_PIN,
-    pull_up=True,
-    bounce_time=0.15,
-)
-
 picam2 = Picamera2()
 camera_config = picam2.create_preview_configuration(
     main={
@@ -372,6 +368,93 @@ def capture_image():
 
     cv2.imwrite("captured_item.jpg", frame)
     return frame
+
+
+def prepare_motion_frame(frame):
+    gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+    gray = cv2.GaussianBlur(gray, (21, 21), 0)
+    return gray
+
+
+def frame_has_motion(previous_gray, current_frame):
+    current_gray = prepare_motion_frame(current_frame)
+    frame_delta = cv2.absdiff(previous_gray, current_gray)
+    threshold = cv2.threshold(
+        frame_delta,
+        25,
+        255,
+        cv2.THRESH_BINARY,
+    )[1]
+    threshold = cv2.dilate(threshold, None, iterations=2)
+
+    contours, _ = cv2.findContours(
+        threshold,
+        cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_SIMPLE,
+    )
+
+    largest_area = max(
+        (cv2.contourArea(contour) for contour in contours),
+        default=0,
+    )
+
+    return largest_area >= MOTION_MIN_AREA, current_gray, largest_area
+
+
+def wait_for_item_motion():
+    """
+    Wait until the camera sees real movement, then wait until the
+    object becomes still before returning the final frame to YOLO.
+    """
+    previous_frame = picam2.capture_array()
+    previous_gray = prepare_motion_frame(previous_frame)
+
+    motion_frames = 0
+    stable_frames = 0
+    motion_started = False
+    latest_frame = previous_frame
+
+    while not shutdown_event.is_set():
+        # Stop waiting if the recycling session was cancelled/reset.
+        if not session_requested.is_set():
+            return None
+
+        current_frame = picam2.capture_array()
+        has_motion, current_gray, largest_area = frame_has_motion(
+            previous_gray,
+            current_frame,
+        )
+        previous_gray = current_gray
+        latest_frame = current_frame
+
+        if not motion_started:
+            if has_motion:
+                motion_frames += 1
+                if motion_frames >= MOTION_TRIGGER_FRAMES:
+                    motion_started = True
+                    stable_frames = 0
+                    update_state(
+                        phase="motion_detected",
+                        message="Item detected. Hold it still...",
+                    )
+                    print(
+                        f"Motion detected. Largest changed area: "
+                        f"{largest_area:.0f}"
+                    )
+            else:
+                motion_frames = 0
+
+        else:
+            if has_motion:
+                stable_frames = 0
+            else:
+                stable_frames += 1
+                if stable_frames >= STABLE_FRAMES_REQUIRED:
+                    return latest_frame
+
+        time.sleep(MOTION_FRAME_DELAY)
+
+    return None
 
 
 def verify_item(frame):
@@ -481,21 +564,24 @@ def machine_worker():
         try:
             update_state(
                 phase="waiting_for_item",
-                message="Insert an item, then press the machine button.",
+                message="Insert a bottle or can in front of the camera.",
                 error=None,
             )
 
-            button.wait_for_press()
+            frame = wait_for_item_motion()
+
+            if frame is None:
+                continue
 
             if shutdown_event.is_set():
                 break
 
             update_state(
                 phase="capturing",
-                message="Capturing item image...",
+                message="Item is still. Capturing image...",
             )
-            time.sleep(0.5)
-            frame = capture_image()
+
+            cv2.imwrite("captured_item.jpg", frame)
 
             update_state(
                 phase="verifying",
