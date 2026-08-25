@@ -15,7 +15,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
-import "../../styles/theme.css";
+import "../../styles/auth.css";
 
 function Login() {
   const navigate = useNavigate();

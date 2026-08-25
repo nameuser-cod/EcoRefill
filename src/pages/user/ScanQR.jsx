@@ -29,7 +29,8 @@ import {
   ScanLine,
 } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
-import "../../styles/theme.css";
+import UserBottomNav from "./UserBottomNav";
+import "../../styles/user.css";
 
 const getWaterRefillSessionId = (rawCode) => {
   const cleanCode = String(rawCode || "").trim();
@@ -433,7 +434,7 @@ if (waterSessionId) {
   };
 
   return (
-    <div className="scan-page">
+    <div className="scan-page user-page-with-nav">
       <div className="scan-container">
         <header className="scan-header">
           <button
@@ -461,7 +462,7 @@ if (waterSessionId) {
             {redeeming ? (
               <LoaderCircle
                 size={54}
-                className="machine-spin"
+                className="user-spin"
               />
             ) : (
               <QrCode size={54} />
@@ -504,7 +505,7 @@ if (waterSessionId) {
               {redeeming ? (
                 <LoaderCircle
                   size={22}
-                  className="machine-spin"
+                  className="user-spin"
                 />
               ) : (
                 <ScanLine size={22} />
@@ -553,6 +554,8 @@ if (waterSessionId) {
           </div>
         )}
       </div>
+
+      <UserBottomNav />
     </div>
   );
 }

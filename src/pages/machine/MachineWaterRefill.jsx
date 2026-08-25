@@ -186,7 +186,23 @@ function MachineWaterRefill() {
 
             redirectTimerRef.current =
               window.setTimeout(
-                () => {
+                async () => {
+                  // Resume automatic recycling detection, which
+                  // was paused on entering the water refill flow.
+                  try {
+                    await fetch(
+                      `${API_BASE_URL}/api/machine/resume-recycling`,
+                      {
+                        method: "POST",
+                      }
+                    );
+                  } catch (resumeErr) {
+                    console.error(
+                      "Resume recycling error:",
+                      resumeErr
+                    );
+                  }
+
                   navigate(
                     "/machine",
                     {
@@ -253,6 +269,23 @@ function MachineWaterRefill() {
           err
         );
       } finally {
+        // Water refill entry paused automatic recycling detection
+        // (see MachineHome's openWaterRefill). Always resume it when
+        // leaving this screen, or the camera stays paused forever.
+        try {
+          await fetch(
+            `${API_BASE_URL}/api/machine/resume-recycling`,
+            {
+              method: "POST",
+            }
+          );
+        } catch (resumeErr) {
+          console.error(
+            "Resume recycling error:",
+            resumeErr
+          );
+        }
+
         navigate("/machine", {
           replace: true,
         });

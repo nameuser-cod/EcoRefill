@@ -18,6 +18,7 @@ import firebase_admin
 from firebase_admin import auth as firebase_auth
 from firebase_admin import credentials
 from firebase_admin import firestore
+from firebase_admin import storage as firebase_storage
 from datetime import (
     datetime,
     timedelta,
@@ -44,6 +45,11 @@ API_HOST = "0.0.0.0"
 API_PORT = 5000
 
 MACHINE_ID = "machine_001"
+
+# Firebase Storage bucket for accepted/rejected item photos, e.g.
+# "my-project.appspot.com". Leave unset to disable photo uploads —
+# the machine will keep working, it just won't attach an image.
+STORAGE_BUCKET = os.getenv("FIREBASE_STORAGE_BUCKET", "")
 
 BOTTLE_ITEMS = {
     "plastic_bottle",
@@ -110,19 +116,31 @@ def initialize_firebase():
         "serviceAccountKey.json",
     )
 
+    app_options = (
+        {"storageBucket": STORAGE_BUCKET}
+        if STORAGE_BUCKET
+        else {}
+    )
+
     try:
         if os.path.exists(credential_path):
             cred = credentials.Certificate(credential_path)
-            firebase_admin.initialize_app(cred)
+            firebase_admin.initialize_app(cred, app_options)
             print(
                 f"Firebase Admin initialized using "
                 f"{credential_path}"
             )
         else:
-            firebase_admin.initialize_app()
+            firebase_admin.initialize_app(options=app_options)
             print(
                 "Firebase Admin initialized using "
                 "Application Default Credentials."
+            )
+
+        if not STORAGE_BUCKET:
+            print(
+                "FIREBASE_STORAGE_BUCKET is not set. "
+                "Item photos will not be uploaded."
             )
 
         return firestore.client()
@@ -159,6 +177,8 @@ machine_state = {
     "confidence": 0,
     "sessionId": None,
     "qrCode": None,
+    "imageUrl": None,
+    "firebaseSaved": False,
     "error": None,
     "updatedAt": time.time(),
 }
@@ -186,6 +206,8 @@ def reset_state():
         confidence=0,
         sessionId=None,
         qrCode=None,
+        imageUrl=None,
+        firebaseSaved=False,
         error=None,
     )
 
@@ -307,6 +329,51 @@ def send_to_esp32(command):
     except serial.SerialException as error:
         print(f"Serial error: {error}")
         return False
+
+
+def upload_item_image(session_id):
+    """
+    Upload the photo of the most recently scanned item to Firebase
+    Storage and return a URL the owner dashboard can render in an
+    <img> tag. Prefers the annotated detection image (with the
+    bounding box drawn on it); falls back to the raw capture if the
+    model produced no annotated frame.
+
+    Returns None (never raises) if Storage isn't configured or the
+    upload fails — a missing photo should never stop the physical
+    recycling flow.
+    """
+    if db is None or not STORAGE_BUCKET:
+        return None
+
+    local_path = (
+        "detection_result.jpg"
+        if os.path.exists("detection_result.jpg")
+        else "captured_item.jpg"
+    )
+
+    if not os.path.exists(local_path):
+        return None
+
+    try:
+        bucket = firebase_storage.bucket()
+        blob = bucket.blob(f"recycling_items/{session_id}.jpg")
+        blob.upload_from_filename(local_path, content_type="image/jpeg")
+
+        try:
+            # Works when the bucket allows per-object ACLs.
+            blob.make_public()
+            return blob.public_url
+        except Exception:
+            # Uniform bucket-level access buckets reject make_public();
+            # fall back to a long-lived signed URL instead.
+            return blob.generate_signed_url(
+                expiration=timedelta(days=7)
+            )
+
+    except Exception as error:
+        print(f"Item image upload failed for {session_id}:", error)
+        return None
 
 
 def require_firebase_user():
@@ -560,6 +627,113 @@ Created At: {time.time()}
         file.write(session_text)
 
 
+def save_recycling_to_firestore(
+    session_id, result, qr_code=None, image_url=None
+):
+    """
+    Save one machine detection to Firestore.
+
+    Collections/documents written:
+    - recycling_records/{sessionId}: accepted and rejected item history
+    - redeem_qr_codes/{sessionId}: claimable reward for accepted items only
+    - machines/{machineId}: running counters for Device Owner analytics
+
+    Firebase errors do not stop the physical recycling machine. The local
+    sessions_log.txt file remains the offline fallback.
+    """
+    if db is None:
+        print(
+            "Firebase unavailable. Recycling result was saved locally only."
+        )
+        return False
+
+    accepted = bool(result.get("accepted"))
+    category = str(result.get("category") or "reject")
+    material_type = str(result.get("item") or "unknown")
+    points_earned = int(result.get("points") or 0)
+    confidence = round(float(result.get("confidence") or 0), 4)
+
+    record_ref = (
+        db.collection("recycling_records")
+        .document(session_id)
+    )
+    machine_ref = (
+        db.collection("machines")
+        .document(MACHINE_ID)
+    )
+
+    record_data = {
+        "sessionId": session_id,
+        "machineId": MACHINE_ID,
+        "accepted": accepted,
+        "status": "accepted" if accepted else "rejected",
+        "category": category,
+        "materialType": material_type,
+        "pointsEarned": points_earned,
+        "confidence": confidence,
+        "qrCode": qr_code,
+        "imageUrl": image_url,
+        "claimedBy": None,
+        "createdAt": firestore.SERVER_TIMESTAMP,
+        "updatedAt": firestore.SERVER_TIMESTAMP,
+    }
+
+    machine_updates = {
+        "machineId": MACHINE_ID,
+        "lastRecyclingSessionId": session_id,
+        "lastMaterialType": material_type,
+        "lastCategory": category,
+        "lastResultAccepted": accepted,
+        "lastSeenAt": firestore.SERVER_TIMESTAMP,
+        "totalItems": firestore.Increment(1),
+    }
+
+    if category == "bottle":
+        machine_updates["bottleCount"] = firestore.Increment(1)
+    elif category == "can":
+        machine_updates["canCount"] = firestore.Increment(1)
+    else:
+        machine_updates["rejectedCount"] = firestore.Increment(1)
+
+    batch = db.batch()
+    batch.set(record_ref, record_data, merge=True)
+    batch.set(machine_ref, machine_updates, merge=True)
+
+    if accepted:
+        reward_ref = (
+            db.collection("redeem_qr_codes")
+            .document(session_id)
+        )
+        batch.set(
+            reward_ref,
+            {
+                "code": session_id,
+                "sessionId": session_id,
+                "machineId": MACHINE_ID,
+                "materialType": material_type,
+                "category": category,
+                "pointsEarned": points_earned,
+                "confidence": confidence,
+                "status": "unclaimed",
+                "claimedBy": None,
+                "qrCode": qr_code,
+                "imageUrl": image_url,
+                "createdAt": firestore.SERVER_TIMESTAMP,
+                "updatedAt": firestore.SERVER_TIMESTAMP,
+                "expiresAt": datetime.now(timezone.utc) + timedelta(minutes=10),
+            },
+            merge=True,
+        )
+
+    try:
+        batch.commit()
+        print(f"Recycling session saved to Firestore: {session_id}")
+        return True
+    except Exception as error:
+        print("Failed to save recycling session to Firestore:", error)
+        return False
+
+
 def machine_worker():
     """
     Always-on recycling watcher.
@@ -635,6 +809,7 @@ def machine_worker():
             result = verify_item(frame)
 
             session_id = str(uuid.uuid4())
+            image_url = upload_item_image(session_id)
 
             update_state(
                 phase="sorting",
@@ -650,6 +825,12 @@ def machine_worker():
                     result,
                     qr_code,
                 )
+                firebase_saved = save_recycling_to_firestore(
+                    session_id,
+                    result,
+                    qr_code,
+                    image_url,
+                )
 
                 update_state(
                     phase="accepted",
@@ -661,11 +842,19 @@ def machine_worker():
                     confidence=round(result["confidence"], 4),
                     sessionId=session_id,
                     qrCode=qr_code,
+                    imageUrl=image_url,
+                    firebaseSaved=firebase_saved,
                     error=None,
                 )
 
             else:
                 save_local_session(session_id, result)
+                firebase_saved = save_recycling_to_firestore(
+                    session_id,
+                    result,
+                    None,
+                    image_url,
+                )
 
                 update_state(
                     phase="rejected",
@@ -680,6 +869,8 @@ def machine_worker():
                     confidence=round(result["confidence"], 4),
                     sessionId=session_id,
                     qrCode=None,
+                    imageUrl=image_url,
+                    firebaseSaved=firebase_saved,
                     error=None,
                 )
 

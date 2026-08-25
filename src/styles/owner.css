@@ -2263,3 +2263,281 @@ button:disabled {
     min-height: auto;
   }
 }
+/* ========================================
+   OWNER DASHBOARD - USER FRIENDLY MOBILE UX
+   Keeps the existing EcoRefill theme while
+   adding clear spacing and bottom navigation.
+======================================== */
+
+.owner-dashboard-page {
+  padding-bottom: calc(108px + env(safe-area-inset-bottom));
+}
+
+.owner-dashboard-container {
+  max-width: 720px;
+}
+
+.owner-dashboard-page .dashboard-header {
+  gap: 16px;
+}
+
+.owner-dashboard-page .owner-section,
+.owner-dashboard-page .machine-status-card,
+.owner-dashboard-page .quality-card {
+  scroll-margin-top: 20px;
+}
+
+/* Recent scanned-item gallery was used in JSX but had no dedicated styling. */
+.recent-items-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.recent-item-card {
+  overflow: hidden;
+  border: var(--border);
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+.recent-item-photo {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--mint-green);
+  border-bottom: 2px solid var(--ink);
+}
+
+.recent-item-photo img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.recent-item-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: 130px;
+  display: grid;
+  place-items: center;
+  color: var(--deep-green);
+}
+
+.recent-item-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 6px 9px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 950;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.recent-item-info {
+  padding: 13px 14px 15px;
+}
+
+.recent-item-info h4 {
+  margin: 0 0 5px;
+  font-size: 15px;
+  font-weight: 950;
+  text-transform: capitalize;
+}
+
+.recent-item-info p {
+  margin: 0;
+  color: var(--dark-green);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+/* Fixed bottom navigation */
+.owner-bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  z-index: 1000;
+  width: min(calc(100% - 28px), 600px);
+  min-height: 72px;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  transform: translateX(-50%);
+  border: var(--border);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 7px 7px 0 var(--ink);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.owner-nav-item {
+  min-width: 0;
+  min-height: 54px;
+  padding: 7px 4px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--dark-green);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.owner-nav-item:hover,
+.owner-nav-item:active {
+  transform: none;
+  box-shadow: none;
+  background: var(--mint-green);
+}
+
+.owner-nav-item.active {
+  background: var(--main-green);
+  color: var(--ink);
+}
+
+.owner-nav-item:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.owner-nav-item svg {
+  stroke-width: 2.6;
+}
+
+.owner-nav-icon-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.owner-nav-badge {
+  position: absolute;
+  top: -8px;
+  right: -12px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--warning);
+  color: var(--ink);
+  font-size: 9px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.owner-nav-logout {
+  color: #8b1d1d;
+}
+
+/* Make list rows easier to scan and tap on smaller screens. */
+.owner-dashboard-page .owner-list-item {
+  min-height: 76px;
+}
+
+.owner-dashboard-page .section-header button {
+  min-height: 40px;
+}
+
+@media (max-width: 600px) {
+  .owner-dashboard-container {
+    max-width: 100%;
+  }
+
+  .owner-dashboard-page {
+    padding: 16px 14px calc(104px + env(safe-area-inset-bottom));
+  }
+
+  .owner-dashboard-page .dashboard-header {
+    align-items: flex-start;
+    margin-bottom: 18px;
+  }
+
+  .owner-dashboard-page .dashboard-header h1 {
+    font-size: clamp(25px, 8vw, 32px);
+    line-height: 1;
+  }
+
+  .owner-dashboard-page .machine-status-card {
+    padding: 20px;
+  }
+
+  .owner-dashboard-page .machine-status-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .owner-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .owner-stat-card {
+    padding: 16px;
+  }
+
+  .analytics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+  }
+
+  .analytics-card {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .analytics-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .analytics-card h3 {
+    font-size: 1.5rem;
+  }
+
+  .recent-items-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+  }
+
+  .owner-list-item {
+    align-items: flex-start;
+  }
+
+  .owner-status-pill {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 390px) {
+  .owner-stats-grid,
+  .analytics-grid,
+  .recent-items-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .owner-bottom-nav {
+    width: calc(100% - 20px);
+    bottom: max(9px, env(safe-area-inset-bottom));
+  }
+
+  .owner-nav-item {
+    font-size: 10px;
+  }
+}

@@ -4,7 +4,8 @@ import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Droplets, History, Recycle, ShoppingBag } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
-import "../../styles/theme.css";
+import UserBottomNav from "./UserBottomNav";
+import "../../styles/user.css";
 
 function UserHistory() {
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ function UserHistory() {
   };
 
   return (
-    <div className="history-page">
+    <div className="history-page user-page-with-nav">
       <div className="history-container">
         <header className="history-header">
           <button className="back-button" onClick={() => navigate("/user/dashboard")} aria-label="Back to dashboard"><ArrowLeft size={20} /></button>
@@ -105,6 +106,8 @@ function UserHistory() {
           )}
         </section>
       </div>
+
+      <UserBottomNav />
     </div>
   );
 }

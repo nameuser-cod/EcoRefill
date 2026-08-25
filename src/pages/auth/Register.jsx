@@ -11,7 +11,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
-import "../../styles/theme.css";
+import "../../styles/auth.css";
 
 function Register() {
   const navigate = useNavigate();

@@ -12,18 +12,22 @@ import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
   Bell,
+  Camera,
   Droplets,
   Gauge,
+  ImageOff,
+  LayoutDashboard,
   LogOut,
   Package,
   PackageX,
   Recycle,
+  ReceiptText,
   ShieldCheck,
   ShieldAlert,
   WalletCards,
 } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
-import "../../styles/theme.css";
+import "../../styles/owner.css";
 
 function OwnerDashboard() {
   const navigate = useNavigate();
@@ -31,6 +35,7 @@ function OwnerDashboard() {
   const [machine, setMachine] = useState(null);
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [recentAlerts, setRecentAlerts] = useState([]);
+  const [recentItems, setRecentItems] = useState([]);
 
   const [analytics, setAnalytics] = useState({
     bottleCount: 0,
@@ -89,24 +94,6 @@ function OwnerDashboard() {
     );
   };
 
-  const isAcceptedRecyclingTransaction = (transaction) => {
-    const type = normalizeText(transaction.type);
-    const status = normalizeText(transaction.status);
-
-    if (isRejectedTransaction(transaction)) {
-      return false;
-    }
-
-    return (
-      type === "recycling" &&
-      (status === "" ||
-        status === "accepted" ||
-        status === "completed" ||
-        status === "claimed" ||
-        status === "success")
-    );
-  };
-
   const getDetectedMaterial = (transaction) => {
     return (
       transaction.materialType ||
@@ -118,7 +105,13 @@ function OwnerDashboard() {
     );
   };
 
-  const calculateAnalytics = (transactions) => {
+  /*
+   * `recycling_records` is what machine_flow.py actually writes for
+   * every scanned item (accepted or rejected) — it carries its own
+   * `accepted` boolean and `category` field, so there's no need to
+   * guess from loosely-typed transaction data here.
+   */
+  const calculateAnalytics = (records) => {
     let bottleCount = 0;
     let canCount = 0;
     let acceptedCount = 0;
@@ -126,10 +119,11 @@ function OwnerDashboard() {
 
     const rejectedTypes = {};
 
-    transactions.forEach((transaction) => {
-      const material = getDetectedMaterial(transaction);
+    records.forEach((record) => {
+      const accepted = Boolean(record.accepted);
+      const material = getDetectedMaterial(record);
 
-      if (isRejectedTransaction(transaction)) {
+      if (!accepted) {
         rejectedCount += 1;
 
         const rejectedName =
@@ -143,15 +137,13 @@ function OwnerDashboard() {
         return;
       }
 
-      if (!isAcceptedRecyclingTransaction(transaction)) {
-        return;
-      }
-
       acceptedCount += 1;
 
-      if (isBottleMaterial(material)) {
+      const category = normalizeText(record.category);
+
+      if (category === "bottle" || isBottleMaterial(material)) {
         bottleCount += 1;
-      } else if (isCanMaterial(material)) {
+      } else if (category === "can" || isCanMaterial(material)) {
         canCount += 1;
       }
     });
@@ -205,24 +197,47 @@ function OwnerDashboard() {
         const machineId = machineDoc.id;
 
         /*
-         * Load every transaction for this machine so the dashboard
-         * can calculate the complete analytics.
+         * Load every recycling record for this machine (accepted and
+         * rejected scans both live here) so the dashboard can
+         * calculate the complete analytics.
          */
         const analyticsQuery = query(
-          collection(db, "transactions"),
+          collection(db, "recycling_records"),
           where("machineId", "==", machineId)
         );
 
         const analyticsSnapshot = await getDocs(analyticsQuery);
 
-        const allTransactions = analyticsSnapshot.docs.map(
-          (transactionDoc) => ({
-            id: transactionDoc.id,
-            ...transactionDoc.data(),
+        const allRecords = analyticsSnapshot.docs.map(
+          (recordDoc) => ({
+            id: recordDoc.id,
+            ...recordDoc.data(),
           })
         );
 
-        calculateAnalytics(allTransactions);
+        calculateAnalytics(allRecords);
+
+        /*
+         * Load the newest scans (with photos, when available) for
+         * the "Recent Scanned Items" gallery.
+         */
+        const recentItemsQuery = query(
+          collection(db, "recycling_records"),
+          where("machineId", "==", machineId),
+          orderBy("createdAt", "desc"),
+          limit(8)
+        );
+
+        const recentItemsSnapshot = await getDocs(recentItemsQuery);
+
+        const recentItemsList = recentItemsSnapshot.docs.map(
+          (recordDoc) => ({
+            id: recordDoc.id,
+            ...recordDoc.data(),
+          })
+        );
+
+        setRecentItems(recentItemsList);
 
         /*
          * Load only the five newest transactions for the
@@ -592,6 +607,81 @@ function OwnerDashboard() {
           </div>
         </section>
 
+        {/* Photos of recently scanned items */}
+        <section className="owner-section">
+          <div className="section-header">
+            <h2>Recent Scanned Items</h2>
+          </div>
+
+          {recentItems.length === 0 ? (
+            <div className="empty-card">
+              <Camera size={28} />
+              <p>No scanned items yet.</p>
+              <span>
+                Photos of accepted and rejected items will
+                appear here as the machine scans them.
+              </span>
+            </div>
+          ) : (
+            <div className="recent-items-grid">
+              {recentItems.map((item) => (
+                <div
+                  className="recent-item-card"
+                  key={item.id}
+                >
+                  <div className="recent-item-photo">
+                    {item.imageUrl ? (
+                      <img
+                        src={item.imageUrl}
+                        alt={
+                          item.materialType ||
+                          "Scanned item"
+                        }
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="recent-item-photo-placeholder">
+                        <ImageOff size={22} />
+                      </div>
+                    )}
+
+                    <span
+                      className={`recent-item-badge ${
+                        item.accepted
+                          ? "status-good"
+                          : "status-danger"
+                      }`}
+                    >
+                      {item.accepted
+                        ? "Accepted"
+                        : "Rejected"}
+                    </span>
+                  </div>
+
+                  <div className="recent-item-info">
+                    <h4>
+                      {item.materialType ||
+                        "Unknown item"}
+                    </h4>
+
+                    <p>
+                      {Math.round(
+                        (item.confidence || 0) * 100
+                      )}
+                      % confidence
+                      {item.createdAt?.toDate
+                        ? ` • ${item.createdAt
+                            .toDate()
+                            .toLocaleString()}`
+                        : ""}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
         {/* Rejected item breakdown */}
         <section className="owner-section">
           <div className="section-header">
@@ -809,6 +899,61 @@ function OwnerDashboard() {
           )}
         </section>
       </div>
+
+      <nav className="owner-bottom-nav" aria-label="Owner navigation">
+        <button
+          type="button"
+          className="owner-nav-item active"
+          onClick={() =>
+            window.scrollTo({ top: 0, behavior: "smooth" })
+          }
+          aria-label="Dashboard"
+          aria-current="page"
+        >
+          <LayoutDashboard size={22} />
+          <span>Dashboard</span>
+        </button>
+
+        <button
+          type="button"
+          className="owner-nav-item"
+          onClick={() => navigate("/owner/transactions")}
+          aria-label="Transactions"
+        >
+          <ReceiptText size={22} />
+          <span>Transactions</span>
+        </button>
+
+        <button
+          type="button"
+          className="owner-nav-item owner-nav-alerts"
+          onClick={() => navigate("/owner/alerts")}
+          aria-label="Alerts"
+        >
+          <span className="owner-nav-icon-wrap">
+            <Bell size={22} />
+            {recentAlerts.length > 0 && (
+              <span
+                className="owner-nav-badge"
+                aria-label={`${recentAlerts.length} recent alerts`}
+              >
+                {recentAlerts.length > 9 ? "9+" : recentAlerts.length}
+              </span>
+            )}
+          </span>
+          <span>Alerts</span>
+        </button>
+
+        <button
+          type="button"
+          className="owner-nav-item owner-nav-logout"
+          onClick={handleLogout}
+          aria-label="Log out"
+        >
+          <LogOut size={22} />
+          <span>Logout</span>
+        </button>
+      </nav>
     </div>
   );
 }

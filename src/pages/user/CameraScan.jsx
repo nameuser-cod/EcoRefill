@@ -14,7 +14,7 @@ import {
   Recycle,
   ScanLine,
 } from "lucide-react";
-import "../../styles/theme.css";
+import "../../styles/user.css";
 
 const SCANNER_ELEMENT_ID =
   "ecorefill-qr-reader";
@@ -501,7 +501,7 @@ if (waterSessionId) {
               <div className="camera-loading">
                 <LoaderCircle
                   size={42}
-                  className="machine-spin"
+                  className="user-spin"
                 />
 
                 <p>
@@ -539,7 +539,7 @@ if (waterSessionId) {
 
               <LoaderCircle
                 size={34}
-                className="machine-spin"
+                className="user-spin"
               />
             </div>
           )}

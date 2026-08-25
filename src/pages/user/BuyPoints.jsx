@@ -10,7 +10,8 @@ import {
 } from "firebase/firestore";
 import { ArrowLeft, CheckCircle2, ShoppingBag } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
-import "../../styles/theme.css";
+import UserBottomNav from "./UserBottomNav";
+import "../../styles/user.css";
 
 const POINT_PACKAGES = [
   { id: 1, name: "Starter Pack", points: 100, price: 20, description: "Good for small refills" },
@@ -94,7 +95,7 @@ function BuyPoints() {
   };
 
   return (
-    <div className="user-dashboard-page">
+    <div className="user-dashboard-page user-page-with-nav">
       <div className="user-dashboard-container">
         <header className="history-header">
           <button className="back-button" onClick={() => navigate("/user/dashboard")} aria-label="Back to dashboard">
@@ -158,6 +159,8 @@ function BuyPoints() {
           </button>
         </section>
       </div>
+
+      <UserBottomNav />
     </div>
   );
 }

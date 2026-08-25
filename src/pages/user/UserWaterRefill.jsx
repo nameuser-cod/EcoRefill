@@ -33,7 +33,7 @@ import {
   db,
 } from "../../firebase/firebase";
 
-import "../../styles/theme.css";
+import "../../styles/user.css";
 
 
 const WATER_OPTIONS = [
@@ -429,7 +429,7 @@ await setDoc(requestRef, {
 
           <LoaderCircle
             size={28}
-            className="machine-spin"
+            className="user-spin"
           />
 
           Loading refill session...
@@ -475,7 +475,7 @@ await setDoc(requestRef, {
                 className={
                   isFailed
                     ? ""
-                    : "machine-spin"
+                    : "user-spin"
                 }
               />
             )}
@@ -876,7 +876,7 @@ await setDoc(requestRef, {
                 {confirming ? (
                   <LoaderCircle
                     size={24}
-                    className="machine-spin"
+                    className="user-spin"
                   />
                 ) : (
                   <Droplets
