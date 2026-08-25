@@ -37,7 +37,15 @@ MOTION_FRAME_DELAY = 0.08
 AUTO_REJECT_RESET_SECONDS = 3.0
 AUTO_REARM_DELAY = 1.0
 
-CONFIDENCE_LIMIT = 0.25
+# YOLO can return low-confidence candidates for logging/comparison,
+# but the machine will ACCEPT only a much stronger prediction.
+DETECTION_CONFIDENCE_LIMIT = 0.20
+ACCEPT_CONFIDENCE_LIMIT = 0.65
+
+# Reject tiny detections that are likely background objects/noise.
+# 0.05 means the bounding box must cover at least 5% of the image.
+MIN_OBJECT_AREA_RATIO = 0.05
+
 SERIAL_BAUD_RATE = 115200
 SERIAL_TIMEOUT = 2
 
@@ -51,29 +59,24 @@ MACHINE_ID = "machine_001"
 # the machine will keep working, it just won't attach an image.
 STORAGE_BUCKET = os.getenv("FIREBASE_STORAGE_BUCKET", "")
 
+# IMPORTANT: only these exact material-specific YOLO classes are accepted.
+# Generic labels such as "bottle", "can", "metal_can", and "tin_can"
+# are intentionally NOT accepted because they do not prove the material.
 BOTTLE_ITEMS = {
     "plastic_bottle",
-    "bottle",
     "pet_bottle",
 }
 
 CAN_ITEMS = {
-    "can",
     "aluminum_can",
     "aluminium_can",
-    "tin_can",
-    "metal_can",
 }
 
 POINTS = {
     "plastic_bottle": 1,
-    "bottle": 1,
     "pet_bottle": 1,
-    "can": 1,
     "aluminum_can": 1,
     "aluminium_can": 1,
-    "tin_can": 1,
-    "metal_can": 1,
 }
 
 # Water prices are calculated on the SERVER.
@@ -534,9 +537,24 @@ def wait_for_item_motion():
 
 
 def verify_item(frame):
+    """
+    Accept ONLY a plastic bottle or aluminum can.
+
+    Safety rules:
+    1. Generic labels such as "bottle" and "can" are rejected.
+    2. The approved class must meet ACCEPT_CONFIDENCE_LIMIT.
+    3. Tiny bounding boxes are ignored to reduce background false positives.
+    4. If a non-approved object has the strongest valid prediction, reject it.
+
+    NOTE:
+    For this to work properly, the YOLO model itself should contain classes
+    such as plastic_bottle/pet_bottle and aluminum_can/aluminium_can.
+    If the model only contains generic "bottle" and "can" classes, retraining
+    the model is required to distinguish material reliably.
+    """
     results = model.predict(
         source=frame,
-        conf=CONFIDENCE_LIMIT,
+        conf=DETECTION_CONFIDENCE_LIMIT,
         imgsz=640,
         verbose=False,
     )
@@ -553,8 +571,10 @@ def verify_item(frame):
     annotated_frame = results[0].plot()
     cv2.imwrite("detection_result.jpg", annotated_frame)
 
-    best_item = None
-    best_confidence = 0
+    frame_height, frame_width = frame.shape[:2]
+    frame_area = float(frame_width * frame_height)
+
+    detections = []
 
     for result in results:
         if result.boxes is None:
@@ -565,11 +585,83 @@ def verify_item(frame):
             confidence = float(box.conf[0])
             item = normalize_class_name(model.names[class_id])
 
-            if confidence > best_confidence:
-                best_item = item
-                best_confidence = confidence
+            x1, y1, x2, y2 = [float(value) for value in box.xyxy[0].tolist()]
+            box_width = max(0.0, x2 - x1)
+            box_height = max(0.0, y2 - y1)
+            box_area_ratio = (
+                (box_width * box_height) / frame_area
+                if frame_area > 0
+                else 0
+            )
+
+            print(
+                "YOLO detection:",
+                f"class={item}",
+                f"confidence={confidence:.3f}",
+                f"area={box_area_ratio:.3f}",
+            )
+
+            # Ignore tiny detections likely caused by background/noise.
+            if box_area_ratio < MIN_OBJECT_AREA_RATIO:
+                continue
+
+            detections.append({
+                "item": item,
+                "confidence": confidence,
+                "area_ratio": box_area_ratio,
+            })
+
+    if not detections:
+        return {
+            "accepted": False,
+            "category": "reject",
+            "item": "unknown",
+            "points": 0,
+            "confidence": 0,
+        }
+
+    # Strongest meaningful detection in the frame.
+    strongest = max(
+        detections,
+        key=lambda detection: detection["confidence"],
+    )
+
+    best_item = strongest["item"]
+    best_confidence = strongest["confidence"]
+
+    # Reject any class that is not explicitly material-specific.
+    if best_item not in BOTTLE_ITEMS and best_item not in CAN_ITEMS:
+        print(
+            "REJECTED: strongest class is not an approved material:",
+            best_item,
+        )
+        return {
+            "accepted": False,
+            "category": "reject",
+            "item": best_item,
+            "points": 0,
+            "confidence": best_confidence,
+        }
+
+    # Approved class, but prediction is still too uncertain.
+    if best_confidence < ACCEPT_CONFIDENCE_LIMIT:
+        print(
+            "REJECTED: approved class confidence too low:",
+            f"{best_item} {best_confidence:.3f}",
+        )
+        return {
+            "accepted": False,
+            "category": "reject",
+            "item": best_item,
+            "points": 0,
+            "confidence": best_confidence,
+        }
 
     if best_item in BOTTLE_ITEMS:
+        print(
+            "ACCEPTED: plastic bottle",
+            f"confidence={best_confidence:.3f}",
+        )
         return {
             "accepted": True,
             "category": "bottle",
@@ -578,20 +670,15 @@ def verify_item(frame):
             "confidence": best_confidence,
         }
 
-    if best_item in CAN_ITEMS:
-        return {
-            "accepted": True,
-            "category": "can",
-            "item": "aluminum_can",
-            "points": POINTS.get(best_item, 1),
-            "confidence": best_confidence,
-        }
-
+    print(
+        "ACCEPTED: aluminum can",
+        f"confidence={best_confidence:.3f}",
+    )
     return {
-        "accepted": False,
-        "category": "reject",
-        "item": best_item or "unknown",
-        "points": 0,
+        "accepted": True,
+        "category": "can",
+        "item": "aluminum_can",
+        "points": POINTS.get(best_item, 1),
         "confidence": best_confidence,
     }
 
