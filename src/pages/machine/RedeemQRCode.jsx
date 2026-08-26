@@ -135,11 +135,17 @@ function RedeemQRCode() {
             </h2>
 
             <p>
-              Your{" "}
-              {getMaterialLabel(
-                machineResult.materialType
-              ).toLowerCase()}{" "}
-              was successfully recycled.
+              You recycled{" "}
+              <strong>
+                {Number(machineResult.itemCount || 0)}
+              </strong>{" "}
+              item(s)
+              {Number(machineResult.bottleCount || 0) > 0
+                ? ` · ${machineResult.bottleCount} bottle(s)`
+                : ""}
+              {Number(machineResult.canCount || 0) > 0
+                ? ` · ${machineResult.canCount} can(s)`
+                : ""}.
             </p>
 
             <div className="reward-points">
@@ -165,8 +171,8 @@ function RedeemQRCode() {
                 </span>
 
                 <h3>
-                  Scan to collect your
-                  points
+                  Scan to collect all
+                  your points
                 </h3>
               </div>
 
@@ -209,7 +215,7 @@ function RedeemQRCode() {
             <div className="reward-expiry">
               <Timer size={20} />
 
-              QR expires in 5 minutes
+              QR expires in 10 minutes
             </div>
           </section>
         </main>

@@ -4,6 +4,10 @@ from picamera2 import Picamera2
 from ultralytics import YOLO
 from serial.tools import list_ports
 
+try:
+    from gpiozero import Button
+except ImportError:
+    Button = None
 
 import cv2
 import json
@@ -54,6 +58,12 @@ API_HOST = "0.0.0.0"
 API_PORT = 5000
 
 MACHINE_ID = "machine_001"
+
+# Green FINISH / REDEEM button on the Raspberry Pi.
+# BCM GPIO numbering is used. GPIO17 = physical pin 11.
+# Wire the other side of the push button to any GND pin.
+GREEN_BUTTON_GPIO = int(os.getenv("GREEN_BUTTON_GPIO", "17"))
+GREEN_BUTTON_BOUNCE_SECONDS = 0.15
 
 # Firebase Storage bucket for accepted/rejected item photos, e.g.
 # "my-project.appspot.com". Leave unset to disable photo uploads —
@@ -169,18 +179,29 @@ db = initialize_firebase()
 state_lock = threading.Lock()
 shutdown_event = threading.Event()
 recycling_paused = threading.Event()
+finish_session_event = threading.Event()
 
 machine_state = {
     "machineId": MACHINE_ID,
     "phase": "idle",
-    "message": "Ready — insert a bottle or can",
+    "message": "Insert bottles or cans. Press the green button when finished.",
     "accepted": False,
     "materialType": None,
     "category": None,
+
+    # CUMULATIVE recycling-session totals.
     "pointsEarned": 0,
-    "confidence": 0,
+    "itemCount": 0,
+    "bottleCount": 0,
+    "canCount": 0,
+
+    # batchSessionId exists while the customer is adding items.
+    # sessionId/qrCode are populated only after the green button is pressed.
+    "batchSessionId": None,
     "sessionId": None,
     "qrCode": None,
+
+    "confidence": 0,
     "imageUrl": None,
     "firebaseSaved": False,
     "error": None,
@@ -200,22 +221,48 @@ def get_state():
 
 
 def reset_state():
+    """Start a completely new customer recycling session."""
+    finish_session_event.clear()
     update_state(
         phase="idle",
-        message="Ready — insert a bottle or can",
+        message="Insert bottles or cans. Press the green button when finished.",
         accepted=False,
         materialType=None,
         category=None,
         pointsEarned=0,
-        confidence=0,
+        itemCount=0,
+        bottleCount=0,
+        canCount=0,
+        batchSessionId=None,
         sessionId=None,
         qrCode=None,
+        confidence=0,
         imageUrl=None,
         firebaseSaved=False,
         error=None,
     )
 
 
+def rearm_for_next_item(message=None):
+    """
+    Return the camera to idle WITHOUT clearing the customer's accumulated
+    item/point totals.
+    """
+    update_state(
+        phase="idle",
+        message=(
+            message
+            or "Insert another bottle or can, or press the green button when finished."
+        ),
+        accepted=False,
+        materialType=None,
+        category=None,
+        confidence=0,
+        sessionId=None,
+        qrCode=None,
+        imageUrl=None,
+        error=None,
+    )
 
 
 
@@ -570,7 +617,7 @@ def wait_for_item_motion():
     latest_frame = previous_frame
 
     while not shutdown_event.is_set():
-        if recycling_paused.is_set():
+        if recycling_paused.is_set() or finish_session_event.is_set():
             return None
 
         current_frame = picam2.capture_array()
@@ -793,18 +840,19 @@ Created At: {time.time()}
 
 
 def save_recycling_to_firestore(
-    session_id, result, qr_code=None, image_url=None
+    item_id,
+    result,
+    image_url=None,
+    batch_session_id=None,
 ):
     """
-    Save one machine detection to Firestore.
+    Save ONE detected item.
 
-    Collections/documents written:
-    - recycling_records/{sessionId}: accepted and rejected item history
-    - redeem_qr_codes/{sessionId}: claimable reward for accepted items only
-    - machines/{machineId}: running counters for Device Owner analytics
-
-    Firebase errors do not stop the physical recycling machine. The local
-    sessions_log.txt file remains the offline fallback.
+    Important multi-item behavior:
+    - This function does NOT create a redeem_qr_codes document.
+    - Accepted items are linked to the customer's batchSessionId.
+    - The ONE final redeemable reward is created only after the green
+      Raspberry Pi button is pressed.
     """
     if db is None:
         print(
@@ -820,7 +868,7 @@ def save_recycling_to_firestore(
 
     record_ref = (
         db.collection("recycling_records")
-        .document(session_id)
+        .document(item_id)
     )
     machine_ref = (
         db.collection("machines")
@@ -828,7 +876,8 @@ def save_recycling_to_firestore(
     )
 
     record_data = {
-        "sessionId": session_id,
+        "sessionId": item_id,
+        "batchSessionId": batch_session_id,
         "machineId": MACHINE_ID,
         "accepted": accepted,
         "status": "accepted" if accepted else "rejected",
@@ -836,7 +885,7 @@ def save_recycling_to_firestore(
         "materialType": material_type,
         "pointsEarned": points_earned,
         "confidence": confidence,
-        "qrCode": qr_code,
+        "qrCode": None,
         "imageUrl": image_url,
         "claimedBy": None,
         "createdAt": firestore.SERVER_TIMESTAMP,
@@ -845,7 +894,8 @@ def save_recycling_to_firestore(
 
     machine_updates = {
         "machineId": MACHINE_ID,
-        "lastRecyclingSessionId": session_id,
+        "lastRecyclingSessionId": item_id,
+        "lastBatchSessionId": batch_session_id,
         "lastMaterialType": material_type,
         "lastCategory": category,
         "lastResultAccepted": accepted,
@@ -864,99 +914,245 @@ def save_recycling_to_firestore(
     batch.set(record_ref, record_data, merge=True)
     batch.set(machine_ref, machine_updates, merge=True)
 
-    if accepted:
-        reward_ref = (
-            db.collection("redeem_qr_codes")
-            .document(session_id)
-        )
-        batch.set(
-            reward_ref,
-            {
-                "code": session_id,
-                "sessionId": session_id,
-                "machineId": MACHINE_ID,
-                "materialType": material_type,
-                "category": category,
-                "pointsEarned": points_earned,
-                "confidence": confidence,
-                "status": "unclaimed",
-                "claimedBy": None,
-                "qrCode": qr_code,
-                "imageUrl": image_url,
-                "createdAt": firestore.SERVER_TIMESTAMP,
-                "updatedAt": firestore.SERVER_TIMESTAMP,
-                "expiresAt": datetime.now(timezone.utc) + timedelta(minutes=10),
-            },
-            merge=True,
-        )
-
     try:
         batch.commit()
-        print(f"Recycling session saved to Firestore: {session_id}")
+        print(f"Recycling item saved to Firestore: {item_id}")
         return True
     except Exception as error:
-        print("Failed to save recycling session to Firestore:", error)
+        print("Failed to save recycling item to Firestore:", error)
         return False
+
+
+def finalize_recycling_session():
+    """
+    Create exactly ONE redeemable reward for every accepted item collected
+    in the current customer session.
+    """
+    current = get_state()
+
+    item_count = int(current.get("itemCount") or 0)
+    total_points = int(current.get("pointsEarned") or 0)
+    bottle_count = int(current.get("bottleCount") or 0)
+    can_count = int(current.get("canCount") or 0)
+    batch_session_id = current.get("batchSessionId")
+
+    if item_count <= 0 or total_points <= 0 or not batch_session_id:
+        finish_session_event.clear()
+        rearm_for_next_item(
+            "No accepted items yet. Insert a bottle or can first."
+        )
+        return False
+
+    qr_code = f"ecorefill://claim/{batch_session_id}"
+    firebase_saved = False
+
+    if db is not None:
+        reward_ref = (
+            db.collection("redeem_qr_codes")
+            .document(batch_session_id)
+        )
+        machine_ref = (
+            db.collection("machines")
+            .document(MACHINE_ID)
+        )
+
+        reward_data = {
+            "code": batch_session_id,
+            "sessionId": batch_session_id,
+            "machineId": MACHINE_ID,
+            "materialType": "multiple_items",
+            "category": "recycling_batch",
+            "pointsEarned": total_points,
+            "itemCount": item_count,
+            "bottleCount": bottle_count,
+            "canCount": can_count,
+            "status": "unclaimed",
+            "claimedBy": None,
+            "qrCode": qr_code,
+            "createdAt": firestore.SERVER_TIMESTAMP,
+            "updatedAt": firestore.SERVER_TIMESTAMP,
+            "expiresAt": datetime.now(timezone.utc) + timedelta(minutes=10),
+        }
+
+        try:
+            batch = db.batch()
+            batch.set(reward_ref, reward_data, merge=False)
+            batch.set(
+                machine_ref,
+                {
+                    "machineId": MACHINE_ID,
+                    "lastCompletedBatchSessionId": batch_session_id,
+                    "lastBatchItemCount": item_count,
+                    "lastBatchPoints": total_points,
+                    "lastSeenAt": firestore.SERVER_TIMESTAMP,
+                },
+                merge=True,
+            )
+            batch.commit()
+            firebase_saved = True
+            print(
+                "Final recycling reward created:",
+                batch_session_id,
+                f"items={item_count}",
+                f"points={total_points}",
+            )
+        except Exception as error:
+            print("Could not create final recycling reward:", error)
+
+    finish_session_event.clear()
+
+    update_state(
+        phase="reward_ready",
+        message="Scan the QR code to collect all your EcoPoints.",
+        accepted=True,
+        materialType="multiple_items",
+        category="recycling_batch",
+        pointsEarned=total_points,
+        itemCount=item_count,
+        bottleCount=bottle_count,
+        canCount=can_count,
+        sessionId=batch_session_id,
+        qrCode=qr_code,
+        firebaseSaved=firebase_saved,
+        error=(
+            None
+            if firebase_saved
+            else "Reward was not saved to Firebase."
+        ),
+    )
+
+    return firebase_saved
+
+
+def request_finish_recycling_session():
+    """
+    GPIO callback. It only requests finalization; the machine worker performs
+    the actual Firestore write so a button press cannot interrupt sorting.
+    """
+    current = get_state()
+
+    if current.get("phase") == "reward_ready":
+        return
+
+    if int(current.get("itemCount") or 0) <= 0:
+        print("Green button pressed, but no accepted items exist yet.")
+        update_state(
+            message="Insert at least one accepted bottle or can first."
+        )
+        return
+
+    print("Green button pressed. Finishing recycling session...")
+    finish_session_event.set()
+
+
+# Configure the physical green push button.
+green_button = None
+
+if Button is None:
+    print(
+        "gpiozero is not installed. Green GPIO button is disabled. "
+        "Install it with: sudo apt install python3-gpiozero"
+    )
+else:
+    try:
+        green_button = Button(
+            GREEN_BUTTON_GPIO,
+            pull_up=True,
+            bounce_time=GREEN_BUTTON_BOUNCE_SECONDS,
+        )
+        green_button.when_pressed = request_finish_recycling_session
+        print(
+            f"Green FINISH button ready on BCM GPIO {GREEN_BUTTON_GPIO}."
+        )
+    except Exception as error:
+        print("Could not initialize green GPIO button:", error)
 
 
 def machine_worker():
     """
-    Always-on recycling watcher.
+    Multi-item recycling watcher.
 
-    While the machine is idle, the camera silently watches the opening.
-    Motion starts a recycling session automatically.
-
-    Accepted items stay on the result/QR screen until /api/machine/reset
-    is called. Rejected items automatically return to idle after a short
-    delay so the next item can be tried.
+    Flow:
+    1. Customer inserts as many bottles/cans as desired.
+    2. Each accepted item is sorted and added to session totals.
+    3. Camera automatically rearms for the next item.
+    4. Customer presses the GREEN GPIO button when finished.
+    5. Pi creates one QR reward containing the TOTAL points.
     """
     print("========================================")
-    print("Automatic camera recycling is ON.")
-    print("Insert a bottle or can — no button required.")
+    print("Multi-item automatic recycling is ON.")
+    print("Insert bottles/cans one at a time.")
+    print(
+        f"Press the GREEN button on BCM GPIO {GREEN_BUTTON_GPIO} "
+        "when finished."
+    )
     print("========================================")
 
     while not shutdown_event.is_set():
-        # Pause recycling detection when explicitly requested.
         if recycling_paused.is_set():
             time.sleep(0.2)
             continue
 
         current_state = get_state()
 
-        # Do not overwrite an accepted QR/result. The existing Finish/Reset
-        # action clears it, then this watcher automatically rearms.
-        if current_state["phase"] == "accepted":
+        # Hold the final QR screen until the kiosk calls reset.
+        if current_state["phase"] == "reward_ready":
             time.sleep(0.2)
             continue
 
-        # Recover automatically from rejected/error states.
+        # If the finish button was pressed, create the aggregate reward.
+        if finish_session_event.is_set():
+            finalize_recycling_session()
+            time.sleep(0.1)
+            continue
+
+        # Rejected items automatically rearm without clearing totals.
         if current_state["phase"] == "rejected":
             time.sleep(AUTO_REJECT_RESET_SECONDS)
             if get_state()["phase"] == "rejected":
-                reset_state()
+                rearm_for_next_item(
+                    "Try another item, or press the green button when finished."
+                )
             continue
 
         if current_state["phase"] == "error":
             time.sleep(AUTO_REJECT_RESET_SECONDS)
             if get_state()["phase"] == "error":
-                reset_state()
+                rearm_for_next_item()
             continue
 
-        # Keep the UI in idle while silently watching.
-        if current_state["phase"] not in {"idle", "motion_detected"}:
+        if current_state["phase"] not in {
+            "idle",
+            "motion_detected",
+            "item_accepted",
+        }:
             time.sleep(0.1)
             continue
 
+        # Show the accepted result briefly, then automatically rearm.
+        if current_state["phase"] == "item_accepted":
+            time.sleep(1.2)
+            if finish_session_event.is_set():
+                continue
+            if get_state()["phase"] == "item_accepted":
+                rearm_for_next_item()
+            continue
+
         try:
-            if current_state["phase"] != "idle":
-                reset_state()
+            if current_state["phase"] == "motion_detected":
+                rearm_for_next_item()
 
             frame = wait_for_item_motion()
 
+            # wait_for_item_motion also exits when green button is pressed.
             if frame is None:
                 continue
 
-            if shutdown_event.is_set() or recycling_paused.is_set():
+            if (
+                shutdown_event.is_set()
+                or recycling_paused.is_set()
+                or finish_session_event.is_set()
+            ):
                 continue
 
             update_state(
@@ -973,8 +1169,8 @@ def machine_worker():
             )
             result = verify_item(frame)
 
-            session_id = str(uuid.uuid4())
-            image_url = upload_item_image(session_id)
+            item_id = str(uuid.uuid4())
+            image_url = upload_item_image(item_id)
 
             update_state(
                 phase="sorting",
@@ -983,56 +1179,85 @@ def machine_worker():
             sort_item(result)
 
             if result["accepted"]:
-                qr_code = f"ecorefill://claim/{session_id}"
+                current = get_state()
+
+                batch_session_id = (
+                    current.get("batchSessionId")
+                    or str(uuid.uuid4())
+                )
+
+                new_item_count = int(current.get("itemCount") or 0) + 1
+                new_total_points = (
+                    int(current.get("pointsEarned") or 0)
+                    + int(result.get("points") or 0)
+                )
+                new_bottle_count = int(current.get("bottleCount") or 0)
+                new_can_count = int(current.get("canCount") or 0)
+
+                if result["category"] == "bottle":
+                    new_bottle_count += 1
+                elif result["category"] == "can":
+                    new_can_count += 1
 
                 save_local_session(
-                    session_id,
+                    item_id,
                     result,
-                    qr_code,
+                    None,
                 )
+
                 firebase_saved = save_recycling_to_firestore(
-                    session_id,
+                    item_id,
                     result,
-                    qr_code,
                     image_url,
+                    batch_session_id,
                 )
 
                 update_state(
-                    phase="accepted",
-                    message="Item accepted. Scan the QR code.",
+                    phase="item_accepted",
+                    message=(
+                        f"Accepted! {new_item_count} item(s), "
+                        f"{new_total_points} EcoPoint(s). "
+                        "Add another or press the green button."
+                    ),
                     accepted=True,
                     materialType=result["item"],
                     category=result["category"],
-                    pointsEarned=result["points"],
+                    pointsEarned=new_total_points,
+                    itemCount=new_item_count,
+                    bottleCount=new_bottle_count,
+                    canCount=new_can_count,
+                    batchSessionId=batch_session_id,
                     confidence=round(result["confidence"], 4),
-                    sessionId=session_id,
-                    qrCode=qr_code,
+                    sessionId=None,
+                    qrCode=None,
                     imageUrl=image_url,
                     firebaseSaved=firebase_saved,
                     error=None,
                 )
 
             else:
-                save_local_session(session_id, result)
+                save_local_session(item_id, result)
+
+                # Rejected items do not belong to the reward batch, but still
+                # remain available to owner analytics.
                 firebase_saved = save_recycling_to_firestore(
-                    session_id,
+                    item_id,
                     result,
-                    None,
                     image_url,
+                    get_state().get("batchSessionId"),
                 )
 
                 update_state(
                     phase="rejected",
                     message=(
-                        "Item rejected. Use a clean plastic "
-                        "bottle or aluminum can."
+                        "Item rejected. Use a clean plastic bottle or "
+                        "aluminum can. Your accepted-item total is safe."
                     ),
                     accepted=False,
                     materialType=result["item"],
                     category="reject",
-                    pointsEarned=0,
                     confidence=round(result["confidence"], 4),
-                    sessionId=session_id,
+                    sessionId=None,
                     qrCode=None,
                     imageUrl=image_url,
                     firebaseSaved=firebase_saved,
@@ -1053,6 +1278,7 @@ worker_thread = threading.Thread(
     daemon=True,
 )
 worker_thread.start()
+
 
 # =========================================================
 # FIRESTORE WATER REQUEST WORKER
@@ -1952,6 +2178,21 @@ def api_machine_reset():
     })
 
 
+@app.post("/api/machine/finish-recycling")
+def api_machine_finish_recycling():
+    """
+    Test/maintenance equivalent of pressing the physical green button.
+    The real kiosk flow should use the GPIO button.
+    """
+    request_finish_recycling_session()
+
+    return jsonify({
+        "ok": True,
+        "finishRequested": finish_session_event.is_set(),
+        "state": get_state(),
+    })
+
+
 @app.post("/api/machine/pause-recycling")
 def api_machine_pause_recycling():
     """Optional helper for screens such as water refill/maintenance."""
@@ -2774,6 +3015,9 @@ def api_redeem_recycling_reward():
                     "",
                 ),
                 "pointsEarned": points_earned,
+                "itemCount": int(reward_data.get("itemCount", 1) or 1),
+                "bottleCount": int(reward_data.get("bottleCount", 0) or 0),
+                "canCount": int(reward_data.get("canCount", 0) or 0),
                 "previousPoints": current_points,
                 "pointsAfter": new_points,
                 "status": "completed",
@@ -2865,6 +3109,12 @@ if __name__ == "__main__":
             pass
 
         cv2.destroyAllWindows()
+
+        if green_button is not None:
+            try:
+                green_button.close()
+            except Exception:
+                pass
 
         if esp32 is not None and esp32.is_open:
             try:
