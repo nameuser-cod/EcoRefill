@@ -5,6 +5,7 @@ import {
   useState,
 } from "react";
 import { onAuthStateChanged } from "firebase/auth";
+import { httpsCallable } from "firebase/functions";
 import {
   useLocation,
   useNavigate,
@@ -17,14 +18,12 @@ import {
   QrCode,
   ScanLine,
 } from "lucide-react";
-import { auth } from "../../firebase/firebase";
+import {
+  auth,
+  functions,
+} from "../../firebase/firebase";
 import UserBottomNav from "./UserBottomNav";
 import "../../styles/user.css";
-
-
-const API_BASE_URL =
-  import.meta.env.VITE_MACHINE_API_URL ||
-  "http://192.168.101.23:5000";
 
 const getWaterRefillSessionId = (rawCode) => {
   const cleanCode = String(rawCode || "").trim();
@@ -177,30 +176,24 @@ if (waterSessionId) {
       setRedeeming(true);
 
       try {
-        const idToken =
-          await currentUser.getIdToken();
+        const redeemRecyclingReward =
+          httpsCallable(
+            functions,
+            "redeemRecyclingReward"
+          );
 
-        const response = await fetch(
-          `${API_BASE_URL}/api/recycling/redeem`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-              Authorization:
-                `Bearer ${idToken}`,
-            },
-            body: JSON.stringify({
+        const result =
+          await redeemRecyclingReward(
+            {
               code: cleanCode,
-            }),
-          }
-        );
+            }
+          );
 
-        const data = await response.json();
+        const data = result.data;
 
-        if (!response.ok) {
+        if (!data?.ok) {
           throw new Error(
-            data.message ||
+            data?.message ||
               "The QR code could not be redeemed."
           );
         }
