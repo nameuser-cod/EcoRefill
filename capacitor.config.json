@@ -1,5 +1,8 @@
 {
   "appId": "com.ecorefill.app",
   "appName": "EcoRefill",
-  "webDir": "dist"
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": true
+  }
 }
