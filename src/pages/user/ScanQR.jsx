@@ -6,17 +6,6 @@ import {
 } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import {
-  collection,
-  doc,
-  getDocs,
-  increment,
-  limit,
-  query,
-  runTransaction,
-  serverTimestamp,
-  where,
-} from "firebase/firestore";
-import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
@@ -28,9 +17,14 @@ import {
   QrCode,
   ScanLine,
 } from "lucide-react";
-import { auth, db } from "../../firebase/firebase";
+import { auth } from "../../firebase/firebase";
 import UserBottomNav from "./UserBottomNav";
 import "../../styles/user.css";
+
+
+const API_BASE_URL =
+  import.meta.env.VITE_MACHINE_API_URL ||
+  "http://192.168.101.23:5000";
 
 const getWaterRefillSessionId = (rawCode) => {
   const cleanCode = String(rawCode || "").trim();
@@ -183,205 +177,67 @@ if (waterSessionId) {
       setRedeeming(true);
 
       try {
-        const qrQuery = query(
-          collection(db, "redeem_qr_codes"),
-          where("code", "==", cleanCode),
-          limit(1)
-        );
+        const idToken =
+          await currentUser.getIdToken();
 
-        const qrSnapshot = await getDocs(qrQuery);
-
-        if (qrSnapshot.empty) {
-          throw new Error(
-            "Invalid QR code. Scan the current reward QR shown by the EcoRefill machine."
-          );
-        }
-
-        const qrDocument = qrSnapshot.docs[0];
-
-        const qrRef = doc(
-          db,
-          "redeem_qr_codes",
-          qrDocument.id
-        );
-
-        const userRef = doc(
-          db,
-          "users",
-          currentUser.uid
-        );
-
-        const transactionRef = doc(
-          collection(db, "transactions")
-        );
-
-        const result = await runTransaction(
-          db,
-          async (transaction) => {
-            const qrSnap =
-              await transaction.get(qrRef);
-
-            const userSnap =
-              await transaction.get(userRef);
-
-            if (!qrSnap.exists()) {
-              throw new Error(
-                "The reward record no longer exists."
-              );
-            }
-
-            if (!userSnap.exists()) {
-              throw new Error(
-                "Your EcoRefill user profile was not found."
-              );
-            }
-
-            const qrData = qrSnap.data();
-            const userData = userSnap.data();
-
-            if (qrData.code !== cleanCode) {
-              throw new Error(
-                "The scanned QR code does not match this reward."
-              );
-            }
-
-            if (qrData.status === "claimed") {
-              if (
-                qrData.claimedBy ===
-                currentUser.uid
-              ) {
-                throw new Error(
-                  "You already claimed this QR reward."
-                );
-              }
-
-              throw new Error(
-                "This QR code has already been claimed by another account."
-              );
-            }
-
-            if (
-              qrData.status !== "unclaimed"
-            ) {
-              throw new Error(
-                "This QR reward is no longer available."
-              );
-            }
-
-            if (
-              qrData.expiresAt?.toMillis &&
-              qrData.expiresAt.toMillis() <
-                Date.now()
-            ) {
-              throw new Error(
-                "This QR code has expired. Please recycle another item."
-              );
-            }
-
-            const pointsEarned = Number(
-              qrData.pointsEarned
-            );
-
-            if (
-              !Number.isFinite(pointsEarned) ||
-              pointsEarned <= 0
-            ) {
-              throw new Error(
-                "This QR code does not contain valid reward points."
-              );
-            }
-
-            const currentPoints = Number(
-              userData.points || 0
-            );
-
-            transaction.update(userRef, {
-              points: increment(pointsEarned),
-              updatedAt: serverTimestamp(),
-            });
-
-            transaction.update(qrRef, {
-              status: "claimed",
-              claimedBy: currentUser.uid,
-              claimedAt: serverTimestamp(),
-            });
-
-            transaction.set(transactionRef, {
-              type: "recycling",
-              userId: currentUser.uid,
-              userEmail:
-                currentUser.email || "",
-              machineId:
-                qrData.machineId ||
-                "machine_001",
-              materialType:
-                qrData.materialType ||
-                "recyclable_item",
-              category:
-                qrData.category || "",
-              pointsEarned,
-              previousPoints: currentPoints,
-              pointsAfter:
-                currentPoints + pointsEarned,
-              status: "completed",
-              qrCode: cleanCode,
-              sessionId:
-                qrData.sessionId ||
-                qrDocument.id,
-              createdAt: serverTimestamp(),
-            });
-
-            return {
-              pointsEarned,
-              totalPoints:
-                currentPoints + pointsEarned,
-            };
+        const response = await fetch(
+          `${API_BASE_URL}/api/recycling/redeem`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+              Authorization:
+                `Bearer ${idToken}`,
+            },
+            body: JSON.stringify({
+              code: cleanCode,
+            }),
           }
         );
 
-        setEarnedPoints(result.pointsEarned);
+        const data = await response.json();
 
-        setMessage(
-          `Success! ${result.pointsEarned} points were added. Your new balance is ${result.totalPoints} points.`
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              "The QR code could not be redeemed."
+          );
+        }
+
+        setEarnedPoints(
+          Number(data.pointsEarned || 0)
         );
 
-        navigate(location.pathname, {
-          replace: true,
-          state: {},
-        });
+        setMessage(
+          `Success! ${data.pointsEarned} points were added. Your new balance is ${data.totalPoints} points.`
+        );
+
+        navigate(
+          location.pathname,
+          {
+            replace: true,
+            state: {},
+          }
+        );
       } catch (redeemError) {
         console.error(
           "QR redemption error:",
           redeemError
         );
 
-        const firebaseCode =
-          redeemError?.code || "";
+        setError(
+          redeemError?.message ||
+            "The QR code could not be redeemed."
+        );
 
-        if (
-          firebaseCode ===
-          "permission-denied"
-        ) {
-          setError(
-            "Firestore denied the redemption request. Check your Firestore security rules."
-          );
-        } else if (
-          firebaseCode === "unavailable"
-        ) {
-          setError(
-            "The network is unavailable. Connect to the internet and try again."
-          );
-        } else {
-          setError(
-            redeemError?.message ||
-              "The QR code could not be redeemed."
-          );
-        }
-
-        navigate(location.pathname, {
-          replace: true,
-          state: {},
-        });
+        navigate(
+          location.pathname,
+          {
+            replace: true,
+            state: {},
+          }
+        );
       } finally {
         processingRef.current = false;
         setRedeeming(false);
