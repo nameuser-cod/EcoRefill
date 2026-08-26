@@ -48,6 +48,7 @@ MIN_OBJECT_AREA_RATIO = 0.05
 
 SERIAL_BAUD_RATE = 115200
 SERIAL_TIMEOUT = 2
+WATER_COMMAND_TIMEOUT_SECONDS = 45
 
 API_HOST = "0.0.0.0"
 API_PORT = 5000
@@ -332,6 +333,83 @@ def send_to_esp32(command):
     except serial.SerialException as error:
         print(f"Serial error: {error}")
         return False
+
+
+def run_water_command(command, on_dispensing=None):
+    """
+    Send a water command and wait for the ESP32's final response.
+
+    The ESP32 emits several progress lines while it waits for a
+    container. DISPENSING means the pump has actually started, while
+    OK is only emitted after the pump has stopped. Reading just one
+    line would mistake WATER REQUEST for completion and leave the
+    Firestore session stuck in dispensing.
+    """
+    command = command.upper().strip()
+
+    if command not in set(WATER_COMMANDS.values()):
+        return False, f"Blocked unknown water command: {command}"
+
+    if esp32 is None:
+        return False, "ESP32 is unavailable."
+
+    dispensing_response = f"DISPENSING {command}"
+    completed_response = f"OK {command}"
+    error_response = f"ERROR {command}"
+    deadline = time.monotonic() + WATER_COMMAND_TIMEOUT_SECONDS
+
+    try:
+        with serial_lock:
+            esp32.reset_input_buffer()
+            esp32.write(f"{command}\n".encode("utf-8"))
+            esp32.flush()
+
+            dispensing_started = False
+
+            while time.monotonic() < deadline:
+                response = esp32.readline().decode(
+                    "utf-8",
+                    errors="ignore",
+                ).strip()
+
+                if not response:
+                    continue
+
+                print(f"ESP32: {response}")
+                normalized_response = response.upper()
+
+                if normalized_response == dispensing_response:
+                    if not dispensing_started:
+                        dispensing_started = True
+
+                        if on_dispensing is not None:
+                            try:
+                                on_dispensing()
+                            except Exception as error:
+                                # Keep reading the serial result. Water may
+                                # already be flowing, so a Firestore update
+                                # failure must not interrupt pump tracking.
+                                print(
+                                    "Could not mark refill as dispensing:",
+                                    error,
+                                )
+
+                    continue
+
+                if normalized_response == completed_response:
+                    return True, None
+
+                if normalized_response.startswith(error_response):
+                    return False, response
+
+        return (
+            False,
+            "Timed out waiting for the ESP32 to finish dispensing.",
+        )
+
+    except serial.SerialException as error:
+        print(f"Water serial error: {error}")
+        return False, str(error)
 
 
 def upload_item_image(session_id):
@@ -1490,53 +1568,58 @@ def process_water_refill_request(request_doc):
         f"{command}"
     )
 
-    session_ref.update({
-        "status":
-            "dispensing",
+    def mark_refill_dispensing():
+        dispensing_batch = db.batch()
 
-        "message":
-            f"Dispensing "
-            f"{water_amount_ml} ml "
-            f"of water.",
-
-        "updatedAt":
-            firestore
-            .SERVER_TIMESTAMP,
-    })
-
-    request_ref.update({
-        "status":
-            "dispensing",
-
-        "updatedAt":
-            firestore
-            .SERVER_TIMESTAMP,
-    })
-
-    transaction_ref.update({
-        "status":
-            "dispensing",
-
-        "updatedAt":
-            firestore
-            .SERVER_TIMESTAMP,
-    })
-
-    command_sent = (
-        send_to_esp32(
-            command
+        dispensing_batch.update(
+            session_ref,
+            {
+                "status": "dispensing",
+                "message": (
+                    f"Dispensing {water_amount_ml} ml "
+                    "of water."
+                ),
+                "updatedAt": firestore.SERVER_TIMESTAMP,
+            },
         )
+
+        dispensing_batch.update(
+            request_ref,
+            {
+                "status": "dispensing",
+                "updatedAt": firestore.SERVER_TIMESTAMP,
+            },
+        )
+
+        dispensing_batch.update(
+            transaction_ref,
+            {
+                "status": "dispensing",
+                "updatedAt": firestore.SERVER_TIMESTAMP,
+            },
+        )
+
+        dispensing_batch.commit()
+
+    command_completed, command_error = run_water_command(
+        command,
+        on_dispensing=mark_refill_dispensing,
     )
 
     # =====================================================
     # ESP32 ERROR -> REFUND POINTS
     # =====================================================
 
-    if not command_sent:
+    if not command_completed:
 
         print(
-            "ESP32 command failed. "
+            "ESP32 water command failed. "
             "Refunding points..."
+        )
+
+        failure_message = (
+            command_error
+            or "The water dispenser could not complete the refill."
         )
 
         try:
@@ -1603,10 +1686,11 @@ def process_water_refill_request(request_doc):
 
                         "message":
                             "Water dispenser "
-                            "could not start.",
+                            "could not complete "
+                            "the refill.",
 
                         "error":
-                            "ESP32 command failed.",
+                            failure_message,
 
                         "updatedAt":
                             firestore
@@ -1621,7 +1705,7 @@ def process_water_refill_request(request_doc):
                             "failed",
 
                         "error":
-                            "ESP32 command failed.",
+                            failure_message,
 
                         "updatedAt":
                             firestore
@@ -1636,7 +1720,7 @@ def process_water_refill_request(request_doc):
                             "failed",
 
                         "failureReason":
-                            "ESP32 command failed.",
+                            failure_message,
 
                         "updatedAt":
                             firestore
@@ -1657,14 +1741,45 @@ def process_water_refill_request(request_doc):
 
         return
 
+    completion_batch = db.batch()
+
+    completion_batch.update(
+        session_ref,
+        {
+            "status": "completed",
+            "message": "Water refill completed.",
+            "error": None,
+            "updatedAt": firestore.SERVER_TIMESTAMP,
+        },
+    )
+
+    completion_batch.update(
+        request_ref,
+        {
+            "status": "completed",
+            "error": None,
+            "updatedAt": firestore.SERVER_TIMESTAMP,
+        },
+    )
+
+    completion_batch.update(
+        transaction_ref,
+        {
+            "status": "completed",
+            "updatedAt": firestore.SERVER_TIMESTAMP,
+        },
+    )
+
+    completion_batch.commit()
+
     print(
-        "ESP32 water command "
-        "sent successfully."
+        "ESP32 confirmed that water "
+        "dispensing completed."
     )
 
     print(
         f"Water refill session "
-        f"{session_id} is dispensing."
+        f"{session_id} is completed."
     )
 
 def water_request_worker():
