@@ -63,6 +63,11 @@ function MachineHome() {
         setMachineState(data);
         setConnectionError("");
 
+        if (data.phase === "water_refill_requested") {
+          navigate("/machine/water-refill");
+          return;
+        }
+
         if (
           data.phase === "reward_ready" &&
           data.sessionId &&
@@ -280,6 +285,15 @@ function MachineHome() {
             "Your total reward QR code is ready.",
           icon: <CheckCircle2 size={62} />,
           tone: "success",
+        };
+
+      case "water_refill_requested":
+        return {
+          eyebrow: "Blue button pressed",
+          title: "Opening water refill",
+          message: "Preparing the water refill screen...",
+          icon: <Droplets size={62} />,
+          tone: "active",
         };
 
       case "paused":
@@ -576,7 +590,7 @@ function MachineHome() {
           </span>
 
           <span>
-            💧 Choose Water Refill before placing your container
+            🔵 Blue button = buy / refill water
           </span>
         </footer>
       </div>

@@ -79,6 +79,12 @@ MACHINE_ID = "machine_001"
 GREEN_BUTTON_GPIO = int(os.getenv("GREEN_BUTTON_GPIO", "17"))
 GREEN_BUTTON_BOUNCE_SECONDS = 0.15
 
+# Blue WATER REFILL button on the Raspberry Pi.
+# BCM GPIO numbering is used. GPIO27 = physical pin 13.
+# Wire the other side of the push button to any GND pin.
+BLUE_BUTTON_GPIO = int(os.getenv("BLUE_BUTTON_GPIO", "27"))
+BLUE_BUTTON_BOUNCE_SECONDS = 0.15
+
 # Firebase Storage bucket for accepted/rejected item photos, e.g.
 # "my-project.appspot.com". Leave unset to disable photo uploads —
 # the machine will keep working, it just won't attach an image.
@@ -1069,6 +1075,50 @@ def request_finish_recycling_session():
     finish_session_event.set()
 
 
+def request_water_refill():
+    """Open water-refill mode from the physical BLUE button.
+
+    The button is accepted only when no recycling batch is in progress.
+    The kiosk sees the `water_refill_requested` phase through /api/machine/state
+    and navigates to the water-refill screen.
+    """
+    current = get_state()
+
+    if int(current.get("itemCount") or 0) > 0:
+        print(
+            "Blue button ignored: finish the current recycling session first."
+        )
+        update_state(
+            message=(
+                "Finish recycling first. Press the GREEN button to show "
+                "your reward QR, then use the BLUE button for water."
+            )
+        )
+        return
+
+    if current.get("phase") not in {"idle", "rejected", "error"}:
+        print(
+            "Blue button ignored because the machine is busy:",
+            current.get("phase"),
+        )
+        return
+
+    print("Blue button pressed. Opening water refill mode...")
+    finish_session_event.clear()
+    recycling_paused.set()
+    update_state(
+        phase="water_refill_requested",
+        message="Opening water refill...",
+        accepted=False,
+        materialType=None,
+        category=None,
+        confidence=0,
+        sessionId=None,
+        qrCode=None,
+        error=None,
+    )
+
+
 # Configure the physical green push button.
 green_button = None
 
@@ -1090,6 +1140,29 @@ else:
         )
     except Exception as error:
         print("Could not initialize green GPIO button:", error)
+
+
+# Configure the physical blue WATER REFILL push button.
+blue_button = None
+
+if Button is None:
+    print(
+        "gpiozero is not installed. Blue GPIO button is disabled. "
+        "Install it with: sudo apt install python3-gpiozero"
+    )
+else:
+    try:
+        blue_button = Button(
+            BLUE_BUTTON_GPIO,
+            pull_up=True,
+            bounce_time=BLUE_BUTTON_BOUNCE_SECONDS,
+        )
+        blue_button.when_pressed = request_water_refill
+        print(
+            f"Blue WATER REFILL button ready on BCM GPIO {BLUE_BUTTON_GPIO}."
+        )
+    except Exception as error:
+        print("Could not initialize blue GPIO button:", error)
 
 
 def machine_worker():
@@ -3256,6 +3329,12 @@ if __name__ == "__main__":
         if green_button is not None:
             try:
                 green_button.close()
+            except Exception:
+                pass
+
+        if blue_button is not None:
+            try:
+                blue_button.close()
             except Exception:
                 pass
 
