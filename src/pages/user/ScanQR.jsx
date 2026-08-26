@@ -5,7 +5,10 @@ import {
   useState,
 } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { httpsCallable } from "firebase/functions";
+import {
+  doc,
+  getDoc,
+} from "firebase/firestore";
 import {
   useLocation,
   useNavigate,
@@ -20,10 +23,47 @@ import {
 } from "lucide-react";
 import {
   auth,
-  functions,
+  db,
 } from "../../firebase/firebase";
 import UserBottomNav from "./UserBottomNav";
 import "../../styles/user.css";
+
+const LOCAL_API_BASE_URL =
+  import.meta.env.VITE_MACHINE_API_URL ||
+  "http://192.168.101.23:5000";
+
+const CONFIGURED_REDEMPTION_URL =
+  import.meta.env.VITE_REDEMPTION_API_URL || "";
+
+const getTrustedTunnelUrl = (rawUrl) => {
+  try {
+    const url = new URL(rawUrl);
+
+    if (
+      url.protocol === "https:" &&
+      url.hostname.endsWith(
+        ".trycloudflare.com"
+      )
+    ) {
+      return url.origin;
+    }
+  } catch {
+    // Ignore malformed or untrusted URLs from scanned QR codes.
+  }
+
+  return "";
+};
+
+const getRecyclingSessionId = (rawCode) => {
+  const cleanCode = String(rawCode || "").trim();
+  const claimPrefix = "ecorefill://claim/";
+
+  if (!cleanCode.startsWith(claimPrefix)) {
+    return "";
+  }
+
+  return cleanCode.slice(claimPrefix.length).trim();
+};
 
 const getWaterRefillSessionId = (rawCode) => {
   const cleanCode = String(rawCode || "").trim();
@@ -168,6 +208,17 @@ if (waterSessionId) {
         return;
       }
 
+      const recyclingSessionId =
+        getRecyclingSessionId(cleanCode);
+
+      if (!recyclingSessionId) {
+        setError(
+          "Invalid EcoRefill recycling QR code."
+        );
+
+        return;
+      }
+
       if (processingRef.current) {
         return;
       }
@@ -176,24 +227,59 @@ if (waterSessionId) {
       setRedeeming(true);
 
       try {
-        const redeemRecyclingReward =
-          httpsCallable(
-            functions,
-            "redeemRecyclingReward"
+        let redemptionApiUrl = String(
+          CONFIGURED_REDEMPTION_URL ||
+            LOCAL_API_BASE_URL
+        ).replace(/\/+$/, "");
+
+        try {
+          const rewardSnapshot = await getDoc(
+            doc(
+              db,
+              "redeem_qr_codes",
+              recyclingSessionId
+            )
           );
 
-        const result =
-          await redeemRecyclingReward(
-            {
+          const tunnelUrl = getTrustedTunnelUrl(
+            rewardSnapshot.data()
+              ?.redemptionApiUrl
+          );
+
+          if (tunnelUrl) {
+            redemptionApiUrl = tunnelUrl;
+          }
+        } catch (endpointError) {
+          console.warn(
+            "Could not load the public redemption endpoint:",
+            endpointError
+          );
+        }
+
+        const idToken =
+          await currentUser.getIdToken();
+
+        const response = await fetch(
+          `${redemptionApiUrl}/api/recycling/redeem`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+              Authorization:
+                `Bearer ${idToken}`,
+            },
+            body: JSON.stringify({
               code: cleanCode,
-            }
-          );
+            }),
+          }
+        );
 
-        const data = result.data;
+        const data = await response.json();
 
-        if (!data?.ok) {
+        if (!response.ok) {
           throw new Error(
-            data?.message ||
+            data.message ||
               "The QR code could not be redeemed."
           );
         }
@@ -220,8 +306,12 @@ if (waterSessionId) {
         );
 
         setError(
-          redeemError?.message ||
-            "The QR code could not be redeemed."
+          redeemError instanceof TypeError &&
+            redeemError.message ===
+              "Failed to fetch"
+            ? "The public redemption service could not be reached. Please ask the machine operator to check its Cloudflare connection."
+            : redeemError?.message ||
+                "The QR code could not be redeemed."
         );
 
         navigate(

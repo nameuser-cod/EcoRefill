@@ -12,7 +12,10 @@ except ImportError:
 import cv2
 import json
 import os
+import re
 import serial
+import shutil
+import subprocess
 import threading
 import time
 import uuid
@@ -56,6 +59,17 @@ WATER_COMMAND_TIMEOUT_SECONDS = 45
 
 API_HOST = "0.0.0.0"
 API_PORT = 5000
+PUBLIC_REDEMPTION_PORT = int(
+    os.getenv("PUBLIC_REDEMPTION_PORT", "5001")
+)
+CLOUDFLARE_TUNNEL_ENABLED = (
+    os.getenv("CLOUDFLARE_TUNNEL_ENABLED", "true").lower()
+    in {"1", "true", "yes"}
+)
+CLOUDFLARED_COMMAND = os.getenv(
+    "CLOUDFLARED_COMMAND",
+    "cloudflared",
+)
 
 MACHINE_ID = "machine_001"
 
@@ -180,6 +194,9 @@ state_lock = threading.Lock()
 shutdown_event = threading.Event()
 recycling_paused = threading.Event()
 finish_session_event = threading.Event()
+redemption_tunnel_lock = threading.Lock()
+redemption_tunnel_url = None
+redemption_tunnel_process = None
 
 machine_state = {
     "machineId": MACHINE_ID,
@@ -218,6 +235,11 @@ def update_state(**changes):
 def get_state():
     with state_lock:
         return dict(machine_state)
+
+
+def get_redemption_tunnel_url():
+    with redemption_tunnel_lock:
+        return redemption_tunnel_url
 
 
 def reset_state():
@@ -944,6 +966,7 @@ def finalize_recycling_session():
         return False
 
     qr_code = f"ecorefill://claim/{batch_session_id}"
+    redemption_api_url = get_redemption_tunnel_url()
     firebase_saved = False
 
     if db is not None:
@@ -969,6 +992,7 @@ def finalize_recycling_session():
             "status": "unclaimed",
             "claimedBy": None,
             "qrCode": qr_code,
+            "redemptionApiUrl": redemption_api_url,
             "createdAt": firestore.SERVER_TIMESTAMP,
             "updatedAt": firestore.SERVER_TIMESTAMP,
             "expiresAt": datetime.now(timezone.utc) + timedelta(minutes=10),
@@ -2138,6 +2162,12 @@ water_request_thread.start()
 app = Flask(__name__)
 CORS(app)
 
+# This second app is the only origin exposed through Cloudflare. Keeping
+# machine-control routes off this app prevents public callers from resetting,
+# pausing, or operating the physical machine.
+public_redeem_app = Flask(f"{__name__}.public_redeem")
+CORS(public_redeem_app)
+
 
 # =========================================================
 # MACHINE / RECYCLING API
@@ -2762,6 +2792,7 @@ def api_complete_water_refill_session(
 # =========================================================
 
 @app.post("/api/recycling/redeem")
+@public_redeem_app.post("/api/recycling/redeem")
 def api_redeem_recycling_reward():
     if db is None:
         return jsonify({
@@ -3076,12 +3107,113 @@ def api_redeem_recycling_reward():
             "message": "Unable to redeem the reward right now.",
         }), 500
 
+
+def run_public_redemption_server():
+    public_redeem_app.run(
+        host="127.0.0.1",
+        port=PUBLIC_REDEMPTION_PORT,
+        debug=False,
+        threaded=True,
+        use_reloader=False,
+    )
+
+
+def watch_redemption_tunnel(process):
+    global redemption_tunnel_url
+
+    tunnel_pattern = re.compile(
+        r"https://[a-z0-9-]+\.trycloudflare\.com",
+        re.IGNORECASE,
+    )
+
+    if process.stdout is None:
+        return
+
+    for output_line in process.stdout:
+        line = output_line.strip()
+
+        if line:
+            print(f"cloudflared: {line}")
+
+        match = tunnel_pattern.search(line)
+
+        if match:
+            tunnel_url = match.group(0).rstrip("/")
+
+            with redemption_tunnel_lock:
+                redemption_tunnel_url = tunnel_url
+
+            print(
+                "Public recycling redemption URL:",
+                tunnel_url,
+            )
+
+    with redemption_tunnel_lock:
+        redemption_tunnel_url = None
+
+    print(
+        "Cloudflare redemption tunnel stopped with code:",
+        process.poll(),
+    )
+
+
+def start_redemption_tunnel():
+    global redemption_tunnel_process
+
+    if not CLOUDFLARE_TUNNEL_ENABLED:
+        print("Cloudflare redemption tunnel is disabled.")
+        return None
+
+    cloudflared_path = shutil.which(CLOUDFLARED_COMMAND)
+
+    if not cloudflared_path:
+        print(
+            "cloudflared is not installed. Recycling redemption "
+            "will only work on the machine's local network."
+        )
+        return None
+
+    public_server_thread = threading.Thread(
+        target=run_public_redemption_server,
+        daemon=True,
+    )
+    public_server_thread.start()
+
+    try:
+        redemption_tunnel_process = subprocess.Popen(
+            [
+                cloudflared_path,
+                "tunnel",
+                "--url",
+                f"http://127.0.0.1:{PUBLIC_REDEMPTION_PORT}",
+                "--no-autoupdate",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+    except OSError as error:
+        print("Could not start Cloudflare tunnel:", error)
+        return None
+
+    tunnel_output_thread = threading.Thread(
+        target=watch_redemption_tunnel,
+        args=(redemption_tunnel_process,),
+        daemon=True,
+    )
+    tunnel_output_thread.start()
+
+    return redemption_tunnel_process
+
 # =========================================================
 # START SERVER
 # =========================================================
 
 if __name__ == "__main__":
     try:
+        start_redemption_tunnel()
+
         print(
             f"EcoRefill API running on port {API_PORT}"
         )
@@ -3102,6 +3234,17 @@ if __name__ == "__main__":
 
     finally:
         shutdown_event.set()
+
+        if (
+            redemption_tunnel_process is not None
+            and redemption_tunnel_process.poll() is None
+        ):
+            redemption_tunnel_process.terminate()
+
+            try:
+                redemption_tunnel_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                redemption_tunnel_process.kill()
 
         try:
             picam2.stop()
