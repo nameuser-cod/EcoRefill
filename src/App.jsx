@@ -5,17 +5,16 @@ import UserDashboard from "./pages/user/UserDashboard";
 import OwnerDashboard from "./pages/owner/OwnerDashboard";
 import MachineHome from "./pages/machine/MachineHome";
 import RedeemQRCode from "./pages/machine/RedeemQRCode";
-import ScanQR from "./pages/user/ScanQR";
+import ScanQR, { CameraScan } from "./pages/user/ScanQR";
 import UserHistory from "./pages/user/UserHistory";
 import BuyPoints from "./pages/user/BuyPoints";
-import CameraScan from "./pages/user/CameraScan";
 import MachineWaterRefill from "./pages/machine/MachineWaterRefill";
 import UserWaterRefill from "./pages/user/UserWaterRefill";
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" />} />
+      <Route path="/" element={<Navigate to="/machine" />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/user/dashboard" element={<UserDashboard />} />
