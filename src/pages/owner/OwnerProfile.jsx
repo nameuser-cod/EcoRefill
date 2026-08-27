@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { signOut } from "firebase/auth";
 import { doc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { LogOut, Mail, MapPin, Save, UserRound } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { auth, db } from "../../firebase/firebase";
+import LogoutButton from "../../components/LogoutButton";
 import OwnerPageShell from "./components/OwnerPageShell";
 import { OwnerError, OwnerLoading } from "./components/OwnerFeedback";
 import useOwnerMachine from "./hooks/useOwnerMachine";
@@ -87,13 +86,7 @@ function ProfileForm({ owner, machine }) {
 }
 
 function OwnerProfile() {
-  const navigate = useNavigate();
   const { owner, machine, loading, error } = useOwnerMachine();
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    navigate("/login", { replace: true });
-  };
 
   return (
     <OwnerPageShell
@@ -117,10 +110,10 @@ function OwnerProfile() {
             <span><MapPin size={16} />{machine?.location || "Location not set"}</span>
           </aside>
 
-          <button type="button" className="owner-logout-button" onClick={handleLogout}>
+          <LogoutButton className="owner-logout-button">
             <LogOut size={19} />
             Log out of EcoRefill
-          </button>
+          </LogoutButton>
         </div>
       )}
     </OwnerPageShell>

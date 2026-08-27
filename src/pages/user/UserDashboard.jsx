@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   doc,
@@ -20,6 +20,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
+import LogoutButton from "../../components/LogoutButton";
 import UserBottomNav from "./UserBottomNav";
 import "../../styles/user.css";
 
@@ -93,11 +94,6 @@ function UserDashboard() {
     };
   }, [navigate]);
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    navigate("/login", { replace: true });
-  };
-
   const getTransactionLabel = (type) =>
     ({
       recycling: "Recycling Reward",
@@ -155,15 +151,13 @@ function UserDashboard() {
             </p>
           </div>
 
-          <button
-            type="button"
+          <LogoutButton
             className="icon-button"
-            onClick={handleLogout}
-            aria-label="Log out"
+            ariaLabel="Log out"
             title="Log out"
           >
             <LogOut size={20} />
-          </button>
+          </LogoutButton>
         </header>
 
         {error && (

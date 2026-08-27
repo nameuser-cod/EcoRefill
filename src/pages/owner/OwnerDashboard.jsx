@@ -1,7 +1,5 @@
-import { signOut } from "firebase/auth";
 import { AlertTriangle, LogOut } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { auth } from "../../firebase/firebase";
+import LogoutButton from "../../components/LogoutButton";
 import MachineMetrics from "./components/MachineMetrics";
 import MachineOverview from "./components/MachineOverview";
 import OwnerPageShell from "./components/OwnerPageShell";
@@ -22,7 +20,6 @@ import useOwnerMachine from "./hooks/useOwnerMachine";
 import { normalizeText } from "./utils/ownerDashboard";
 
 function OwnerDashboard() {
-  const navigate = useNavigate();
   const {
     owner,
     machine,
@@ -34,11 +31,6 @@ function OwnerDashboard() {
   const unreadAlerts = dashboard.recentAlerts.filter(
     (alert) => normalizeText(alert.status) === "unread"
   ).length;
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    navigate("/login", { replace: true });
-  };
 
   if (machineLoading) {
     return (
@@ -59,14 +51,12 @@ function OwnerDashboard() {
         title={`Welcome${owner?.fullName ? `, ${owner.fullName}` : ""}`}
         subtitle="Manage your EcoRefill machine from one place."
         action={
-          <button
-            type="button"
+          <LogoutButton
             className="owner-header-button"
-            onClick={handleLogout}
-            aria-label="Log out"
+            ariaLabel="Log out"
           >
             <LogOut size={20} />
-          </button>
+          </LogoutButton>
         }
       >
         <OwnerError message={machineError} />
@@ -88,14 +78,12 @@ function OwnerDashboard() {
       subtitle={`Welcome back${owner?.fullName ? `, ${owner.fullName}` : ""}.`}
       unreadAlerts={unreadAlerts}
       action={
-        <button
-          type="button"
+        <LogoutButton
           className="owner-header-button"
-          onClick={handleLogout}
-          aria-label="Log out"
+          ariaLabel="Log out"
         >
           <LogOut size={20} />
-        </button>
+        </LogoutButton>
       }
     >
       <OwnerError message={machineError || dashboard.error} />
