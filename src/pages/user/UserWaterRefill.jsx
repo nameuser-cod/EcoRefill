@@ -24,6 +24,7 @@ import {
 import {
   ArrowLeft,
   CheckCircle2,
+  CupSoda,
   Droplets,
   LoaderCircle,
 } from "lucide-react";
@@ -469,6 +470,12 @@ await setDoc(requestRef, {
               <CheckCircle2
                 size={70}
               />
+            ) : refillStatus ===
+              "processing" ? (
+              <CupSoda
+                size={70}
+                className="refill-cup-icon"
+              />
             ) : (
               <LoaderCircle
                 size={70}
@@ -518,15 +525,30 @@ await setDoc(requestRef, {
               "processing" && (
               <>
                 <h1>
-                  Checking Points
+                  Place Your Cup Near
+                  the Sensor
                 </h1>
 
                 <p>
-                  The machine is
-                  verifying your
-                  account and point
-                  balance.
+                  Put your cup under
+                  the water dispenser
+                  so the sensor can
+                  detect it. Keep it
+                  there until your
+                  refill is complete.
                 </p>
+
+                <div
+                  className="refill-live-status"
+                  role="status"
+                >
+                  <LoaderCircle
+                    size={20}
+                    className="user-spin"
+                  />
+
+                  Checking your points...
+                </div>
               </>
             )}
 

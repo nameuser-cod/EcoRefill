@@ -8,11 +8,11 @@ import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   CheckCircle2,
+  CupSoda,
   Droplets,
   LoaderCircle,
   RefreshCw,
   ScanLine,
-  ShieldCheck,
   XCircle,
 } from "lucide-react";
 import "../../styles/machine.css";
@@ -306,13 +306,13 @@ function MachineWaterRefill() {
           eyebrow: "Step 2 of 3",
 
           title:
-            "Checking your points",
+            "Place your cup near the sensor",
 
           message:
-            "Please keep this screen open.",
+            "Set it under the water dispenser and keep it there.",
 
           icon: (
-            <ShieldCheck
+            <CupSoda
               size={58}
             />
           ),
@@ -559,21 +559,35 @@ function MachineWaterRefill() {
                 {session.status ===
                   "processing" && (
                   <div className="water-big-message">
-                    <LoaderCircle
-                      size={44}
-                      className="machine-spin"
+                    <CupSoda
+                      size={64}
+                      className="water-cup-icon"
                     />
 
                     <div>
                       <h3>
-                        Verifying your
-                        account
+                        Put your cup under
+                        the dispenser
                       </h3>
 
                       <p>
-                        Checking available
-                        points...
+                        Move it close to
+                        the sensor. Do not
+                        remove it while the
+                        machine is working.
                       </p>
+
+                      <div
+                        className="water-processing-status"
+                        role="status"
+                      >
+                        <LoaderCircle
+                          size={20}
+                          className="machine-spin"
+                        />
+
+                        Checking your points...
+                      </div>
                     </div>
                   </div>
                 )}

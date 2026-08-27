@@ -1,960 +1,131 @@
-import { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
-import {
-  collection,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  where,
-} from "firebase/firestore";
+import { AlertTriangle, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { auth } from "../../firebase/firebase";
+import MachineMetrics from "./components/MachineMetrics";
+import MachineOverview from "./components/MachineOverview";
+import OwnerPageShell from "./components/OwnerPageShell";
 import {
-  AlertTriangle,
-  Bell,
-  Camera,
-  Droplets,
-  Gauge,
-  ImageOff,
-  LayoutDashboard,
-  LogOut,
-  Package,
-  PackageX,
-  Recycle,
-  ReceiptText,
-  ShieldCheck,
-  ShieldAlert,
-  WalletCards,
-} from "lucide-react";
-import { auth, db } from "../../firebase/firebase";
-import "../../styles/owner.css";
+  OwnerEmpty,
+  OwnerError,
+  OwnerLoading,
+} from "./components/OwnerFeedback";
+import RecentScans from "./components/RecentScans";
+import RecyclingOverview from "./components/RecyclingOverview";
+import RejectedBreakdown from "./components/RejectedBreakdown";
+import {
+  RecentAlerts,
+  RecentTransactions,
+} from "./components/RecentActivity";
+import useOwnerDashboard from "./hooks/useOwnerDashboard";
+import useOwnerMachine from "./hooks/useOwnerMachine";
+import { normalizeText } from "./utils/ownerDashboard";
 
 function OwnerDashboard() {
   const navigate = useNavigate();
+  const {
+    owner,
+    machine,
+    loading: machineLoading,
+    error: machineError,
+  } = useOwnerMachine();
+  const dashboard = useOwnerDashboard(machine?.id);
 
-  const [machine, setMachine] = useState(null);
-  const [recentTransactions, setRecentTransactions] = useState([]);
-  const [recentAlerts, setRecentAlerts] = useState([]);
-  const [recentItems, setRecentItems] = useState([]);
-
-  const [analytics, setAnalytics] = useState({
-    bottleCount: 0,
-    canCount: 0,
-    acceptedCount: 0,
-    rejectedCount: 0,
-    totalItems: 0,
-    acceptanceRate: 0,
-    rejectedTypes: {},
-  });
-
-  const [loading, setLoading] = useState(true);
-  const currentUser = auth.currentUser;
-
-  const normalizeText = (value) =>
-    String(value || "")
-      .trim()
-      .toLowerCase()
-      .replaceAll("_", " ")
-      .replaceAll("-", " ");
-
-  const isBottleMaterial = (value) => {
-    const material = normalizeText(value);
-
-    return (
-      material.includes("bottle") ||
-      material.includes("plastic") ||
-      material === "pet"
-    );
-  };
-
-  const isCanMaterial = (value) => {
-    const material = normalizeText(value);
-
-    return (
-      material.includes("can") ||
-      material.includes("aluminum") ||
-      material.includes("aluminium")
-    );
-  };
-
-  const isRejectedTransaction = (transaction) => {
-    const status = normalizeText(transaction.status);
-    const type = normalizeText(transaction.type);
-    const result = normalizeText(transaction.result);
-    const decision = normalizeText(transaction.decision);
-
-    return (
-      status === "rejected" ||
-      type === "rejected" ||
-      type === "rejection" ||
-      type === "rejected item" ||
-      result === "rejected" ||
-      decision === "rejected" ||
-      transaction.accepted === false
-    );
-  };
-
-  const getDetectedMaterial = (transaction) => {
-    return (
-      transaction.materialType ||
-      transaction.detectedClass ||
-      transaction.detectedItem ||
-      transaction.category ||
-      transaction.itemType ||
-      "Unknown item"
-    );
-  };
-
-  /*
-   * `recycling_records` is what machine_flow.py actually writes for
-   * every scanned item (accepted or rejected) — it carries its own
-   * `accepted` boolean and `category` field, so there's no need to
-   * guess from loosely-typed transaction data here.
-   */
-  const calculateAnalytics = (records) => {
-    let bottleCount = 0;
-    let canCount = 0;
-    let acceptedCount = 0;
-    let rejectedCount = 0;
-
-    const rejectedTypes = {};
-
-    records.forEach((record) => {
-      const accepted = Boolean(record.accepted);
-      const material = getDetectedMaterial(record);
-
-      if (!accepted) {
-        rejectedCount += 1;
-
-        const rejectedName =
-          normalizeText(material) === ""
-            ? "Unknown item"
-            : String(material).trim();
-
-        rejectedTypes[rejectedName] =
-          (rejectedTypes[rejectedName] || 0) + 1;
-
-        return;
-      }
-
-      acceptedCount += 1;
-
-      const category = normalizeText(record.category);
-
-      if (category === "bottle" || isBottleMaterial(material)) {
-        bottleCount += 1;
-      } else if (category === "can" || isCanMaterial(material)) {
-        canCount += 1;
-      }
-    });
-
-    const totalItems = acceptedCount + rejectedCount;
-
-    const acceptanceRate =
-      totalItems > 0
-        ? Math.round((acceptedCount / totalItems) * 100)
-        : 0;
-
-    setAnalytics({
-      bottleCount,
-      canCount,
-      acceptedCount,
-      rejectedCount,
-      totalItems,
-      acceptanceRate,
-      rejectedTypes,
-    });
-  };
-
-  useEffect(() => {
-    const loadOwnerDashboard = async () => {
-      try {
-        if (!currentUser) {
-          navigate("/login");
-          return;
-        }
-
-        const machinesQuery = query(
-          collection(db, "machines"),
-          where("ownerId", "==", currentUser.uid),
-          limit(1)
-        );
-
-        const machinesSnapshot = await getDocs(machinesQuery);
-
-        if (machinesSnapshot.empty) {
-          setMachine(null);
-          return;
-        }
-
-        const machineDoc = machinesSnapshot.docs[0];
-
-        setMachine({
-          id: machineDoc.id,
-          ...machineDoc.data(),
-        });
-
-        const machineId = machineDoc.id;
-
-        /*
-         * Load every recycling record for this machine (accepted and
-         * rejected scans both live here) so the dashboard can
-         * calculate the complete analytics.
-         */
-        const analyticsQuery = query(
-          collection(db, "recycling_records"),
-          where("machineId", "==", machineId)
-        );
-
-        const analyticsSnapshot = await getDocs(analyticsQuery);
-
-        const allRecords = analyticsSnapshot.docs.map(
-          (recordDoc) => ({
-            id: recordDoc.id,
-            ...recordDoc.data(),
-          })
-        );
-
-        calculateAnalytics(allRecords);
-
-        /*
-         * Load the newest scans (with photos, when available) for
-         * the "Recent Scanned Items" gallery.
-         */
-        const recentItemsQuery = query(
-          collection(db, "recycling_records"),
-          where("machineId", "==", machineId),
-          orderBy("createdAt", "desc"),
-          limit(8)
-        );
-
-        const recentItemsSnapshot = await getDocs(recentItemsQuery);
-
-        const recentItemsList = recentItemsSnapshot.docs.map(
-          (recordDoc) => ({
-            id: recordDoc.id,
-            ...recordDoc.data(),
-          })
-        );
-
-        setRecentItems(recentItemsList);
-
-        /*
-         * Load only the five newest transactions for the
-         * Recent Transactions section.
-         */
-        const transactionsQuery = query(
-          collection(db, "transactions"),
-          where("machineId", "==", machineId),
-          orderBy("createdAt", "desc"),
-          limit(5)
-        );
-
-        const transactionsSnapshot = await getDocs(transactionsQuery);
-
-        const transactionList = transactionsSnapshot.docs.map(
-          (transactionDoc) => ({
-            id: transactionDoc.id,
-            ...transactionDoc.data(),
-          })
-        );
-
-        setRecentTransactions(transactionList);
-
-        const alertsQuery = query(
-          collection(db, "alerts"),
-          where("machineId", "==", machineId),
-          orderBy("createdAt", "desc"),
-          limit(5)
-        );
-
-        const alertsSnapshot = await getDocs(alertsQuery);
-
-        const alertList = alertsSnapshot.docs.map((alertDoc) => ({
-          id: alertDoc.id,
-          ...alertDoc.data(),
-        }));
-
-        setRecentAlerts(alertList);
-      } catch (error) {
-        console.error("Error loading device owner dashboard:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadOwnerDashboard();
-  }, [currentUser, navigate]);
+  const unreadAlerts = dashboard.recentAlerts.filter(
+    (alert) => normalizeText(alert.status) === "unread"
+  ).length;
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigate("/login");
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
+    await signOut(auth);
+    navigate("/login", { replace: true });
   };
 
-  const getStatusClass = (status) => {
-    if (status === "online" || status === "safe") {
-      return "status-good";
-    }
-
-    if (status === "warning") {
-      return "status-warning";
-    }
-
-    if (status === "offline" || status === "unsafe") {
-      return "status-danger";
-    }
-
-    return "status-good";
-  };
-
-  const getTransactionLabel = (type) => {
-    const normalizedType = normalizeText(type);
-
-    if (normalizedType === "recycling") return "Recycling";
-    if (normalizedType === "water refill") return "Water Refill";
-    if (normalizedType === "point purchase") return "Point Purchase";
-
-    if (
-      normalizedType === "rejected" ||
-      normalizedType === "rejection" ||
-      normalizedType === "rejected item"
-    ) {
-      return "Rejected Item";
-    }
-
-    return "Transaction";
-  };
-
-  const getTransactionIcon = (type) => {
-    const normalizedType = normalizeText(type);
-
-    if (normalizedType === "recycling") {
-      return <Recycle size={20} />;
-    }
-
-    if (normalizedType === "water refill") {
-      return <Droplets size={20} />;
-    }
-
-    if (normalizedType === "point purchase") {
-      return <WalletCards size={20} />;
-    }
-
-    if (
-      normalizedType === "rejected" ||
-      normalizedType === "rejection" ||
-      normalizedType === "rejected item"
-    ) {
-      return <PackageX size={20} />;
-    }
-
-    return <Gauge size={20} />;
-  };
-
-  const rejectedTypeEntries = Object.entries(
-    analytics.rejectedTypes
-  ).sort((firstItem, secondItem) => secondItem[1] - firstItem[1]);
-
-  if (loading) {
+  if (machineLoading) {
     return (
-      <div className="owner-dashboard-page">
-        <p className="loading-text">
-          Loading device owner dashboard...
-        </p>
-      </div>
+      <OwnerPageShell
+        eyebrow="Owner workspace"
+        title="Dashboard"
+        subtitle="Preparing your machine overview"
+      >
+        <OwnerLoading />
+      </OwnerPageShell>
     );
   }
 
   if (!machine) {
     return (
-      <div className="owner-dashboard-page">
-        <div className="owner-dashboard-container">
-          <header className="dashboard-header">
-            <div>
-              <p className="small-title">EcoRefill</p>
-              <h1>Device Owner Dashboard</h1>
-            </div>
-
-            <button
-              type="button"
-              className="icon-button"
-              onClick={handleLogout}
-              aria-label="Log out"
-            >
-              <LogOut size={20} />
-            </button>
-          </header>
-
-          <div className="empty-owner-card">
-            <AlertTriangle size={42} />
-
-            <h2>No machine connected yet</h2>
-
-            <p>
-              Your account does not have an assigned EcoRefill
-              machine yet. Add a machine document in Firestore and
-              set its ownerId to your Firebase UID.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="owner-dashboard-page">
-      <div className="owner-dashboard-container">
-        <header className="dashboard-header">
-          <div>
-            <p className="small-title">Device Owner</p>
-
-            <h1>
-              {machine.machineName || "EcoRefill Machine"}
-            </h1>
-
-            <span className="machine-location">
-              {machine.location || "No location set"}
-            </span>
-          </div>
-
+      <OwnerPageShell
+        eyebrow="Owner workspace"
+        title={`Welcome${owner?.fullName ? `, ${owner.fullName}` : ""}`}
+        subtitle="Manage your EcoRefill machine from one place."
+        action={
           <button
             type="button"
-            className="icon-button"
+            className="owner-header-button"
             onClick={handleLogout}
             aria-label="Log out"
           >
             <LogOut size={20} />
           </button>
-        </header>
-
-        <section className="machine-status-card">
-          <div>
-            <p>Machine Status</p>
-
-            <h2>{machine.machineStatus || "online"}</h2>
-
-            <span>
-              Real-time overview of your EcoRefill machine.
-            </span>
-          </div>
-
-          <div className="machine-status-icon">
-            <Gauge size={44} />
-          </div>
+        }
+      >
+        <OwnerError message={machineError} />
+        <section className="owner-panel owner-no-machine">
+          <OwnerEmpty
+            icon={AlertTriangle}
+            title="No machine connected"
+            description="Ask an administrator to assign a machine to this owner account."
+          />
         </section>
+      </OwnerPageShell>
+    );
+  }
 
-        <section className="owner-stats-grid">
-          <div className="owner-stat-card">
-            <Droplets size={28} />
-            <p>Water Level</p>
-            <h3>{machine.waterLevel || 0}%</h3>
-
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{
-                  width: `${machine.waterLevel || 0}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="owner-stat-card">
-            <Package size={28} />
-            <p>Bottle Storage</p>
-            <h3>{machine.bottleStorageLevel || 0}%</h3>
-
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{
-                  width: `${machine.bottleStorageLevel || 0}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="owner-stat-card">
-            <Recycle size={28} />
-            <p>Can Storage</p>
-            <h3>{machine.canStorageLevel || 0}%</h3>
-
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{
-                  width: `${machine.canStorageLevel || 0}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="owner-stat-card">
-            {machine.isTampered ? (
-              <ShieldAlert size={28} />
-            ) : (
-              <ShieldCheck size={28} />
-            )}
-
-            <p>Security</p>
-            <h3>{machine.isTampered ? "Alert" : "Safe"}</h3>
-
-            <span
-              className={
-                machine.isTampered
-                  ? "owner-status-pill status-danger"
-                  : "owner-status-pill status-good"
-              }
-            >
-              {machine.isTampered ? "Tampered" : "Secured"}
-            </span>
-          </div>
-        </section>
-
-        {/* Machine item analytics */}
-        <section className="owner-section">
-          <div className="section-header">
-            <div>
-              <p className="section-small-title">
-                Machine Analytics
-              </p>
-              <h2>Recycling Overview</h2>
-            </div>
-          </div>
-
-          <div className="analytics-grid">
-            <div className="analytics-card">
-              <div className="analytics-icon">
-                <Package size={25} />
-              </div>
-
-              <div>
-                <p>Plastic Bottles</p>
-                <h3>{analytics.bottleCount}</h3>
-                <span>Accepted by machine</span>
-              </div>
-            </div>
-
-            <div className="analytics-card">
-              <div className="analytics-icon">
-                <Recycle size={25} />
-              </div>
-
-              <div>
-                <p>Aluminum Cans</p>
-                <h3>{analytics.canCount}</h3>
-                <span>Accepted by machine</span>
-              </div>
-            </div>
-
-            <div className="analytics-card">
-              <div className="analytics-icon analytics-accepted-icon">
-                <ShieldCheck size={25} />
-              </div>
-
-              <div>
-                <p>Accepted Items</p>
-                <h3>{analytics.acceptedCount}</h3>
-                <span>
-                  {analytics.acceptanceRate}% acceptance rate
-                </span>
-              </div>
-            </div>
-
-            <div className="analytics-card rejected-analytics-card">
-              <div className="analytics-icon analytics-rejected-icon">
-                <PackageX size={25} />
-              </div>
-
-              <div>
-                <p>Rejected Items</p>
-                <h3>{analytics.rejectedCount}</h3>
-                <span>Not accepted by machine</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="analytics-summary">
-            <div>
-              <p>Total Items Scanned</p>
-              <h3>{analytics.totalItems}</h3>
-            </div>
-
-            <div>
-              <p>Successful Acceptance</p>
-              <h3>{analytics.acceptanceRate}%</h3>
-            </div>
-          </div>
-
-          <div className="analytics-progress">
-            <div className="analytics-progress-header">
-              <span>Machine acceptance rate</span>
-              <strong>{analytics.acceptanceRate}%</strong>
-            </div>
-
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{
-                  width: `${analytics.acceptanceRate}%`,
-                }}
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Photos of recently scanned items */}
-        <section className="owner-section">
-          <div className="section-header">
-            <h2>Recent Scanned Items</h2>
-          </div>
-
-          {recentItems.length === 0 ? (
-            <div className="empty-card">
-              <Camera size={28} />
-              <p>No scanned items yet.</p>
-              <span>
-                Photos of accepted and rejected items will
-                appear here as the machine scans them.
-              </span>
-            </div>
-          ) : (
-            <div className="recent-items-grid">
-              {recentItems.map((item) => (
-                <div
-                  className="recent-item-card"
-                  key={item.id}
-                >
-                  <div className="recent-item-photo">
-                    {item.imageUrl ? (
-                      <img
-                        src={item.imageUrl}
-                        alt={
-                          item.materialType ||
-                          "Scanned item"
-                        }
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="recent-item-photo-placeholder">
-                        <ImageOff size={22} />
-                      </div>
-                    )}
-
-                    <span
-                      className={`recent-item-badge ${
-                        item.accepted
-                          ? "status-good"
-                          : "status-danger"
-                      }`}
-                    >
-                      {item.accepted
-                        ? "Accepted"
-                        : "Rejected"}
-                    </span>
-                  </div>
-
-                  <div className="recent-item-info">
-                    <h4>
-                      {item.materialType ||
-                        "Unknown item"}
-                    </h4>
-
-                    <p>
-                      {Math.round(
-                        (item.confidence || 0) * 100
-                      )}
-                      % confidence
-                      {item.createdAt?.toDate
-                        ? ` • ${item.createdAt
-                            .toDate()
-                            .toLocaleString()}`
-                        : ""}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Rejected item breakdown */}
-        <section className="owner-section">
-          <div className="section-header">
-            <h2>Rejected Item Breakdown</h2>
-          </div>
-
-          {rejectedTypeEntries.length === 0 ? (
-            <div className="empty-card">
-              <ShieldCheck size={28} />
-              <p>No rejected items yet.</p>
-              <span>
-                Rejected objects detected by the machine will
-                appear here.
-              </span>
-            </div>
-          ) : (
-            <div className="rejected-breakdown-list">
-              {rejectedTypeEntries.map(
-                ([rejectedType, count]) => (
-                  <div
-                    className="rejected-breakdown-item"
-                    key={rejectedType}
-                  >
-                    <div className="rejected-item-name">
-                      <div className="rejected-item-icon">
-                        <PackageX size={19} />
-                      </div>
-
-                      <div>
-                        <h4>{rejectedType}</h4>
-                        <span>Detected rejected object</span>
-                      </div>
-                    </div>
-
-                    <strong>{count}</strong>
-                  </div>
-                )
-              )}
-            </div>
-          )}
-        </section>
-
-        <section className="quality-card">
-          <div>
-            <p>Water Quality</p>
-            <h2>
-              {machine.waterQualityStatus || "safe"}
-            </h2>
-          </div>
-
-          <span
-            className={`owner-status-pill ${getStatusClass(
-              machine.waterQualityStatus
-            )}`}
-          >
-            {machine.waterQualityStatus || "safe"}
-          </span>
-        </section>
-
-        <section className="owner-section">
-          <div className="section-header">
-            <h2>Recent Alerts</h2>
-
-            <button
-              type="button"
-              onClick={() => navigate("/owner/alerts")}
-            >
-              View All
-            </button>
-          </div>
-
-          {recentAlerts.length === 0 ? (
-            <div className="empty-card">
-              <p>No alerts yet.</p>
-              <span>
-                Your machine has no recent warning alerts.
-              </span>
-            </div>
-          ) : (
-            <div className="owner-list">
-              {recentAlerts.map((alert) => (
-                <div
-                  className="owner-list-item"
-                  key={alert.id}
-                >
-                  <div className="owner-list-icon alert-icon">
-                    <Bell size={20} />
-                  </div>
-
-                  <div className="owner-list-details">
-                    <h4>
-                      {alert.alertType || "Machine Alert"}
-                    </h4>
-
-                    <p>
-                      {alert.message ||
-                        "No message provided"}
-                    </p>
-                  </div>
-
-                  <span className="owner-status-pill status-warning">
-                    {alert.status || "unread"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="owner-section">
-          <div className="section-header">
-            <h2>Recent Transactions</h2>
-
-            <button
-              type="button"
-              onClick={() =>
-                navigate("/owner/transactions")
-              }
-            >
-              View All
-            </button>
-          </div>
-
-          {recentTransactions.length === 0 ? (
-            <div className="empty-card">
-              <p>No transactions yet.</p>
-
-              <span>
-                Transactions will appear here when users use
-                the machine.
-              </span>
-            </div>
-          ) : (
-            <div className="owner-list">
-              {recentTransactions.map((transaction) => {
-                const rejected =
-                  isRejectedTransaction(transaction);
-
-                return (
-                  <div
-                    className="owner-list-item"
-                    key={transaction.id}
-                  >
-                    <div
-                      className={`owner-list-icon ${
-                        rejected ? "alert-icon" : ""
-                      }`}
-                    >
-                      {getTransactionIcon(transaction.type)}
-                    </div>
-
-                    <div className="owner-list-details">
-                      <h4>
-                        {rejected
-                          ? "Rejected Item"
-                          : getTransactionLabel(
-                              transaction.type
-                            )}
-                      </h4>
-
-                      {rejected && (
-                        <p>
-                          {getDetectedMaterial(transaction)} •
-                          Not accepted
-                        </p>
-                      )}
-
-                      {!rejected &&
-                        normalizeText(transaction.type) ===
-                          "recycling" && (
-                          <p>
-                            +{transaction.pointsEarned || 0}{" "}
-                            points •{" "}
-                            {transaction.materialType ||
-                              "Unknown material"}
-                          </p>
-                        )}
-
-                      {normalizeText(transaction.type) ===
-                        "water refill" && (
-                        <p>
-                          -{transaction.pointsUsed || 0}{" "}
-                          points •{" "}
-                          {transaction.waterAmountMl || 0} ml
-                        </p>
-                      )}
-
-                      {normalizeText(transaction.type) ===
-                        "point purchase" && (
-                        <p>
-                          +
-                          {transaction.pointsBought || 0}{" "}
-                          points • ₱
-                          {transaction.amountPaid || 0}
-                        </p>
-                      )}
-                    </div>
-
-                    <span
-                      className={`owner-status-pill ${
-                        rejected
-                          ? "status-danger"
-                          : "status-good"
-                      }`}
-                    >
-                      {rejected
-                        ? "rejected"
-                        : transaction.status ||
-                          "completed"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      </div>
-
-      <nav className="owner-bottom-nav" aria-label="Owner navigation">
+  return (
+    <OwnerPageShell
+      eyebrow="Owner workspace"
+      title={machine.machineName || "EcoRefill machine"}
+      subtitle={`Welcome back${owner?.fullName ? `, ${owner.fullName}` : ""}.`}
+      unreadAlerts={unreadAlerts}
+      action={
         <button
           type="button"
-          className="owner-nav-item active"
-          onClick={() =>
-            window.scrollTo({ top: 0, behavior: "smooth" })
-          }
-          aria-label="Dashboard"
-          aria-current="page"
-        >
-          <LayoutDashboard size={22} />
-          <span>Dashboard</span>
-        </button>
-
-        <button
-          type="button"
-          className="owner-nav-item"
-          onClick={() => navigate("/owner/transactions")}
-          aria-label="Transactions"
-        >
-          <ReceiptText size={22} />
-          <span>Transactions</span>
-        </button>
-
-        <button
-          type="button"
-          className="owner-nav-item owner-nav-alerts"
-          onClick={() => navigate("/owner/alerts")}
-          aria-label="Alerts"
-        >
-          <span className="owner-nav-icon-wrap">
-            <Bell size={22} />
-            {recentAlerts.length > 0 && (
-              <span
-                className="owner-nav-badge"
-                aria-label={`${recentAlerts.length} recent alerts`}
-              >
-                {recentAlerts.length > 9 ? "9+" : recentAlerts.length}
-              </span>
-            )}
-          </span>
-          <span>Alerts</span>
-        </button>
-
-        <button
-          type="button"
-          className="owner-nav-item owner-nav-logout"
+          className="owner-header-button"
           onClick={handleLogout}
           aria-label="Log out"
         >
-          <LogOut size={22} />
-          <span>Logout</span>
+          <LogOut size={20} />
         </button>
-      </nav>
-    </div>
+      }
+    >
+      <OwnerError message={machineError || dashboard.error} />
+
+      {dashboard.loading ? (
+        <OwnerLoading label="Loading live machine activity..." />
+      ) : (
+        <>
+          <MachineOverview machine={machine} />
+          <MachineMetrics machine={machine} />
+
+          <div className="owner-dashboard-layout">
+            <div className="owner-dashboard-main">
+              <RecyclingOverview analytics={dashboard.analytics} />
+              <RecentScans items={dashboard.recentItems} />
+            </div>
+
+            <aside className="owner-dashboard-side">
+              <RecentAlerts alerts={dashboard.recentAlerts} />
+              <RecentTransactions
+                transactions={dashboard.recentTransactions}
+              />
+              <RejectedBreakdown
+                rejectedTypes={dashboard.analytics.rejectedTypes}
+              />
+            </aside>
+          </div>
+        </>
+      )}
+    </OwnerPageShell>
   );
 }
 

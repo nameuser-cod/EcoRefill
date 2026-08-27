@@ -3,6 +3,9 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import UserDashboard from "./pages/user/UserDashboard";
 import OwnerDashboard from "./pages/owner/OwnerDashboard";
+import OwnerAlerts from "./pages/owner/OwnerAlerts";
+import OwnerProfile from "./pages/owner/OwnerProfile";
+import OwnerTransactions from "./pages/owner/OwnerTransactions";
 import MachineHome from "./pages/machine/MachineHome";
 import RedeemQRCode from "./pages/machine/RedeemQRCode";
 import ScanQR, { CameraScan } from "./pages/user/ScanQR";
@@ -19,6 +22,9 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/user/dashboard" element={<UserDashboard />} />
       <Route path="/owner/dashboard" element={<OwnerDashboard />} />
+      <Route path="/owner/transactions" element={<OwnerTransactions />} />
+      <Route path="/owner/alerts" element={<OwnerAlerts />} />
+      <Route path="/owner/profile" element={<OwnerProfile />} />
       <Route path="/machine" element={<MachineHome />} />
       <Route path="/machine/redeem-qr" element={<RedeemQRCode />} />
       <Route path="/user/scan-qr" element={<ScanQR />} />

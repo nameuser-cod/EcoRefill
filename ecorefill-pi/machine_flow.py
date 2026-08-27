@@ -9,7 +9,7 @@ try:
 except ImportError:
     Button = None
 
-import cv2
+import base64
 import json
 import os
 import re
@@ -20,12 +20,12 @@ import threading
 import time
 import uuid
 
+import cv2
 import firebase_admin
 
 from firebase_admin import auth as firebase_auth
 from firebase_admin import credentials
 from firebase_admin import firestore
-from firebase_admin import storage as firebase_storage
 from datetime import (
     datetime,
     timedelta,
@@ -85,10 +85,10 @@ GREEN_BUTTON_BOUNCE_SECONDS = 0.15
 BLUE_BUTTON_GPIO = int(os.getenv("BLUE_BUTTON_GPIO", "27"))
 BLUE_BUTTON_BOUNCE_SECONDS = 0.15
 
-# Firebase Storage bucket for accepted/rejected item photos, e.g.
-# "my-project.appspot.com". Leave unset to disable photo uploads —
-# the machine will keep working, it just won't attach an image.
-STORAGE_BUCKET = os.getenv("FIREBASE_STORAGE_BUCKET", "")
+# Recent-scan photos are compressed and stored directly in each Firestore
+# recycling record. Keeping the encoded JPEG small avoids needing Firebase
+# Storage while leaving room below Firestore's document-size limit.
+SCAN_THUMBNAIL_MAX_ENCODED_BYTES = 150_000
 
 # IMPORTANT: only these exact material-specific YOLO classes are accepted.
 # Generic labels such as "bottle", "can", "metal_can", and "tin_can"
@@ -150,31 +150,19 @@ def initialize_firebase():
         "serviceAccountKey.json",
     )
 
-    app_options = (
-        {"storageBucket": STORAGE_BUCKET}
-        if STORAGE_BUCKET
-        else {}
-    )
-
     try:
         if os.path.exists(credential_path):
             cred = credentials.Certificate(credential_path)
-            firebase_admin.initialize_app(cred, app_options)
+            firebase_admin.initialize_app(cred)
             print(
                 f"Firebase Admin initialized using "
                 f"{credential_path}"
             )
         else:
-            firebase_admin.initialize_app(options=app_options)
+            firebase_admin.initialize_app()
             print(
                 "Firebase Admin initialized using "
                 "Application Default Credentials."
-            )
-
-        if not STORAGE_BUCKET:
-            print(
-                "FIREBASE_STORAGE_BUCKET is not set. "
-                "Item photos will not be uploaded."
             )
 
         return firestore.client()
@@ -487,21 +475,15 @@ def run_water_command(command, on_dispensing=None):
         return False, str(error)
 
 
-def upload_item_image(session_id):
+def create_item_thumbnail_data_url():
     """
-    Upload the photo of the most recently scanned item to Firebase
-    Storage and return a URL the owner dashboard can render in an
-    <img> tag. Prefers the annotated detection image (with the
-    bounding box drawn on it); falls back to the raw capture if the
-    model produced no annotated frame.
+    Create a small Base64 JPEG thumbnail for the owner dashboard.
 
-    Returns None (never raises) if Storage isn't configured or the
-    upload fails — a missing photo should never stop the physical
-    recycling flow.
+    The thumbnail is saved directly in the Firestore recycling record,
+    so Firebase Storage and a paid Storage plan are not required. The
+    function tries progressively smaller/lower-quality encodings and
+    returns None rather than interrupting the physical recycling flow.
     """
-    if db is None or not STORAGE_BUCKET:
-        return None
-
     local_path = (
         "detection_result.jpg"
         if os.path.exists("detection_result.jpg")
@@ -512,23 +494,53 @@ def upload_item_image(session_id):
         return None
 
     try:
-        bucket = firebase_storage.bucket()
-        blob = bucket.blob(f"recycling_items/{session_id}.jpg")
-        blob.upload_from_filename(local_path, content_type="image/jpeg")
+        source_image = cv2.imread(local_path)
 
-        try:
-            # Works when the bucket allows per-object ACLs.
-            blob.make_public()
-            return blob.public_url
-        except Exception:
-            # Uniform bucket-level access buckets reject make_public();
-            # fall back to a long-lived signed URL instead.
-            return blob.generate_signed_url(
-                expiration=timedelta(days=7)
+        if source_image is None:
+            return None
+
+        source_height, source_width = source_image.shape[:2]
+        encoding_options = (
+            (480, 55),
+            (420, 45),
+            (320, 35),
+        )
+
+        for max_dimension, quality in encoding_options:
+            scale = min(
+                1.0,
+                max_dimension / max(source_width, source_height),
+            )
+            resized_width = max(1, int(source_width * scale))
+            resized_height = max(1, int(source_height * scale))
+
+            thumbnail = cv2.resize(
+                source_image,
+                (resized_width, resized_height),
+                interpolation=cv2.INTER_AREA,
+            )
+            encoded_successfully, encoded_image = cv2.imencode(
+                ".jpg",
+                thumbnail,
+                [cv2.IMWRITE_JPEG_QUALITY, quality],
             )
 
+            if not encoded_successfully:
+                continue
+
+            if len(encoded_image) > SCAN_THUMBNAIL_MAX_ENCODED_BYTES:
+                continue
+
+            encoded_text = base64.b64encode(encoded_image).decode("ascii")
+            return f"data:image/jpeg;base64,{encoded_text}"
+
+        print(
+            "Recent-scan thumbnail was too large to store safely in Firestore."
+        )
+        return None
+
     except Exception as error:
-        print(f"Item image upload failed for {session_id}:", error)
+        print("Could not create recent-scan thumbnail:", error)
         return None
 
 
@@ -870,7 +882,7 @@ Created At: {time.time()}
 def save_recycling_to_firestore(
     item_id,
     result,
-    image_url=None,
+    image_data_url=None,
     batch_session_id=None,
 ):
     """
@@ -914,7 +926,7 @@ def save_recycling_to_firestore(
         "pointsEarned": points_earned,
         "confidence": confidence,
         "qrCode": None,
-        "imageUrl": image_url,
+        "imageDataUrl": image_data_url,
         "claimedBy": None,
         "createdAt": firestore.SERVER_TIMESTAMP,
         "updatedAt": firestore.SERVER_TIMESTAMP,
@@ -1267,7 +1279,7 @@ def machine_worker():
             result = verify_item(frame)
 
             item_id = str(uuid.uuid4())
-            image_url = upload_item_image(item_id)
+            image_data_url = create_item_thumbnail_data_url()
 
             update_state(
                 phase="sorting",
@@ -1305,7 +1317,7 @@ def machine_worker():
                 firebase_saved = save_recycling_to_firestore(
                     item_id,
                     result,
-                    image_url,
+                    image_data_url,
                     batch_session_id,
                 )
 
@@ -1327,7 +1339,6 @@ def machine_worker():
                     confidence=round(result["confidence"], 4),
                     sessionId=None,
                     qrCode=None,
-                    imageUrl=image_url,
                     firebaseSaved=firebase_saved,
                     error=None,
                 )
@@ -1340,7 +1351,7 @@ def machine_worker():
                 firebase_saved = save_recycling_to_firestore(
                     item_id,
                     result,
-                    image_url,
+                    image_data_url,
                     get_state().get("batchSessionId"),
                 )
 
@@ -1356,7 +1367,6 @@ def machine_worker():
                     confidence=round(result["confidence"], 4),
                     sessionId=None,
                     qrCode=None,
-                    imageUrl=image_url,
                     firebaseSaved=firebase_saved,
                     error=None,
                 )

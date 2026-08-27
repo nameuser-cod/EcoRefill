@@ -1248,6 +1248,30 @@
   line-height: 1.5;
 }
 
+.refill-success-card > .refill-cup-icon {
+  padding: 10px;
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  background: var(--lime-green);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+.refill-live-status {
+  width: fit-content;
+  margin: -5px auto 22px;
+  padding: 9px 13px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--mint-green);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .refill-success-details {
   margin-top: 10px;
   text-align: left;

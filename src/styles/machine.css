@@ -851,6 +851,33 @@ button.machine-choice-card:active:not(:disabled) {
   font-weight: 700;
 }
 
+.water-big-message > .water-cup-icon {
+  width: 96px;
+  height: 96px;
+  flex: 0 0 96px;
+  padding: 15px;
+  border: var(--border);
+  border-radius: 22px;
+  background: var(--lime-green);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+.water-processing-status {
+  width: fit-content;
+  margin-top: 18px;
+  padding: 9px 13px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .water-dispense-display span {
   display: block;
   font-size: 12px;
