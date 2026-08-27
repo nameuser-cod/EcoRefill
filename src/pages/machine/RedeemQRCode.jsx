@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Navigate,
   useLocation,
@@ -45,37 +44,6 @@ function RedeemQRCode() {
       />
     );
   }
-
-  const getMaterialLabel = (
-    value
-  ) => {
-    const normalizedValue =
-      String(value || "")
-        .toLowerCase()
-        .trim();
-
-    if (
-      normalizedValue ===
-        "plastic_bottle" ||
-      normalizedValue ===
-        "plastic bottle" ||
-      normalizedValue === "bottle"
-    ) {
-      return "Plastic Bottle";
-    }
-
-    if (
-      normalizedValue ===
-        "aluminum_can" ||
-      normalizedValue ===
-        "aluminum can" ||
-      normalizedValue === "can"
-    ) {
-      return "Aluminum Can";
-    }
-
-    return "Recyclable Material";
-  };
 
   const returnHome = async () => {
     try {
