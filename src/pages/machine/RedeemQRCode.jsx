@@ -152,7 +152,7 @@ function RedeemQRCode() {
                 value={String(
                   machineResult.qrCode
                 ).trim()}
-                size={250}
+                size={640}
                 bgColor="#ffffff"
                 fgColor="#10281d"
                 level="H"

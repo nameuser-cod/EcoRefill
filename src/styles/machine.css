@@ -17,6 +17,7 @@
   --danger: #ff4d4d;
   --warning: #ffd43b;
   --blue: #bdeeff;
+  --machine-qr-size: min(60vmin, 560px);
   --shadow: 8px 8px 0 var(--ink);
   --shadow-sm: 5px 5px 0 var(--ink);
   --shadow-lg: 12px 12px 0 var(--ink);
@@ -473,7 +474,7 @@ button.machine-choice-card:active:not(:disabled) {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
+  grid-template-columns: 0.72fr 1.28fr;
   gap: 22px;
 }
 
@@ -604,6 +605,12 @@ button.machine-choice-card:active:not(:disabled) {
   box-shadow: var(--shadow);
 }
 
+.reward-qr-frame canvas,
+.water-qr-frame svg {
+  width: var(--machine-qr-size) !important;
+  height: var(--machine-qr-size) !important;
+}
+
 .reward-qr-frame {
   margin-top: 13px;
 }
@@ -612,7 +619,6 @@ button.machine-choice-card:active:not(:disabled) {
 .water-qr-frame svg {
   display: block;
   max-width: 100%;
-  height: auto !important;
 }
 
 .reward-steps {
@@ -724,7 +730,7 @@ button.machine-choice-card:active:not(:disabled) {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
+  grid-template-columns: 1.28fr 0.72fr;
   align-items: center;
   gap: 28px;
 }
@@ -1103,12 +1109,6 @@ button.machine-choice-card:active:not(:disabled) {
     margin-top: 6px;
   }
 
-  .reward-qr-frame canvas,
-  .water-qr-frame svg {
-    width: 185px !important;
-    height: 185px !important;
-  }
-
   .reward-steps {
     margin-top: 9px;
     gap: 4px 8px;
@@ -1190,6 +1190,12 @@ button.machine-choice-card:active:not(:disabled) {
   .machine-kiosk-footer span,
   .reward-footer > div {
     padding: 5px 7px;
+  }
+}
+
+@media (max-height: 650px) {
+  .reward-steps {
+    display: none;
   }
 }
 
