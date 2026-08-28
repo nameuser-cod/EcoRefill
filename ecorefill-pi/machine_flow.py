@@ -59,7 +59,7 @@ MIN_OBJECT_AREA_RATIO = 0.05
 
 SERIAL_BAUD_RATE = 115200
 SERIAL_TIMEOUT = 0.25
-WATER_COMMAND_TIMEOUT_SECONDS = 45
+WATER_COMMAND_TIMEOUT_SECONDS = 50
 SORT_COMMAND_TIMEOUT_SECONDS = 6.0
 
 API_HOST = "0.0.0.0"
@@ -1948,7 +1948,7 @@ def process_water_refill_request(request_doc):
                 )
 
                 if (
-                     session_data.get("status")
+                    session_data.get("status")
     == "waiting_for_user"
                 ):
                     session_ref.update({
