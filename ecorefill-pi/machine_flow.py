@@ -9,6 +9,7 @@ try:
 except ImportError:
     Button = None
 
+import base64
 import json
 import os
 import re
@@ -18,15 +19,12 @@ import subprocess
 import threading
 import time
 import uuid
-from urllib.parse import quote
-
 import cv2
 import firebase_admin
 
 from firebase_admin import auth as firebase_auth
 from firebase_admin import credentials
 from firebase_admin import firestore
-from firebase_admin import storage
 from datetime import (
     datetime,
     timedelta,
@@ -86,21 +84,13 @@ GREEN_BUTTON_BOUNCE_SECONDS = 0.15
 BLUE_BUTTON_GPIO = int(os.getenv("BLUE_BUTTON_GPIO", "27"))
 BLUE_BUTTON_BOUNCE_SECONDS = 0.15
 
-# Firebase Storage bucket used for recycling photos.
-# Set this to the exact bucket shown in Firebase Console > Storage, for example:
-#   your-project-id.firebasestorage.app
-# or, for older Firebase projects:
-#   your-project-id.appspot.com
-FIREBASE_STORAGE_BUCKET = os.getenv(
-    "FIREBASE_STORAGE_BUCKET",
-    "",
-).strip()
-
-# Folder used inside Firebase Storage.
-RECYCLING_IMAGE_FOLDER = os.getenv(
-    "RECYCLING_IMAGE_FOLDER",
-    "recycling_images",
-).strip().strip("/")
+# Scan photos are stored directly in Firestore as compressed Base64 data URLs.
+# Keep them small because a Firestore document has a size limit.
+RECYCLING_IMAGE_WIDTH = int(os.getenv("RECYCLING_IMAGE_WIDTH", "320"))
+RECYCLING_IMAGE_HEIGHT = int(os.getenv("RECYCLING_IMAGE_HEIGHT", "240"))
+RECYCLING_IMAGE_JPEG_QUALITY = int(
+    os.getenv("RECYCLING_IMAGE_JPEG_QUALITY", "55")
+)
 
 # IMPORTANT: only these exact material-specific YOLO classes are accepted.
 # Generic labels such as "bottle", "can", "metal_can", and "tin_can"
@@ -165,23 +155,13 @@ def initialize_firebase():
     try:
         if os.path.exists(credential_path):
             cred = credentials.Certificate(credential_path)
-            firebase_options = (
-                {"storageBucket": FIREBASE_STORAGE_BUCKET}
-                if FIREBASE_STORAGE_BUCKET
-                else None
-            )
-            firebase_admin.initialize_app(cred, firebase_options)
+            firebase_admin.initialize_app(cred)
             print(
                 f"Firebase Admin initialized using "
                 f"{credential_path}"
             )
         else:
-            firebase_options = (
-                {"storageBucket": FIREBASE_STORAGE_BUCKET}
-                if FIREBASE_STORAGE_BUCKET
-                else None
-            )
-            firebase_admin.initialize_app(options=firebase_options)
+            firebase_admin.initialize_app()
             print(
                 "Firebase Admin initialized using "
                 "Application Default Credentials."
@@ -497,90 +477,46 @@ def run_water_command(command, on_dispensing=None):
         return False, str(error)
 
 
-def upload_recycling_image_to_storage(item_id, local_path="captured_item.jpg"):
+def frame_to_base64_data_url(frame):
     """
-    Upload the current recycling photo to Firebase Storage and return a
-    token-protected Firebase download URL.
+    Resize and compress a camera frame, then return a JPEG Base64 data URL.
 
-    Firestore saving continues even if the image upload fails, so a Storage
-    problem will not stop the physical recycling machine.
+    The value is saved directly in Firestore as `imageDataUrl`, so the owner
+    dashboard can display scan photos without Firebase Storage.
     """
-    if not os.path.exists(local_path):
-        print(f"Firebase Storage upload skipped: image not found: {local_path}")
+    if frame is None:
         return None
 
-    if not firebase_admin._apps:
-        print("Firebase Storage upload skipped: Firebase Admin is unavailable.")
-        return None
-
-    app = firebase_admin.get_app()
-    project_id = getattr(app, "project_id", None)
-
-    # Prefer an explicitly configured bucket. If none is supplied, try both
-    # Firebase default bucket naming schemes (new and legacy).
-    bucket_names = []
-    if FIREBASE_STORAGE_BUCKET:
-        bucket_names.append(FIREBASE_STORAGE_BUCKET)
-    elif project_id:
-        bucket_names.extend([
-            f"{project_id}.firebasestorage.app",
-            f"{project_id}.appspot.com",
-        ])
-    else:
-        print(
-            "Firebase Storage upload skipped: no bucket name or project ID is available."
+    try:
+        resized = cv2.resize(
+            frame,
+            (RECYCLING_IMAGE_WIDTH, RECYCLING_IMAGE_HEIGHT),
+            interpolation=cv2.INTER_AREA,
         )
+
+        encode_ok, encoded_image = cv2.imencode(
+            ".jpg",
+            resized,
+            [cv2.IMWRITE_JPEG_QUALITY, RECYCLING_IMAGE_JPEG_QUALITY],
+        )
+
+        if not encode_ok:
+            print("Base64 image encoding failed.")
+            return None
+
+        encoded_bytes = encoded_image.tobytes()
+        encoded_text = base64.b64encode(encoded_bytes).decode("ascii")
+        data_url = f"data:image/jpeg;base64,{encoded_text}"
+
+        print(
+            "Recycling photo encoded for Firestore: "
+            f"{len(data_url) / 1024:.1f} KB"
+        )
+        return data_url
+
+    except Exception as error:
+        print("Could not encode recycling photo as Base64:", error)
         return None
-
-    object_name = (
-        f"{RECYCLING_IMAGE_FOLDER}/{MACHINE_ID}/{item_id}.jpg"
-    )
-    last_error = None
-
-    for bucket_name in dict.fromkeys(bucket_names):
-        try:
-            bucket = storage.bucket(bucket_name)
-            blob = bucket.blob(object_name)
-
-            # Firebase download tokens let the URL work in the dashboard without
-            # making the whole Storage bucket public.
-            download_token = str(uuid.uuid4())
-            blob.metadata = {
-                "firebaseStorageDownloadTokens": download_token,
-            }
-
-            blob.upload_from_filename(
-                local_path,
-                content_type="image/jpeg",
-            )
-
-            encoded_object_name = quote(object_name, safe="")
-            image_url = (
-                "https://firebasestorage.googleapis.com/v0/b/"
-                f"{bucket.name}/o/{encoded_object_name}"
-                f"?alt=media&token={download_token}"
-            )
-
-            print(
-                "Recycling photo uploaded to Firebase Storage: "
-                f"{bucket.name}/{object_name}"
-            )
-            return image_url
-
-        except Exception as error:
-            last_error = error
-            print(
-                f"Firebase Storage upload failed for bucket {bucket_name}: {error}"
-            )
-
-    print(
-        "All Firebase Storage upload attempts failed. "
-        "Set FIREBASE_STORAGE_BUCKET to the exact bucket shown in "
-        "Firebase Console > Storage."
-    )
-    if last_error is not None:
-        print("Last Firebase Storage error:", last_error)
-    return None
 
 
 def require_firebase_user():
@@ -921,7 +857,7 @@ Created At: {time.time()}
 def save_recycling_to_firestore(
     item_id,
     result,
-    image_url=None,
+    image_data_url=None,
     batch_session_id=None,
 ):
     """
@@ -965,7 +901,8 @@ def save_recycling_to_firestore(
         "pointsEarned": points_earned,
         "confidence": confidence,
         "qrCode": None,
-        "imageUrl": image_url,
+        "imageDataUrl": image_data_url,
+        "imageUrl": None,
         "claimedBy": None,
         "createdAt": firestore.SERVER_TIMESTAMP,
         "updatedAt": firestore.SERVER_TIMESTAMP,
@@ -1318,10 +1255,7 @@ def machine_worker():
             result = verify_item(frame)
 
             item_id = str(uuid.uuid4())
-            image_url = upload_recycling_image_to_storage(
-                item_id,
-                "captured_item.jpg",
-            )
+            image_data_url = frame_to_base64_data_url(frame)
 
             update_state(
                 phase="sorting",
@@ -1359,7 +1293,7 @@ def machine_worker():
                 firebase_saved = save_recycling_to_firestore(
                     item_id,
                     result,
-                    image_url,
+                    image_data_url,
                     batch_session_id,
                 )
 
@@ -1381,7 +1315,7 @@ def machine_worker():
                     confidence=round(result["confidence"], 4),
                     sessionId=None,
                     qrCode=None,
-                    imageUrl=image_url,
+                    imageUrl=None,
                     firebaseSaved=firebase_saved,
                     error=None,
                 )
@@ -1394,7 +1328,7 @@ def machine_worker():
                 firebase_saved = save_recycling_to_firestore(
                     item_id,
                     result,
-                    image_url,
+                    image_data_url,
                     get_state().get("batchSessionId"),
                 )
 
@@ -1410,7 +1344,7 @@ def machine_worker():
                     confidence=round(result["confidence"], 4),
                     sessionId=None,
                     qrCode=None,
-                    imageUrl=image_url,
+                    imageUrl=None,
                     firebaseSaved=firebase_saved,
                     error=None,
                 )
