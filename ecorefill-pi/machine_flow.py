@@ -36,12 +36,12 @@ from datetime import (
 # =========================================================
 
 MODEL_PATH = "models/ecorefill_best.pt"
-MOTION_MIN_AREA = 3000
-MOTION_TRIGGER_FRAMES = 2
-STABLE_FRAMES_REQUIRED = 2
-MOTION_FRAME_DELAY = 0.03
-AUTO_REJECT_RESET_SECONDS = 0.7
-AUTO_REARM_DELAY = 0.20
+MOTION_MIN_AREA = 4500
+MOTION_TRIGGER_FRAMES = 3
+STABLE_FRAMES_REQUIRED = 5
+MOTION_FRAME_DELAY = 0.08
+AUTO_REJECT_RESET_SECONDS = 3.0
+AUTO_REARM_DELAY = 1
 
 # YOLO can return low-confidence candidates for logging/comparison,
 # but the machine will ACCEPT only a much stronger prediction.
