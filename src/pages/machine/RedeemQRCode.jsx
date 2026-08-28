@@ -3,10 +3,10 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import { useEffect } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import {
   CheckCircle2,
-  Home,
   QrCode,
   Recycle,
   ScanLine,
@@ -32,6 +32,66 @@ function RedeemQRCode() {
   // Firestore itself: an unauthenticated kiosk browser writing reward
   // documents directly would let anyone forge their own point values.
 
+  useEffect(() => {
+    if (
+      !machineResult?.accepted ||
+      !machineResult?.sessionId ||
+      !machineResult?.qrCode
+    ) {
+      return undefined;
+    }
+
+    let active = true;
+
+    const checkMachineState = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/machine/state`
+        );
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+
+        if (!active) return;
+
+        // machine_flow.py resets the machine immediately after this
+        // exact reward is successfully claimed. Once that happens,
+        // return the kiosk to Machine Home automatically.
+        if (
+          data.phase !== "reward_ready" ||
+          data.sessionId !== machineResult.sessionId
+        ) {
+          navigate("/machine", {
+            replace: true,
+          });
+        }
+      } catch (error) {
+        console.error(
+          "Unable to check reward status:",
+          error
+        );
+      }
+    };
+
+    checkMachineState();
+
+    const interval = window.setInterval(
+      checkMachineState,
+      500
+    );
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [
+    machineResult?.accepted,
+    machineResult?.qrCode,
+    machineResult?.sessionId,
+    navigate,
+  ]);
+
   if (
     !machineResult?.accepted ||
     !machineResult?.sessionId ||
@@ -44,26 +104,6 @@ function RedeemQRCode() {
       />
     );
   }
-
-  const returnHome = async () => {
-    try {
-      await fetch(
-        `${API_BASE_URL}/api/machine/reset`,
-        {
-          method: "POST",
-        }
-      );
-    } catch (error) {
-      console.error(
-        "Unable to reset machine state:",
-        error
-      );
-    } finally {
-      navigate("/machine", {
-        replace: true,
-      });
-    }
-  };
 
   return (
     <div className="machine-page machine-kiosk-page">
@@ -192,18 +232,8 @@ function RedeemQRCode() {
           <div>
             <QrCode size={20} />
 
-            One-time reward
+            One-time reward · Returning home automatically after redemption
           </div>
-
-          <button
-            type="button"
-            className="machine-kiosk-finish"
-            onClick={returnHome}
-          >
-            <Home size={22} />
-
-            Done
-          </button>
         </footer>
       </div>
     </div>

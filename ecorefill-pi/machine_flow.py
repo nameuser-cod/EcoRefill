@@ -3205,6 +3205,22 @@ def api_redeem_recycling_reward():
             f"points={result['pointsEarned']}"
         )
 
+        # The claim is complete. Automatically prepare the physical kiosk
+        # for the next customer, but ONLY if it is still displaying the
+        # reward that was just claimed. This protects a newer session from
+        # being reset by a late/duplicate request from an older QR code.
+        current_machine_state = get_state()
+        if (
+            current_machine_state.get("phase") == "reward_ready"
+            and current_machine_state.get("sessionId") == session_id
+        ):
+            recycling_paused.clear()
+            reset_state()
+            print(
+                "Reward claimed. Machine automatically returned to idle:",
+                session_id,
+            )
+
         return jsonify({
             "ok": True,
             "message": "Recycling reward claimed successfully.",
