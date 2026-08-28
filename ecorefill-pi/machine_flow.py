@@ -43,6 +43,11 @@ MOTION_FRAME_DELAY = 0.03
 AUTO_REJECT_RESET_SECONDS = 0.7
 AUTO_REARM_DELAY = 0.20
 
+# Do not arm motion detection until the sorter/chute has become still.
+# This prevents servo movement after a scan from being mistaken for a new item.
+REARM_SETTLE_MIN_SECONDS = 0.60
+REARM_STABLE_FRAMES_REQUIRED = 12
+
 # YOLO can return low-confidence candidates for logging/comparison,
 # but the machine will ACCEPT only a much stronger prediction.
 DETECTION_CONFIDENCE_LIMIT = 0.20
@@ -607,17 +612,60 @@ def frame_has_motion(previous_gray, current_frame):
 
 def wait_for_item_motion():
     """
-    Continuously watch the camera opening.
+    Watch the camera opening for ONE new item.
 
-    Returns a stable frame after a real object moves into view.
-    Returns None if recycling is paused or the program is shutting down.
+    Important anti-repeat behavior:
+    1. After every sort/reject, ignore all movement while the servo/chute moves.
+    2. Do not ARM the detector until the camera has seen a stable scene for
+       several consecutive frames.
+    3. Only motion that happens AFTER arming can trigger the next scan.
+
+    This prevents sorting motion from being detected as another bottle/can.
     """
-    # Give the camera/servo a moment to settle before building a baseline.
-    time.sleep(AUTO_REARM_DELAY)
+    time.sleep(REARM_SETTLE_MIN_SECONDS)
 
     previous_frame = picam2.capture_array()
     previous_gray = prepare_motion_frame(previous_frame)
 
+    # ---------------------------------------------------------
+    # STAGE 1: WAIT FOR SORTER / CHUTE / CAMERA VIEW TO SETTLE
+    # ---------------------------------------------------------
+    rearm_stable_frames = 0
+
+    while not shutdown_event.is_set():
+        if recycling_paused.is_set() or finish_session_event.is_set():
+            return None
+
+        current_frame = picam2.capture_array()
+        has_motion, current_gray, largest_area = frame_has_motion(
+            previous_gray,
+            current_frame,
+        )
+        previous_gray = current_gray
+
+        if has_motion:
+            # Servo, sorting gate, falling bottle, shadows, etc. are ignored
+            # here. We simply wait until everything becomes still again.
+            rearm_stable_frames = 0
+        else:
+            rearm_stable_frames += 1
+
+            if rearm_stable_frames >= REARM_STABLE_FRAMES_REQUIRED:
+                print("Camera rearmed: scene is stable and ready for next item.")
+                break
+
+        time.sleep(MOTION_FRAME_DELAY)
+
+    if shutdown_event.is_set():
+        return None
+
+    # Fresh baseline AFTER the sorter has completely stopped.
+    previous_frame = picam2.capture_array()
+    previous_gray = prepare_motion_frame(previous_frame)
+
+    # ---------------------------------------------------------
+    # STAGE 2: NOW LISTEN FOR A NEW ITEM
+    # ---------------------------------------------------------
     motion_frames = 0
     stable_frames = 0
     motion_started = False
@@ -648,7 +696,7 @@ def wait_for_item_motion():
                         error=None,
                     )
                     print(
-                        f"Object motion detected. Largest changed area: "
+                        f"NEW item motion detected. Largest changed area: "
                         f"{largest_area:.0f}"
                     )
             else:
