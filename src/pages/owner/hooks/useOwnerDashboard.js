@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  collection,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../../../firebase/firebase";
-import { calculateAnalytics } from "../utils/ownerDashboard";
+import { calculateAnalytics, timestampValue } from "../utils/ownerDashboard";
 
 const EMPTY_RECORDS = [];
+const SECTIONS = ["recycling", "transactions", "alerts"];
+
+const sortNewest = (items) =>
+  [...items].sort(
+    (first, second) =>
+      timestampValue(second.createdAt) - timestampValue(first.createdAt)
+  );
 
 function useOwnerDashboard(machineId) {
   const [result, setResult] = useState({
@@ -19,35 +19,39 @@ function useOwnerDashboard(machineId) {
     recentTransactions: [],
     recentAlerts: [],
     loadedSections: [],
-    error: "",
+    errors: {},
   });
 
   useEffect(() => {
     if (!machineId) {
+      setResult({
+        machineId: null,
+        recyclingRecords: [],
+        recentTransactions: [],
+        recentAlerts: [],
+        loadedSections: [],
+        errors: {},
+      });
       return undefined;
     }
 
-    const getCurrentResult = (current) =>
-      current.machineId === machineId
-        ? current
-        : {
-            machineId,
-            recyclingRecords: [],
-            recentTransactions: [],
-            recentAlerts: [],
-            loadedSections: [],
-            error: "",
-          };
+    setResult({
+      machineId,
+      recyclingRecords: [],
+      recentTransactions: [],
+      recentAlerts: [],
+      loadedSections: [],
+      errors: {},
+    });
 
     const markLoaded = (section) => {
       setResult((current) => {
-        const next = getCurrentResult(current);
-
+        if (current.machineId !== machineId) return current;
         return {
-          ...next,
-          loadedSections: next.loadedSections.includes(section)
-            ? next.loadedSections
-            : [...next.loadedSections, section],
+          ...current,
+          loadedSections: current.loadedSections.includes(section)
+            ? current.loadedSections
+            : [...current.loadedSections, section],
         };
       });
     };
@@ -55,93 +59,78 @@ function useOwnerDashboard(machineId) {
     const handleError = (section, snapshotError) => {
       console.error(`Unable to load owner ${section}:`, snapshotError);
       setResult((current) => {
-        const next = getCurrentResult(current);
-
+        if (current.machineId !== machineId) return current;
         return {
-          ...next,
-          error:
-            "Some dashboard information could not be loaded. Please try again.",
-          loadedSections: next.loadedSections.includes(section)
-            ? next.loadedSections
-            : [...next.loadedSections, section],
+          ...current,
+          errors: { ...current.errors, [section]: snapshotError.message || "Load failed" },
+          loadedSections: current.loadedSections.includes(section)
+            ? current.loadedSections
+            : [...current.loadedSections, section],
         };
       });
     };
 
+    // Index-free listeners: filter by machine in Firestore, sort/limit locally.
     const recyclingQuery = query(
       collection(db, "recycling_records"),
       where("machineId", "==", machineId)
     );
     const transactionsQuery = query(
       collection(db, "transactions"),
-      where("machineId", "==", machineId),
-      orderBy("createdAt", "desc"),
-      limit(5)
+      where("machineId", "==", machineId)
     );
     const alertsQuery = query(
       collection(db, "alerts"),
-      where("machineId", "==", machineId),
-      orderBy("createdAt", "desc"),
-      limit(5)
+      where("machineId", "==", machineId)
     );
 
     const unsubscribeRecycling = onSnapshot(
       recyclingQuery,
       (snapshot) => {
-        setResult((current) => {
-          const next = getCurrentResult(current);
-
-          return {
-            ...next,
-            recyclingRecords: snapshot.docs.map((recordDocument) => ({
-              id: recordDocument.id,
-              ...recordDocument.data(),
-            })),
-          };
-        });
+        const records = snapshot.docs.map((recordDocument) => ({
+          id: recordDocument.id,
+          ...recordDocument.data(),
+        }));
+        setResult((current) =>
+          current.machineId === machineId
+            ? { ...current, recyclingRecords: records }
+            : current
+        );
         markLoaded("recycling");
       },
-      (snapshotError) => handleError("recycling", snapshotError)
+      (error) => handleError("recycling", error)
     );
 
     const unsubscribeTransactions = onSnapshot(
       transactionsQuery,
       (snapshot) => {
-        setResult((current) => {
-          const next = getCurrentResult(current);
-
-          return {
-            ...next,
-            recentTransactions: snapshot.docs.map(
-              (transactionDocument) => ({
-                id: transactionDocument.id,
-                ...transactionDocument.data(),
-              })
-            ),
-          };
-        });
+        const records = sortNewest(
+          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        ).slice(0, 5);
+        setResult((current) =>
+          current.machineId === machineId
+            ? { ...current, recentTransactions: records }
+            : current
+        );
         markLoaded("transactions");
       },
-      (snapshotError) => handleError("transactions", snapshotError)
+      (error) => handleError("transactions", error)
     );
 
     const unsubscribeAlerts = onSnapshot(
       alertsQuery,
       (snapshot) => {
-        setResult((current) => {
-          const next = getCurrentResult(current);
-
-          return {
-            ...next,
-            recentAlerts: snapshot.docs.map((alertDocument) => ({
-              id: alertDocument.id,
-              ...alertDocument.data(),
-            })),
-          };
-        });
+        const records = sortNewest(
+          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        ).slice(0, 5);
+        setResult((current) =>
+          current.machineId === machineId
+            ? { ...current, recentAlerts: records }
+            : current
+        );
         markLoaded("alerts");
       },
-      (snapshotError) => handleError("alerts", snapshotError)
+      (error) => handleError("alerts", error)
     );
 
     return () => {
@@ -152,15 +141,9 @@ function useOwnerDashboard(machineId) {
   }, [machineId]);
 
   const matchesMachine = result.machineId === machineId;
-  const recyclingRecords = matchesMachine
-    ? result.recyclingRecords
-    : EMPTY_RECORDS;
-  const recentTransactions = matchesMachine
-    ? result.recentTransactions
-    : EMPTY_RECORDS;
-  const recentAlerts = matchesMachine
-    ? result.recentAlerts
-    : EMPTY_RECORDS;
+  const recyclingRecords = matchesMachine ? result.recyclingRecords : EMPTY_RECORDS;
+  const recentTransactions = matchesMachine ? result.recentTransactions : EMPTY_RECORDS;
+  const recentAlerts = matchesMachine ? result.recentAlerts : EMPTY_RECORDS;
 
   const analytics = useMemo(
     () => calculateAnalytics(recyclingRecords),
@@ -168,16 +151,13 @@ function useOwnerDashboard(machineId) {
   );
 
   const recentItems = useMemo(
-    () =>
-      [...recyclingRecords]
-        .sort(
-          (first, second) =>
-            (second.createdAt?.toMillis?.() || 0) -
-            (first.createdAt?.toMillis?.() || 0)
-        )
-        .slice(0, 6),
+    () => sortNewest(recyclingRecords).slice(0, 6),
     [recyclingRecords]
   );
+
+  const error = matchesMachine && Object.keys(result.errors).length
+    ? "Some dashboard information could not be loaded. Check your Firestore rules and collection names."
+    : "";
 
   return {
     analytics,
@@ -186,8 +166,8 @@ function useOwnerDashboard(machineId) {
     recentAlerts,
     loading:
       Boolean(machineId) &&
-      (!matchesMachine || result.loadedSections.length < 3),
-    error: matchesMachine ? result.error : "",
+      (!matchesMachine || !SECTIONS.every((section) => result.loadedSections.includes(section))),
+    error,
   };
 }
 

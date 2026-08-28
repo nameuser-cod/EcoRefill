@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
-import {
-  collection,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../../../firebase/firebase";
+import { timestampValue } from "../utils/ownerDashboard";
 
 function useMachineCollection(collectionName, machineId, maximum = 50) {
   const [result, setResult] = useState({
@@ -19,34 +13,35 @@ function useMachineCollection(collectionName, machineId, maximum = 50) {
 
   useEffect(() => {
     if (!machineId) {
+      setResult({ machineId: null, records: [], loading: false, error: "" });
       return undefined;
     }
 
+    setResult({ machineId, records: [], loading: true, error: "" });
+
+    // Intentionally do not use orderBy + where together here.
+    // That combination requires a Firestore composite index. We subscribe to
+    // the machine records and sort/limit in the browser instead.
     const recordsQuery = query(
       collection(db, collectionName),
-      where("machineId", "==", machineId),
-      orderBy("createdAt", "desc"),
-      limit(maximum)
+      where("machineId", "==", machineId)
     );
 
     return onSnapshot(
       recordsQuery,
       (snapshot) => {
-        setResult({
-          machineId,
-          records: snapshot.docs.map((recordDocument) => ({
+        const records = snapshot.docs
+          .map((recordDocument) => ({
             id: recordDocument.id,
             ...recordDocument.data(),
-          })),
-          loading: false,
-          error: "",
-        });
+          }))
+          .sort((a, b) => timestampValue(b.createdAt) - timestampValue(a.createdAt))
+          .slice(0, maximum);
+
+        setResult({ machineId, records, loading: false, error: "" });
       },
       (snapshotError) => {
-        console.error(
-          `Unable to load ${collectionName}:`,
-          snapshotError
-        );
+        console.error(`Unable to load ${collectionName}:`, snapshotError);
         setResult({
           machineId,
           records: [],

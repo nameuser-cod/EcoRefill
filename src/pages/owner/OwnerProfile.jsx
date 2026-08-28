@@ -106,7 +106,7 @@ function OwnerProfile() {
 
           <aside className="owner-panel owner-connected-machine">
             <p>Connected machine</p>
-            <h2>{machine?.machineName || machine?.id || "Not connected"}</h2>
+            <h2>{machine?.machineName || machine?.machineId || machine?.id || "Not connected"}</h2>
             <span><MapPin size={16} />{machine?.location || "Location not set"}</span>
           </aside>
 

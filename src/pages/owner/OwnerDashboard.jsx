@@ -74,7 +74,7 @@ function OwnerDashboard() {
   return (
     <OwnerPageShell
       eyebrow="Owner workspace"
-      title={machine.machineName || "EcoRefill machine"}
+      title={machine.machineName || machine.machineId || machine.id || "EcoRefill machine"}
       subtitle={`Welcome back${owner?.fullName ? `, ${owner.fullName}` : ""}.`}
       unreadAlerts={unreadAlerts}
       action={

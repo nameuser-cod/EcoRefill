@@ -137,34 +137,57 @@ export const getTransactionDescription = (transaction) => {
 };
 
 export const formatTimestamp = (timestamp, fallback = "Just now") => {
-  if (!timestamp?.toDate) return fallback;
+  let date = null;
 
-  return timestamp.toDate().toLocaleString([], {
+  if (timestamp?.toDate) date = timestamp.toDate();
+  else if (timestamp instanceof Date) date = timestamp;
+  else if (typeof timestamp === "number") {
+    // Accept both seconds and milliseconds.
+    date = new Date(timestamp < 10_000_000_000 ? timestamp * 1000 : timestamp);
+  }
+  else if (typeof timestamp === "string") {
+    const parsed = new Date(timestamp);
+    if (!Number.isNaN(parsed.getTime())) date = parsed;
+  }
+
+  if (!date || Number.isNaN(date.getTime())) return fallback;
+
+  return date.toLocaleString([], {
     dateStyle: "medium",
     timeStyle: "short",
   });
 };
 
-export const timestampValue = (timestamp) =>
-  timestamp?.toMillis?.() || 0;
+export const timestampValue = (timestamp) => {
+  if (timestamp?.toMillis) return timestamp.toMillis();
+  if (timestamp instanceof Date) return timestamp.getTime();
+  if (typeof timestamp === "number") {
+    return timestamp < 10_000_000_000 ? timestamp * 1000 : timestamp;
+  }
+  if (typeof timestamp === "string") {
+    const parsed = Date.parse(timestamp);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+};
 
 export const getStatusTone = (status) => {
   const normalizedStatus = normalizeText(status);
 
   if (
-    ["online", "safe", "secured", "completed", "resolved"].includes(
+    ["online", "safe", "secured", "completed", "resolved", "accepted", "claimed"].includes(
       normalizedStatus
     )
   ) {
     return "good";
   }
 
-  if (["warning", "pending", "unread"].includes(normalizedStatus)) {
+  if (["warning", "pending", "unread", "processing", "dispensing", "waiting for user", "waiting for container"].includes(normalizedStatus)) {
     return "warning";
   }
 
   if (
-    ["offline", "unsafe", "tampered", "rejected", "critical"].includes(
+    ["offline", "unsafe", "tampered", "rejected", "critical", "failed", "expired", "cancelled"].includes(
       normalizedStatus
     )
   ) {
