@@ -36,12 +36,12 @@ from datetime import (
 # =========================================================
 
 MODEL_PATH = "models/ecorefill_best.pt"
-MOTION_MIN_AREA = 4500
-MOTION_TRIGGER_FRAMES = 3
-STABLE_FRAMES_REQUIRED = 5
-MOTION_FRAME_DELAY = 0.08
-AUTO_REJECT_RESET_SECONDS = 3.0
-AUTO_REARM_DELAY = 1.0
+MOTION_MIN_AREA = 3000
+MOTION_TRIGGER_FRAMES = 2
+STABLE_FRAMES_REQUIRED = 2
+MOTION_FRAME_DELAY = 0.03
+AUTO_REJECT_RESET_SECONDS = 0.7
+AUTO_REARM_DELAY = 0.20
 
 # YOLO can return low-confidence candidates for logging/comparison,
 # but the machine will ACCEPT only a much stronger prediction.
@@ -53,7 +53,7 @@ ACCEPT_CONFIDENCE_LIMIT = 0.65
 MIN_OBJECT_AREA_RATIO = 0.05
 
 SERIAL_BAUD_RATE = 115200
-SERIAL_TIMEOUT = 2
+SERIAL_TIMEOUT = 0.25
 WATER_COMMAND_TIMEOUT_SECONDS = 45
 
 API_HOST = "0.0.0.0"
@@ -378,21 +378,13 @@ def send_to_esp32(command):
 
     try:
         with serial_lock:
-            esp32.reset_input_buffer()
+            # Sorting commands should be fire-and-forget. Waiting for
+            # readline() here can pause recycling for the full serial timeout
+            # if the ESP32 does not immediately send a reply.
             esp32.write(f"{command}\n".encode("utf-8"))
             esp32.flush()
 
-            response = esp32.readline().decode(
-                "utf-8",
-                errors="ignore",
-            ).strip()
-
-        if response:
-            print(f"ESP32: {response}")
-
-        # A successful serial write is enough to say the command
-        # was handed to the ESP32. The ESP32 firmware should handle
-        # the exact pump timing for WATER_250/500/1000.
+        print(f"Sent to ESP32: {command}")
         return True
 
     except serial.SerialException as error:
@@ -1216,7 +1208,7 @@ def machine_worker():
 
         # Show the accepted result briefly, then automatically rearm.
         if current_state["phase"] == "item_accepted":
-            time.sleep(1.2)
+            time.sleep(0.4)
             if finish_session_event.is_set():
                 continue
             if get_state()["phase"] == "item_accepted":
