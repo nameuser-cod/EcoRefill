@@ -60,6 +60,7 @@ MIN_OBJECT_AREA_RATIO = 0.05
 SERIAL_BAUD_RATE = 115200
 SERIAL_TIMEOUT = 0.25
 WATER_COMMAND_TIMEOUT_SECONDS = 45
+SORT_COMMAND_TIMEOUT_SECONDS = 6.0
 
 API_HOST = "0.0.0.0"
 API_PORT = 5000
@@ -361,6 +362,7 @@ serial_lock = threading.Lock()
 
 
 def send_to_esp32(command):
+    """Send simple commands that do not need completion tracking."""
     command = command.upper().strip()
 
     allowed_commands = {
@@ -383,9 +385,6 @@ def send_to_esp32(command):
 
     try:
         with serial_lock:
-            # Sorting commands should be fire-and-forget. Waiting for
-            # readline() here can pause recycling for the full serial timeout
-            # if the ESP32 does not immediately send a reply.
             esp32.write(f"{command}\n".encode("utf-8"))
             esp32.flush()
 
@@ -395,6 +394,58 @@ def send_to_esp32(command):
     except serial.SerialException as error:
         print(f"Serial error: {error}")
         return False
+
+
+def run_sort_command(command):
+    """
+    Send one sorting command and WAIT until the ESP32 says it finished.
+
+    This prevents the Raspberry Pi from accepting/rearming for the next item
+    while the two servos are still moving. The ESP32 currently emits lines
+    such as MOVING BOTTLE and finally OK BOTTLE.
+    """
+    command = command.upper().strip()
+
+    if command not in {"BOTTLE", "CAN", "REJECT"}:
+        return False, f"Invalid sorting command: {command}"
+
+    if esp32 is None:
+        return False, "ESP32 is unavailable."
+
+    completed_response = f"OK {command}"
+    deadline = time.monotonic() + SORT_COMMAND_TIMEOUT_SECONDS
+
+    try:
+        with serial_lock:
+            # Remove stale messages left by the previous physical action.
+            esp32.reset_input_buffer()
+            esp32.write(f"{command}\n".encode("utf-8"))
+            esp32.flush()
+            print(f"Sent sorting command to ESP32: {command}")
+
+            while time.monotonic() < deadline:
+                response = esp32.readline().decode(
+                    "utf-8",
+                    errors="ignore",
+                ).strip()
+
+                if not response:
+                    continue
+
+                print(f"ESP32 SORT: {response}")
+
+                if response.upper() == completed_response:
+                    print(f"Sorting confirmed by ESP32: {command}")
+                    return True, None
+
+                if response.upper().startswith("ERROR"):
+                    return False, response
+
+        return False, f"ESP32 did not confirm {command} within the timeout."
+
+    except serial.SerialException as error:
+        print(f"Sorting serial error: {error}")
+        return False, str(error)
 
 
 def run_water_command(command, on_dispensing=None):
@@ -865,12 +916,12 @@ def verify_item(frame):
 
 def sort_item(result):
     if result["category"] == "bottle":
-        return send_to_esp32("BOTTLE")
+        return run_sort_command("BOTTLE")
 
     if result["category"] == "can":
-        return send_to_esp32("CAN")
+        return run_sort_command("CAN")
 
-    return send_to_esp32("REJECT")
+    return run_sort_command("REJECT")
 
 
 def save_local_session(session_id, result, qr_code=None):
@@ -1301,7 +1352,24 @@ def machine_worker():
                 phase="sorting",
                 message="Sorting the item...",
             )
-            sort_item(result)
+
+            sort_completed, sort_error = sort_item(result)
+
+            if not sort_completed:
+                print("SORT FAILED:", sort_error)
+                update_state(
+                    phase="error",
+                    message=(
+                        "Item was detected, but the ESP32 did not confirm "
+                        "the sorting movement. Please try again."
+                    ),
+                    accepted=False,
+                    materialType=result.get("item"),
+                    category=result.get("category"),
+                    confidence=round(result.get("confidence", 0), 4),
+                    error=sort_error,
+                )
+                continue
 
             if result["accepted"]:
                 current = get_state()
