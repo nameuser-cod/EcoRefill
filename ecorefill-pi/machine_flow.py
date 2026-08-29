@@ -444,79 +444,130 @@ def run_water_command(command, on_dispensing=None):
     """
     Send a water command and wait for the ESP32's final response.
 
-    The ESP32 emits several progress lines while it waits for a
-    container. DISPENSING means the pump has actually started, while
-    OK is only emitted after the pump has stopped. Reading just one
-    line would mistake WATER REQUEST for completion and leave the
-    Firestore session stuck in dispensing.
+    Improvements:
+    - Converts low-level PySerial disconnect errors into kiosk-friendly codes.
+    - Automatically reconnects once if the ESP32 USB serial connection drops
+      BEFORE dispensing starts.
+    - Never retries a water command after DISPENSING has started, because doing
+      so could dispense water twice.
     """
     command = command.upper().strip()
 
     if command not in set(WATER_COMMANDS.values()):
-        return False, f"Blocked unknown water command: {command}"
-
-    connection = get_esp32_connection()
-    if connection is None:
-        return False, "ESP32 is unavailable."
+        return False, f"INVALID_COMMAND: {command}"
 
     dispensing_response = f"DISPENSING {command}"
     completed_response = f"OK {command}"
     error_response = f"ERROR {command}"
     deadline = time.monotonic() + WATER_COMMAND_TIMEOUT_SECONDS
 
-    try:
-        with serial_lock:
-            connection.reset_input_buffer()
-            connection.write(f"{command}\n".encode("utf-8"))
-            connection.flush()
+    # Only one automatic resend is allowed, and only before water starts.
+    max_connection_attempts = 2
+    attempt = 0
+    dispensing_started = False
 
-            dispensing_started = False
+    while attempt < max_connection_attempts and time.monotonic() < deadline:
+        attempt += 1
 
-            while time.monotonic() < deadline:
-                response = connection.readline().decode(
-                    "utf-8",
-                    errors="ignore",
-                ).strip()
+        connection = get_esp32_connection()
 
-                if not response:
-                    continue
+        if connection is None:
+            if attempt < max_connection_attempts:
+                print("ESP32 unavailable. Retrying connection...")
+                time.sleep(1)
+                continue
 
-                print(f"ESP32: {response}")
-                normalized_response = response.upper()
+            return False, "ESP32_DISCONNECTED"
 
-                if normalized_response == dispensing_response:
-                    if not dispensing_started:
-                        dispensing_started = True
+        try:
+            with serial_lock:
+                connection.reset_input_buffer()
+                connection.write(f"{command}\n".encode("utf-8"))
+                connection.flush()
 
-                        if on_dispensing is not None:
-                            try:
-                                on_dispensing()
-                            except Exception as error:
-                                # Keep reading the serial result. Water may
-                                # already be flowing, so a Firestore update
-                                # failure must not interrupt pump tracking.
-                                print(
-                                    "Could not mark refill as dispensing:",
-                                    error,
-                                )
+                print(
+                    f"Water command sent to ESP32 "
+                    f"(attempt {attempt}/{max_connection_attempts}): {command}"
+                )
 
-                    continue
+                while time.monotonic() < deadline:
+                    try:
+                        raw_response = connection.readline()
+                    except (serial.SerialException, OSError) as read_error:
+                        print("ESP32 serial read failed:", read_error)
+                        raise
 
-                if normalized_response == completed_response:
-                    return True, None
+                    response = raw_response.decode(
+                        "utf-8",
+                        errors="ignore",
+                    ).strip()
 
-                if normalized_response.startswith(error_response):
-                    return False, response
+                    if not response:
+                        continue
 
-        return (
-            False,
-            "Timed out waiting for the ESP32 to finish dispensing.",
-        )
+                    print(f"ESP32: {response}")
+                    normalized_response = response.upper()
 
-    except (serial.SerialException, OSError) as error:
-        print(f"Water serial error: {error}")
-        mark_esp32_disconnected(connection)
-        return False, str(error)
+                    if normalized_response == dispensing_response:
+                        if not dispensing_started:
+                            dispensing_started = True
+
+                            if on_dispensing is not None:
+                                try:
+                                    on_dispensing()
+                                except Exception as error:
+                                    print(
+                                        "Could not mark refill as dispensing:",
+                                        error,
+                                    )
+
+                        continue
+
+                    if normalized_response == completed_response:
+                        return True, None
+
+                    if normalized_response.startswith(error_response):
+                        # Preserve firmware error codes such as:
+                        # ERROR WATER_500 NO_BOTTLE
+                        # ERROR WATER_500 SENSOR_LOST
+                        # ERROR WATER_500 CONTAINER_REMOVED
+                        return False, response
+
+        except (serial.SerialException, OSError) as error:
+            print(
+                f"Water serial error on attempt {attempt}: "
+                f"{repr(error)}"
+            )
+
+            mark_esp32_disconnected(connection)
+
+            # SAFETY: once dispensing has begun, never resend the command.
+            # The ESP32 may still have completed the physical refill even
+            # though the Pi lost the serial connection.
+            if dispensing_started:
+                return False, "ESP32_DISCONNECTED_DURING_DISPENSING"
+
+            if attempt < max_connection_attempts:
+                print(
+                    "ESP32 disconnected before dispensing. "
+                    "Waiting for USB serial to recover..."
+                )
+
+                # Give the ESP32 time to reboot and re-enumerate its USB port.
+                reconnect_deadline = time.monotonic() + 5
+
+                while time.monotonic() < reconnect_deadline:
+                    time.sleep(0.5)
+
+                    if get_esp32_connection() is not None:
+                        print("ESP32 serial connection recovered.")
+                        break
+
+                continue
+
+            return False, "ESP32_DISCONNECTED"
+
+    return False, "WATER_TIMEOUT"
 
 
 def frame_to_base64_data_url(frame):
@@ -2100,10 +2151,21 @@ def process_water_refill_request(request_doc):
             "Refunding points..."
         )
 
+        # Convert machine/serial errors to short stable codes that the
+        # React kiosk can translate into friendly messages.
         failure_message = (
             command_error
-            or "The water dispenser could not complete the refill."
+            or "WATER_DISPENSER_FAILED"
         )
+
+        if "device reports readiness to read but returned no data" in failure_message.lower():
+            failure_message = "ESP32_DISCONNECTED"
+
+        elif "could not open port" in failure_message.lower():
+            failure_message = "ESP32_DISCONNECTED"
+
+        elif "timed out" in failure_message.lower():
+            failure_message = "WATER_TIMEOUT"
 
         try:
             refund_transaction = (
