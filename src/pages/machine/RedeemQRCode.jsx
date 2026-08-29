@@ -223,7 +223,7 @@ function RedeemQRCode() {
             <div className="reward-expiry">
               <Timer size={20} />
 
-              QR expires in 10 minutes
+              QR expires in 1 minute
             </div>
           </section>
         </main>

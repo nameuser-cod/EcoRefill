@@ -59,7 +59,8 @@ MIN_OBJECT_AREA_RATIO = 0.05
 
 SERIAL_BAUD_RATE = 115200
 SERIAL_TIMEOUT = 0.25
-WATER_COMMAND_TIMEOUT_SECONDS = 45
+WATER_COMMAND_TIMEOUT_SECONDS = 90
+REWARD_READY_TIMEOUT_SECONDS = 60
 
 API_HOST = "0.0.0.0"
 API_PORT = 5000
@@ -358,6 +359,46 @@ def connect_to_esp32():
 
 
 serial_lock = threading.Lock()
+esp32_connection_lock = threading.Lock()
+
+
+def get_esp32_connection():
+    """Return a live ESP32 serial connection, reconnecting when needed."""
+    global esp32
+
+    with esp32_connection_lock:
+        if esp32 is not None:
+            try:
+                if esp32.is_open:
+                    return esp32
+            except Exception:
+                pass
+
+            try:
+                esp32.close()
+            except Exception:
+                pass
+
+            esp32 = None
+
+        esp32 = connect_to_esp32()
+        return esp32
+
+
+def mark_esp32_disconnected(connection=None):
+    """Forget a failed serial connection so the next command reconnects."""
+    global esp32
+
+    with esp32_connection_lock:
+        target = connection or esp32
+        if target is not None:
+            try:
+                target.close()
+            except Exception:
+                pass
+
+        if connection is None or connection is esp32:
+            esp32 = None
 
 
 def send_to_esp32(command):
@@ -377,7 +418,8 @@ def send_to_esp32(command):
         print(f"Blocked unknown ESP32 command: {command}")
         return False
 
-    if esp32 is None:
+    connection = get_esp32_connection()
+    if connection is None:
         print(f"ESP32 unavailable. Skipping command: {command}")
         return False
 
@@ -386,14 +428,15 @@ def send_to_esp32(command):
             # Sorting commands should be fire-and-forget. Waiting for
             # readline() here can pause recycling for the full serial timeout
             # if the ESP32 does not immediately send a reply.
-            esp32.write(f"{command}\n".encode("utf-8"))
-            esp32.flush()
+            connection.write(f"{command}\n".encode("utf-8"))
+            connection.flush()
 
         print(f"Sent to ESP32: {command}")
         return True
 
-    except serial.SerialException as error:
+    except (serial.SerialException, OSError) as error:
         print(f"Serial error: {error}")
+        mark_esp32_disconnected(connection)
         return False
 
 
@@ -412,7 +455,8 @@ def run_water_command(command, on_dispensing=None):
     if command not in set(WATER_COMMANDS.values()):
         return False, f"Blocked unknown water command: {command}"
 
-    if esp32 is None:
+    connection = get_esp32_connection()
+    if connection is None:
         return False, "ESP32 is unavailable."
 
     dispensing_response = f"DISPENSING {command}"
@@ -422,14 +466,14 @@ def run_water_command(command, on_dispensing=None):
 
     try:
         with serial_lock:
-            esp32.reset_input_buffer()
-            esp32.write(f"{command}\n".encode("utf-8"))
-            esp32.flush()
+            connection.reset_input_buffer()
+            connection.write(f"{command}\n".encode("utf-8"))
+            connection.flush()
 
             dispensing_started = False
 
             while time.monotonic() < deadline:
-                response = esp32.readline().decode(
+                response = connection.readline().decode(
                     "utf-8",
                     errors="ignore",
                 ).strip()
@@ -469,8 +513,9 @@ def run_water_command(command, on_dispensing=None):
             "Timed out waiting for the ESP32 to finish dispensing.",
         )
 
-    except serial.SerialException as error:
+    except (serial.SerialException, OSError) as error:
         print(f"Water serial error: {error}")
+        mark_esp32_disconnected(connection)
         return False, str(error)
 
 
@@ -547,17 +592,72 @@ print("Loading EcoRefill model...")
 model = YOLO(MODEL_PATH)
 print("Model classes:", model.names)
 
-picam2 = Picamera2()
-camera_config = picam2.create_preview_configuration(
-    main={
-        "size": (640, 480),
-        "format": "RGB888",
-    }
-)
-picam2.configure(camera_config)
-picam2.start()
-time.sleep(3)
+picam2 = None
+camera_lock = threading.Lock()
 
+
+def initialize_camera():
+    camera = Picamera2()
+    camera_config = camera.create_preview_configuration(
+        main={
+            "size": (640, 480),
+            "format": "RGB888",
+        }
+    )
+    camera.configure(camera_config)
+    camera.start()
+    time.sleep(3)
+    return camera
+
+
+def restart_camera():
+    """Restart Picamera2 after an I/O/capture failure."""
+    global picam2
+
+    with camera_lock:
+        old_camera = picam2
+        picam2 = None
+
+        if old_camera is not None:
+            try:
+                old_camera.stop()
+            except Exception:
+                pass
+            try:
+                old_camera.close()
+            except Exception:
+                pass
+
+        for attempt in range(1, 4):
+            try:
+                print(f"Restarting camera (attempt {attempt}/3)...")
+                picam2 = initialize_camera()
+                print("Camera recovered successfully.")
+                return True
+            except Exception as error:
+                print("Camera restart failed:", error)
+                time.sleep(2)
+
+        return False
+
+
+def capture_camera_array():
+    """Capture one frame and automatically recover the camera once."""
+    global picam2
+
+    if picam2 is None and not restart_camera():
+        raise RuntimeError("Camera is unavailable.")
+
+    try:
+        return picam2.capture_array()
+    except Exception as first_error:
+        print("Camera capture error:", first_error)
+        if not restart_camera():
+            raise RuntimeError("Camera recovery failed.") from first_error
+        return picam2.capture_array()
+
+
+picam2 = initialize_camera()
 esp32 = connect_to_esp32()
 
 
@@ -569,7 +669,7 @@ def capture_image():
     frame = None
 
     for _ in range(3):
-        frame = picam2.capture_array()
+        frame = capture_camera_array()
         time.sleep(0.15)
 
     if frame is None:
@@ -624,7 +724,7 @@ def wait_for_item_motion():
     """
     time.sleep(REARM_SETTLE_MIN_SECONDS)
 
-    previous_frame = picam2.capture_array()
+    previous_frame = capture_camera_array()
     previous_gray = prepare_motion_frame(previous_frame)
 
     # ---------------------------------------------------------
@@ -636,7 +736,7 @@ def wait_for_item_motion():
         if recycling_paused.is_set() or finish_session_event.is_set():
             return None
 
-        current_frame = picam2.capture_array()
+        current_frame = capture_camera_array()
         has_motion, current_gray, largest_area = frame_has_motion(
             previous_gray,
             current_frame,
@@ -660,7 +760,7 @@ def wait_for_item_motion():
         return None
 
     # Fresh baseline AFTER the sorter has completely stopped.
-    previous_frame = picam2.capture_array()
+    previous_frame = capture_camera_array()
     previous_gray = prepare_motion_frame(previous_frame)
 
     # ---------------------------------------------------------
@@ -675,7 +775,7 @@ def wait_for_item_motion():
         if recycling_paused.is_set() or finish_session_event.is_set():
             return None
 
-        current_frame = picam2.capture_array()
+        current_frame = capture_camera_array()
         has_motion, current_gray, largest_area = frame_has_motion(
             previous_gray,
             current_frame,
@@ -1029,7 +1129,7 @@ def finalize_recycling_session():
             "redemptionApiUrl": redemption_api_url,
             "createdAt": firestore.SERVER_TIMESTAMP,
             "updatedAt": firestore.SERVER_TIMESTAMP,
-            "expiresAt": datetime.now(timezone.utc) + timedelta(minutes=10),
+            "expiresAt": datetime.now(timezone.utc) + timedelta(seconds=REWARD_READY_TIMEOUT_SECONDS),
         }
 
         try:
@@ -1220,8 +1320,40 @@ def machine_worker():
 
         current_state = get_state()
 
-        # Hold the final QR screen until the kiosk calls reset.
+        # Hold the final QR briefly. If nobody claims it within one minute,
+        # expire it and automatically prepare the machine for the next user.
         if current_state["phase"] == "reward_ready":
+            reward_age = time.time() - float(current_state.get("updatedAt") or 0)
+
+            if reward_age >= REWARD_READY_TIMEOUT_SECONDS:
+                abandoned_session_id = current_state.get("sessionId")
+                print(
+                    "Reward QR abandoned for 60 seconds. Resetting machine:",
+                    abandoned_session_id,
+                )
+
+                if db is not None and abandoned_session_id:
+                    try:
+                        reward_ref = (
+                            db.collection("redeem_qr_codes")
+                            .document(abandoned_session_id)
+                        )
+                        reward_snapshot = reward_ref.get()
+                        if reward_snapshot.exists:
+                            reward_data = reward_snapshot.to_dict() or {}
+                            if reward_data.get("status") == "unclaimed":
+                                reward_ref.update({
+                                    "status": "expired",
+                                    "updatedAt": firestore.SERVER_TIMESTAMP,
+                                })
+                    except Exception as error:
+                        print("Could not expire abandoned reward in Firestore:", error)
+
+                recycling_paused.clear()
+                finish_session_event.clear()
+                reset_state()
+                continue
+
             time.sleep(0.2)
             continue
 
@@ -2152,6 +2284,7 @@ def water_request_worker():
     Continuously checks Firestore for pending
     water refill requests for this machine.
     """
+    global db
 
     print("========================================")
     print("Water refill Firestore worker started.")
@@ -2163,10 +2296,19 @@ def water_request_worker():
         if db is None:
             print(
                 "Firebase database unavailable. "
-                "Retrying in 3 seconds..."
+                "Trying to reconnect..."
             )
-            time.sleep(3)
-            continue
+            try:
+                db = initialize_firebase()
+            except Exception as error:
+                print("Firebase reconnect failed:", error)
+                db = None
+
+            if db is None:
+                time.sleep(3)
+                continue
+
+            print("Firebase connection recovered.")
 
         try:
             print(
