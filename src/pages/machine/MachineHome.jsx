@@ -311,6 +311,7 @@ function MachineHome() {
           eyebrow: "Machine error",
           title: "Something went wrong",
           message:
+            machineState.error ||
             machineState.message ||
             "Please reset the machine and try again.",
           icon: <AlertTriangle size={62} />,

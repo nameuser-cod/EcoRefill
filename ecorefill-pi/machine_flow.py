@@ -59,7 +59,7 @@ MIN_OBJECT_AREA_RATIO = 0.05
 
 SERIAL_BAUD_RATE = 115200
 SERIAL_TIMEOUT = 0.25
-WATER_COMMAND_TIMEOUT_SECONDS = 90
+WATER_COMMAND_TIMEOUT_SECONDS = 120
 REWARD_READY_TIMEOUT_SECONDS = 60
 
 API_HOST = "0.0.0.0"
@@ -2230,43 +2230,47 @@ def process_water_refill_request(request_doc):
 
         return
 
-    completion_batch = db.batch()
+    try:
+        completion_batch = db.batch()
 
-    completion_batch.update(
-        session_ref,
-        {
-            "status": "completed",
-            "message": "Water refill completed.",
-            "error": None,
-            "updatedAt": firestore.SERVER_TIMESTAMP,
-        },
-    )
+        completion_batch.update(
+            session_ref,
+            {
+                "status": "completed",
+                "message": "Water refill completed.",
+                "error": None,
+                "updatedAt": firestore.SERVER_TIMESTAMP,
+            },
+        )
 
-    completion_batch.update(
-        request_ref,
-        {
-            "status": "completed",
-            "error": None,
-            "updatedAt": firestore.SERVER_TIMESTAMP,
-        },
-    )
+        completion_batch.update(
+            request_ref,
+            {
+                "status": "completed",
+                "error": None,
+                "updatedAt": firestore.SERVER_TIMESTAMP,
+            },
+        )
 
-    completion_batch.update(
-        transaction_ref,
-        {
-            "status": "completed",
-            "updatedAt": firestore.SERVER_TIMESTAMP,
-        },
-    )
+        completion_batch.update(
+            transaction_ref,
+            {
+                "status": "completed",
+                "updatedAt": firestore.SERVER_TIMESTAMP,
+            },
+        )
 
-    completion_batch.commit()
-
-    # IMPORTANT: water mode pauses recycling when the BLUE button is pressed.
-    # Always restore the recycling machine after a successful refill so the
-    # next bottle/can can be detected without requiring a manual restart.
-    recycling_paused.clear()
-    finish_session_event.clear()
-    reset_state()
+        completion_batch.commit()
+    except Exception as completion_error:
+        # The ESP32 already confirmed the physical refill. A Firestore write
+        # failure must not leave the kiosk permanently stuck in water mode.
+        print("Water completed, but Firestore completion update failed:", completion_error)
+    finally:
+        # Water mode pauses recycling when the BLUE button is pressed. Always
+        # restore the machine after the physical dispense has ended.
+        recycling_paused.clear()
+        finish_session_event.clear()
+        reset_state()
 
     print(
         "ESP32 confirmed that water "

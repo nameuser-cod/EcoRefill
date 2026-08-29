@@ -6,6 +6,7 @@ import {
 import { QRCodeSVG } from "qrcode.react";
 import { useNavigate } from "react-router-dom";
 import {
+  AlertTriangle,
   ArrowLeft,
   CheckCircle2,
   CupSoda,
@@ -139,7 +140,9 @@ function MachineWaterRefill() {
       session.status ===
         "completed" ||
       session.status ===
-        "cancelled"
+        "cancelled" ||
+      session.status ===
+        "failed"
     ) {
       return;
     }
@@ -254,7 +257,9 @@ function MachineWaterRefill() {
         if (
           session?.sessionId &&
           session.status !==
-            "completed"
+            "completed" &&
+          session.status !==
+            "failed"
         ) {
           await fetch(
             `${API_BASE_URL}/api/water-refill/session/${session.sessionId}/cancel`,
@@ -297,6 +302,73 @@ function MachineWaterRefill() {
       true;
 
     createRefillSession();
+  };
+
+  const getFriendlyRefillError = () => {
+    const rawError = String(
+      session?.error ||
+      session?.message ||
+      ""
+    ).trim();
+
+    const normalized = rawError.toUpperCase();
+
+    if (normalized.includes("NO_BOTTLE")) {
+      return {
+        title: "Container not detected",
+        message:
+          "Place your bottle or cup close to the sensor under the nozzle, then try again.",
+        detail: rawError,
+      };
+    }
+
+    if (normalized.includes("SENSOR_LOST")) {
+      return {
+        title: "Sensor could not detect your container",
+        message:
+          "Keep the container steady and close to the sensor. If the problem continues, please ask for assistance.",
+        detail: rawError,
+      };
+    }
+
+    if (normalized.includes("CONTAINER_REMOVED")) {
+      return {
+        title: "Container was moved",
+        message:
+          "The refill stopped because the container moved too far from the sensor. Keep it under the nozzle until dispensing is complete.",
+        detail: rawError,
+      };
+    }
+
+    if (
+      normalized.includes("ESP32") ||
+      normalized.includes("UNAVAILABLE") ||
+      normalized.includes("SERIAL")
+    ) {
+      return {
+        title: "Water dispenser is not responding",
+        message:
+          "The machine cannot communicate with the water controller. Please ask for assistance.",
+        detail: rawError,
+      };
+    }
+
+    if (normalized.includes("TIMED OUT")) {
+      return {
+        title: "Refill timed out",
+        message:
+          "The dispenser did not finish in time. Please try again or ask for assistance.",
+        detail: rawError,
+      };
+    }
+
+    return {
+      title: "Water refill failed",
+      message:
+        rawError ||
+        "The machine could not complete the refill. Please try again.",
+      detail: rawError,
+    };
   };
 
   const getStatusContent = () => {
@@ -356,6 +428,27 @@ function MachineWaterRefill() {
             />
           ),
         };
+
+      case "failed": {
+        const refillError =
+          getFriendlyRefillError();
+
+        return {
+          eyebrow: "Refill error",
+
+          title:
+            refillError.title,
+
+          message:
+            refillError.message,
+
+          icon: (
+            <AlertTriangle
+              size={58}
+            />
+          ),
+        };
+      }
 
       case "cancelled":
         return {
@@ -616,6 +709,50 @@ function MachineWaterRefill() {
                         points used
                       </p>
                     </div>
+                  </div>
+                )}
+
+                {session.status ===
+                  "failed" && (
+                  <div className="water-center-state error">
+                    <AlertTriangle
+                      size={58}
+                    />
+
+                    <h3>
+                      {
+                        getFriendlyRefillError()
+                          .title
+                      }
+                    </h3>
+
+                    <p>
+                      {
+                        getFriendlyRefillError()
+                          .message
+                      }
+                    </p>
+
+                    {getFriendlyRefillError()
+                      .detail && (
+                      <small>
+                        Machine error:{" "}
+                        {
+                          getFriendlyRefillError()
+                            .detail
+                        }
+                      </small>
+                    )}
+
+                    <button
+                      className="machine-kiosk-primary"
+                      onClick={retrySession}
+                    >
+                      <RefreshCw
+                        size={24}
+                      />
+                      Try Again
+                    </button>
                   </div>
                 )}
 
