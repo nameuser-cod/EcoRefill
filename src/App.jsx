@@ -8,7 +8,8 @@ import OwnerProfile from "./pages/owner/OwnerProfile";
 import OwnerTransactions from "./pages/owner/OwnerTransactions";
 import MachineHome from "./pages/machine/MachineHome";
 import RedeemQRCode from "./pages/machine/RedeemQRCode";
-import ScanQR, { CameraScan } from "./pages/user/ScanQR";
+import ScanQR from "./pages/user/ScanQR";
+import CameraScan from "./pages/user/CameraScan";
 import UserHistory from "./pages/user/UserHistory";
 import BuyPoints from "./pages/user/BuyPoints";
 import MachineWaterRefill from "./pages/machine/MachineWaterRefill";
@@ -30,10 +31,9 @@ function App() {
       <Route path="/user/scan-qr" element={<ScanQR />} />
       <Route path="/user/history" element={<UserHistory />} />
       <Route path="/user/buy-points" element={<BuyPoints />} />
-      <Route path="/user/scan-qr" element={<ScanQR />} />
-      <Route path="/user/camera-scan"element={<CameraScan />} />
-      <Route path="/machine/water-refill"element={<MachineWaterRefill />}/>
-      <Route path="/user/water-refill/:sessionId"element={<UserWaterRefill />}/>
+      <Route path="/user/camera-scan" element={<CameraScan />} />
+      <Route path="/machine/water-refill" element={<MachineWaterRefill />} />
+      <Route path="/user/water-refill/:sessionId" element={<UserWaterRefill />} />
     </Routes>
   );
 }

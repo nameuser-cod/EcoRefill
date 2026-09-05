@@ -10,15 +10,9 @@ import {
 } from "firebase/firestore";
 import { ArrowLeft, CheckCircle2, ShoppingBag } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
-import UserBottomNav from "./UserBottomNav";
+import UserBottomNav from "./components/UserBottomNav";
+import { POINT_PACKAGES } from "./constants";
 import "../../styles/user.css";
-
-const POINT_PACKAGES = [
-  { id: 1, name: "Starter Pack", points: 100, price: 20, description: "Good for small refills" },
-  { id: 2, name: "Eco Saver Pack", points: 250, price: 45, description: "Best for regular users" },
-  { id: 3, name: "Green Hero Pack", points: 500, price: 85, description: "More points, better value" },
-  { id: 4, name: "Eco Champion Pack", points: 1000, price: 160, description: "Recommended for frequent users" },
-];
 
 function BuyPoints() {
   const navigate = useNavigate();

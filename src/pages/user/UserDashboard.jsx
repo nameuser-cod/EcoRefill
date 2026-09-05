@@ -21,7 +21,12 @@ import {
 } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
 import LogoutButton from "../../components/LogoutButton";
-import UserBottomNav from "./UserBottomNav";
+import TransactionIcon from "./components/TransactionIcon";
+import UserBottomNav from "./components/UserBottomNav";
+import {
+  getTransactionDescription,
+  getTransactionTitle,
+} from "./utils/transactions";
 import "../../styles/user.css";
 
 function UserDashboard() {
@@ -93,43 +98,6 @@ function UserDashboard() {
       unsubscribe();
     };
   }, [navigate]);
-
-  const getTransactionLabel = (type) =>
-    ({
-      recycling: "Recycling Reward",
-      water_refill: "Water Refill",
-      point_purchase: "Point Purchase",
-    })[type] || "Transaction";
-
-  const getTransactionIcon = (type) => {
-    if (type === "recycling") return <Recycle size={20} />;
-    if (type === "water_refill") return <Droplets size={20} />;
-    if (type === "point_purchase") return <ShoppingBag size={20} />;
-
-    return <History size={20} />;
-  };
-
-  const getTransactionDescription = (transaction) => {
-    if (transaction.type === "recycling") {
-      return `+${transaction.pointsEarned || 0} points • ${(
-        transaction.materialType || "item"
-      ).replaceAll("_", " ")}`;
-    }
-
-    if (transaction.type === "water_refill") {
-      return `-${transaction.pointsUsed || 0} points • ${
-        transaction.waterAmountMl || 0
-      } ml`;
-    }
-
-    if (transaction.type === "point_purchase") {
-      return `+${transaction.pointsBought || 0} points • ₱${
-        transaction.amountPaid || 0
-      }`;
-    }
-
-    return "EcoRefill activity";
-  };
 
   if (loading) {
     return (
@@ -263,11 +231,11 @@ function UserDashboard() {
               {recentTransactions.map((transaction) => (
                 <div className="transaction-item" key={transaction.id}>
                   <div className="transaction-icon">
-                    {getTransactionIcon(transaction.type)}
+                    <TransactionIcon type={transaction.type} size={20} />
                   </div>
 
                   <div className="transaction-details">
-                    <h4>{getTransactionLabel(transaction.type)}</h4>
+                    <h4>{getTransactionTitle(transaction.type)}</h4>
                     <p>{getTransactionDescription(transaction)}</p>
                   </div>
 
