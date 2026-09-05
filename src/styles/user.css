@@ -1312,11 +1312,29 @@
   background: #bff27c;
   display: grid;
   place-items: center;
+  color: var(--ink);
+  font-size: 36px;
+  font-weight: 950;
+}
+
+.profile-points {
+  margin-top: 8px;
+  padding: 7px 11px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--mint-green);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .profile-form-card {
   display: grid;
   gap: 18px;
+}
+
+.profile-form-card h2 {
+  margin: 4px 0 0;
 }
 
 .profile-form-card label {
@@ -1338,6 +1356,19 @@
 .profile-form-card input:disabled {
   background: #edf2ef;
   color: #5c6f65;
+}
+
+.profile-logout-button {
+  width: 100%;
+  min-height: 52px;
+  margin-bottom: 12px;
+  border-color: #9e2f2f !important;
+  background: #ffe5e1 !important;
+  color: #812121 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
 }
 
 /* ---------- USER BOTTOM NAVIGATION ---------- */
