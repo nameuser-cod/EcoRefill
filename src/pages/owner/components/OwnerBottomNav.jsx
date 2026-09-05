@@ -1,10 +1,11 @@
 import {
   Bell,
+  Leaf,
   LayoutDashboard,
   ReceiptText,
   UserRound,
 } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 const NAV_ITEMS = [
   {
@@ -30,34 +31,41 @@ const NAV_ITEMS = [
 ];
 
 function OwnerBottomNav({ unreadAlerts = 0 }) {
-  const navigate = useNavigate();
-  const location = useLocation();
-
   return (
     <nav className="owner-app-nav" aria-label="Owner navigation">
-      {NAV_ITEMS.map(({ label, path, icon: Icon }) => {
-        const active = location.pathname.startsWith(path);
+      <div className="owner-app-nav-brand" aria-label="EcoRefill owner portal">
+        <span><Leaf size={22} /></span>
+        <div>
+          <strong>EcoRefill</strong>
+          <small>Owner portal</small>
+        </div>
+      </div>
 
-        return (
-          <button
-            type="button"
+      <div className="owner-app-nav-links">
+        {NAV_ITEMS.map(({ label, path, icon: Icon }) => (
+          <NavLink
             key={path}
-            className={`owner-app-nav-item${active ? " active" : ""}`}
-            onClick={() => navigate(path)}
-            aria-current={active ? "page" : undefined}
+            to={path}
+            className={({ isActive }) =>
+              `owner-app-nav-item${isActive ? " active" : ""}`
+            }
           >
             <span className="owner-app-nav-icon">
               <Icon size={21} />
               {label === "Alerts" && unreadAlerts > 0 && (
-                <span className="owner-app-nav-badge" aria-hidden="true">
+                <span className="owner-app-nav-badge" aria-label={`${unreadAlerts} unread alerts`}>
                   {unreadAlerts > 9 ? "9+" : unreadAlerts}
                 </span>
               )}
             </span>
             <span>{label}</span>
-          </button>
-        );
-      })}
+          </NavLink>
+        ))}
+      </div>
+
+      <p className="owner-app-nav-note">
+        Monitor your machine, activity, and service needs in one place.
+      </p>
     </nav>
   );
 }

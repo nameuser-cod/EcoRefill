@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { doc, serverTimestamp, writeBatch } from "firebase/firestore";
-import { LogOut, Mail, MapPin, Save, UserRound } from "lucide-react";
+import {
+  CircleDot,
+  Fingerprint,
+  LogOut,
+  Mail,
+  MapPin,
+  Save,
+  UserRound,
+} from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
 import LogoutButton from "../../components/LogoutButton";
 import OwnerPageShell from "./components/OwnerPageShell";
@@ -60,6 +68,11 @@ function ProfileForm({ owner, machine }) {
         </div>
       </div>
 
+      <div className="owner-form-heading">
+        <h3>Personal information</h3>
+        <p>Keep the name shown across your owner workspace up to date.</p>
+      </div>
+
       <label>
         Display name
         <input
@@ -105,9 +118,22 @@ function OwnerProfile() {
           </section>
 
           <aside className="owner-panel owner-connected-machine">
-            <p>Connected machine</p>
+            <p className="owner-connected-machine-label">Connected machine</p>
             <h2>{machine?.machineName || machine?.machineId || machine?.id || "Not connected"}</h2>
-            <span><MapPin size={16} />{machine?.location || "Location not set"}</span>
+            <dl>
+              <div>
+                <dt><CircleDot size={16} />Status</dt>
+                <dd>{machine?.machineStatus || "Unknown"}</dd>
+              </div>
+              <div>
+                <dt><MapPin size={16} />Location</dt>
+                <dd>{machine?.location || "Not set"}</dd>
+              </div>
+              <div>
+                <dt><Fingerprint size={16} />Machine ID</dt>
+                <dd>{machine?.machineId || machine?.id || "Unavailable"}</dd>
+              </div>
+            </dl>
           </aside>
 
           <LogoutButton className="owner-logout-button">

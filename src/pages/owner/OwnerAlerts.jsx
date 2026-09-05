@@ -46,17 +46,34 @@ function OwnerAlerts() {
     >
       <OwnerError message={machineError || alertsError} />
 
-      <div className="owner-filter-row" aria-label="Alert filters">
-        {FILTERS.map((filter) => (
-          <button
-            type="button"
-            key={filter}
-            className={activeFilter === filter ? "active" : ""}
-            onClick={() => setActiveFilter(filter)}
-          >
-            {filter}
-          </button>
-        ))}
+      <div className="owner-list-toolbar">
+        <div>
+          <strong>Machine notifications</strong>
+          <span>
+            {unreadAlerts === 0
+              ? "No unread alerts"
+              : `${unreadAlerts} unread alert${unreadAlerts === 1 ? "" : "s"}`}
+          </span>
+        </div>
+        <div className="owner-filter-row" aria-label="Alert filters">
+          {FILTERS.map((filter) => {
+            const count = filter === "all"
+              ? alerts.length
+              : alerts.filter((alert) => normalizeText(alert.status) === filter).length;
+
+            return (
+              <button
+                type="button"
+                key={filter}
+                className={activeFilter === filter ? "active" : ""}
+                onClick={() => setActiveFilter(filter)}
+                aria-pressed={activeFilter === filter}
+              >
+                {filter} <span>{count}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <section className="owner-panel owner-page-list-panel">
@@ -69,7 +86,7 @@ function OwnerAlerts() {
             description="Your machine has no alerts in this category."
           />
         ) : (
-          <div className="owner-record-list">
+          <div className="owner-record-list" aria-live="polite">
             {filteredAlerts.map((alert) => {
               const status = alert.status || "unread";
 

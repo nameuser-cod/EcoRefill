@@ -64,17 +64,26 @@ function OwnerTransactions() {
     >
       <OwnerError message={machineError || transactionsError} />
 
-      <div className="owner-filter-row" aria-label="Transaction filters">
-        {FILTERS.map((filter) => (
-          <button
-            type="button"
-            key={filter.value}
-            className={activeFilter === filter.value ? "active" : ""}
-            onClick={() => setActiveFilter(filter.value)}
-          >
-            {filter.label}
-          </button>
-        ))}
+      <div className="owner-list-toolbar">
+        <div>
+          <strong>Activity log</strong>
+          <span>
+            Showing {filteredTransactions.length} of {transactions.length} records
+          </span>
+        </div>
+        <div className="owner-filter-row" aria-label="Transaction filters">
+          {FILTERS.map((filter) => (
+            <button
+              type="button"
+              key={filter.value}
+              className={activeFilter === filter.value ? "active" : ""}
+              onClick={() => setActiveFilter(filter.value)}
+              aria-pressed={activeFilter === filter.value}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <section className="owner-panel owner-page-list-panel">
@@ -87,7 +96,7 @@ function OwnerTransactions() {
             description="Try another filter or check back after the machine is used."
           />
         ) : (
-          <div className="owner-record-list">
+          <div className="owner-record-list" aria-live="polite">
             {filteredTransactions.map((transaction) => {
               const Icon = getIcon(transaction);
               const status = isRejectedTransaction(transaction)

@@ -1,5 +1,4 @@
-import { AlertTriangle, LogOut } from "lucide-react";
-import LogoutButton from "../../components/LogoutButton";
+import { AlertTriangle } from "lucide-react";
 import MachineMetrics from "./components/MachineMetrics";
 import MachineOverview from "./components/MachineOverview";
 import OwnerPageShell from "./components/OwnerPageShell";
@@ -50,14 +49,6 @@ function OwnerDashboard() {
         eyebrow="Owner workspace"
         title={`Welcome${owner?.fullName ? `, ${owner.fullName}` : ""}`}
         subtitle="Manage your EcoRefill machine from one place."
-        action={
-          <LogoutButton
-            className="owner-header-button"
-            ariaLabel="Log out"
-          >
-            <LogOut size={20} />
-          </LogoutButton>
-        }
       >
         <OwnerError message={machineError} />
         <section className="owner-panel owner-no-machine">
@@ -74,26 +65,22 @@ function OwnerDashboard() {
   return (
     <OwnerPageShell
       eyebrow="Owner workspace"
-      title={machine.machineName || machine.machineId || machine.id || "EcoRefill machine"}
-      subtitle={`Welcome back${owner?.fullName ? `, ${owner.fullName}` : ""}.`}
+      title="Dashboard"
+      subtitle={`Welcome back${owner?.fullName ? `, ${owner.fullName}` : ""}. Here’s how ${machine.machineName || machine.machineId || "your machine"} is doing.`}
       unreadAlerts={unreadAlerts}
-      action={
-        <LogoutButton
-          className="owner-header-button"
-          ariaLabel="Log out"
-        >
-          <LogOut size={20} />
-        </LogoutButton>
-      }
     >
       <OwnerError message={machineError || dashboard.error} />
+      <MachineOverview machine={machine} />
 
       {dashboard.loading ? (
         <OwnerLoading label="Loading live machine activity..." />
       ) : (
         <>
-          <MachineOverview machine={machine} />
-          <MachineMetrics machine={machine} />
+          <MachineMetrics
+            machine={machine}
+            analytics={dashboard.analytics}
+            unreadAlerts={unreadAlerts}
+          />
 
           <div className="owner-dashboard-layout">
             <div className="owner-dashboard-main">

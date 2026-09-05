@@ -15,6 +15,8 @@ import {
 } from "../utils/ownerDashboard";
 
 function MachineOverview({ machine }) {
+  const machineName =
+    machine.machineName || machine.machineId || machine.id || "EcoRefill machine";
   const machineStatus = machine.machineStatus || "Unknown";
   const statusTone = getStatusTone(machineStatus);
   const qualityStatus = machine.waterQualityStatus || "Unknown";
@@ -49,9 +51,9 @@ function MachineOverview({ machine }) {
         </span>
 
         <div>
-          <span className="owner-machine-label">Machine status</span>
+          <span className="owner-machine-label">Connected machine</span>
           <div className="owner-machine-title-row">
-            <h2>{machineStatus}</h2>
+            <h2>{machineName}</h2>
             <span className={`owner-status tone-${statusTone}`}>
               <span />
               {machineStatus}
@@ -64,7 +66,7 @@ function MachineOverview({ machine }) {
           </p>
           <p>
             <Clock3 size={16} />
-            Last update: {formatTimestamp(machine.lastSeenAt, "Not reported")}
+            Last seen {formatTimestamp(machine.lastSeenAt, "not reported")}
           </p>
         </div>
       </div>
