@@ -36,6 +36,9 @@ from datetime import (
 # =========================================================
 
 MODEL_PATH = "models/ecorefill_best.pt"
+# Match this checkpoint's training resolution. See MODEL_EVALUATION.md for
+# validation results; re-evaluate this setting when replacing the model.
+INFERENCE_IMAGE_SIZE = 416
 MOTION_MIN_AREA = 3000
 MOTION_TRIGGER_FRAMES = 2
 STABLE_FRAMES_REQUIRED = 2
@@ -886,7 +889,7 @@ def verify_item(frame):
     results = model.predict(
         source=frame,
         conf=DETECTION_CONFIDENCE_LIMIT,
-        imgsz=640,
+        imgsz=INFERENCE_IMAGE_SIZE,
         verbose=False,
     )
 
