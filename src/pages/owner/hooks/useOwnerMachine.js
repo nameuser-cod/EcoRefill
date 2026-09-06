@@ -102,6 +102,9 @@ function useOwnerMachine() {
     machine,
     loading,
     error,
+    updateOwnerName: (fullName) => {
+      setOwner((current) => current ? { ...current, fullName } : current);
+    },
   };
 }
 

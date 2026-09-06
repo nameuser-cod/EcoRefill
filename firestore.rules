@@ -1,0 +1,160 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn()
+        && request.auth.uid == userId;
+    }
+
+    // User accounts
+    match /users/{userId} {
+      allow create: if isOwner(userId)
+        && request.resource.data.points == 0
+        && request.resource.data.role
+             in ['user', 'device_owner'];
+
+      allow read: if isOwner(userId);
+
+      allow update: if isOwner(userId)
+        && request.resource.data.diff(resource.data)
+             .affectedKeys()
+             .hasOnly(['fullName', 'updatedAt'])
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0;
+
+      allow delete: if false;
+    }
+
+    // EcoRefill machines
+    match /machines/{machineId} {
+      allow read: if isSignedIn();
+
+      // A claimed machine's owner can keep their display name in sync.
+      allow update: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.diff(resource.data)
+             .affectedKeys()
+             .hasOnly(['ownerName', 'updatedAt'])
+        && request.resource.data.ownerName is string
+        && request.resource.data.ownerName.size() > 0;
+
+      allow update: if isSignedIn()
+        && (
+          !("ownerId" in resource.data)
+          || resource.data.ownerId == ""
+        )
+        && request.resource.data.ownerId
+             == request.auth.uid
+        && request.resource.data.machineId
+             == machineId;
+
+      allow create, delete: if false;
+    }
+
+    // Payment server connection
+    // Signed-in users can read the Pi's payment address.
+    // Only the trusted Admin SDK can change it.
+    match /serviceEndpoints/pointPayments {
+      allow get: if isSignedIn();
+      allow list, write: if false;
+    }
+
+    // GCash receiving accounts
+    // Accessed through the Raspberry Pi's Admin SDK.
+    match /gcashAccounts/{ownerUid} {
+      allow read, write: if false;
+    }
+
+    // GCash reference reservations
+    match /gcashPaymentReferences/{referenceId} {
+      allow read, write: if false;
+    }
+
+    // Point purchases
+    // Creation, submission, and approval use the Pi API.
+    match /pointPurchases/{purchaseId} {
+      allow read, write: if false;
+    }
+
+    // Recycling QR rewards
+    match /redeem_qr_codes/{rewardId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+
+    // Recycling records
+    match /recycling_records/{recordId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+
+    // Water refill sessions
+    match /water_refill_sessions/{sessionId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+
+    // Water refill requests
+    // The user submits; the Pi processes the request.
+    match /water_refill_requests/{requestId} {
+      allow create: if isSignedIn()
+        && request.resource.data.userId
+             == request.auth.uid
+        && request.resource.data.status == "pending"
+        && request.resource.data.machineId is string
+        && request.resource.data.sessionId is string
+        && request.resource.data.waterAmountMl
+             in [250, 500, 1000];
+
+      allow read: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+
+      allow update, delete: if false;
+    }
+
+    // Machine alerts
+    match /machine_alerts/{documentId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // Main transaction history
+    match /transactions/{documentId} {
+      allow read: if isSignedIn()
+        && ("userId" in resource.data)
+        && resource.data.userId == request.auth.uid;
+
+      allow create, update, delete: if false;
+    }
+
+    // Recycling transactions
+    match /recycling_transactions/{documentId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // Water refill transactions
+    match /water_refill_transactions/{documentId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // Legacy point purchase transactions
+    match /point_purchase_transactions/{documentId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // Deny everything not explicitly allowed above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

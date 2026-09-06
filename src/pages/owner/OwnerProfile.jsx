@@ -16,7 +16,7 @@ import { OwnerError, OwnerLoading } from "./components/OwnerFeedback";
 import useOwnerMachine from "./hooks/useOwnerMachine";
 import GcashSettings from "./components/GcashSettings";
 
-function ProfileForm({ owner, machine }) {
+function ProfileForm({ owner, machine, onSaved }) {
   const [fullName, setFullName] = useState(owner?.fullName || "");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -24,10 +24,19 @@ function ProfileForm({ owner, machine }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (saving) return;
+    setError("");
+    setMessage("");
     const normalizedName = fullName.trim();
 
     if (!normalizedName) {
       setError("Please enter your name.");
+      return;
+    }
+
+    const user = auth.currentUser;
+    if (!user) {
+      setError("Your session has ended. Please sign in again.");
       return;
     }
 
@@ -37,7 +46,7 @@ function ProfileForm({ owner, machine }) {
       setMessage("");
 
       const batch = writeBatch(db);
-      batch.update(doc(db, "users", auth.currentUser.uid), {
+      batch.update(doc(db, "users", user.uid), {
         fullName: normalizedName,
         updatedAt: serverTimestamp(),
       });
@@ -50,10 +59,18 @@ function ProfileForm({ owner, machine }) {
       }
 
       await batch.commit();
+      onSaved(normalizedName);
+      setFullName(normalizedName);
       setMessage("Profile updated.");
     } catch (saveError) {
       console.error("Unable to update owner profile:", saveError);
-      setError("We could not save your profile. Please try again.");
+      const errors = {
+        "permission-denied": "Your account does not have permission to save this profile. Please contact the administrator.",
+        unauthenticated: "Your session has ended. Please sign in again.",
+        unavailable: "Unable to connect. Check your internet connection and try again.",
+        "not-found": "Your profile or connected machine could not be found. Reload the page and try again.",
+      };
+      setError(errors[saveError.code] || "We could not save your profile. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -78,8 +95,15 @@ function ProfileForm({ owner, machine }) {
         Display name
         <input
           value={fullName}
-          onChange={(event) => setFullName(event.target.value)}
+          onChange={(event) => {
+            setFullName(event.target.value);
+            setError("");
+            setMessage("");
+          }}
           autoComplete="name"
+          disabled={saving}
+          maxLength={80}
+          required
         />
       </label>
 
@@ -88,8 +112,8 @@ function ProfileForm({ owner, machine }) {
         <input value={owner?.email || auth.currentUser?.email || ""} disabled readOnly />
       </label>
 
-      {error && <p className="owner-form-error">{error}</p>}
-      {message && <p className="owner-form-success">{message}</p>}
+      {error && <p className="owner-form-error" role="alert">{error}</p>}
+      {message && <p className="owner-form-success" role="status">{message}</p>}
 
       <button type="submit" disabled={saving}>
         <Save size={18} />
@@ -100,7 +124,7 @@ function ProfileForm({ owner, machine }) {
 }
 
 function OwnerProfile() {
-  const { owner, machine, loading, error } = useOwnerMachine();
+  const { owner, machine, loading, error, updateOwnerName } = useOwnerMachine();
 
   return (
     <OwnerPageShell
@@ -115,7 +139,7 @@ function OwnerProfile() {
       ) : (
         <div className="owner-profile-layout">
           <section className="owner-panel">
-            <ProfileForm owner={owner} machine={machine} />
+            <ProfileForm owner={owner} machine={machine} onSaved={updateOwnerName} />
           </section>
 
           <aside className="owner-panel owner-connected-machine">
