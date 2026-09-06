@@ -108,9 +108,23 @@ export const getTransactionLabel = (type) => {
   return labels[normalizeText(type)] || "Transaction";
 };
 
+export const getActivityLabel = (record) => {
+  if (isRejectedTransaction(record)) return "Rejected item";
+  if (record.source === "recycling_records") return "Recycling scan";
+  return getTransactionLabel(record.type);
+};
+
 export const getTransactionDescription = (transaction) => {
   if (isRejectedTransaction(transaction)) {
     return `${getDetectedMaterial(transaction)} · Not accepted`;
+  }
+
+  if (transaction.source === "recycling_records") {
+    return `${getDetectedMaterial(transaction)} · Accepted for recycling`;
+  }
+
+  if (transaction.source === "water_refill_sessions") {
+    return `${transaction.waterAmountMl || 0} ml · ${transaction.pointsUsed || 0} points`;
   }
 
   const type = normalizeText(transaction.type);

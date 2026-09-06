@@ -10,9 +10,9 @@ import { useNavigate } from "react-router-dom";
 import { OwnerEmpty } from "./OwnerFeedback";
 import {
   formatTimestamp,
+  getActivityLabel,
   getStatusTone,
   getTransactionDescription,
-  getTransactionLabel,
   isRejectedTransaction,
   normalizeText,
 } from "../utils/ownerDashboard";
@@ -105,8 +105,8 @@ export function RecentTransactions({ transactions }) {
       {transactions.length === 0 ? (
         <OwnerEmpty
           icon={ReceiptText}
-          title="No transactions yet"
-          description="Completed machine activity will appear here."
+          title="No activity yet"
+          description="Machine scans and transactions will appear here."
         />
       ) : (
         <div className="owner-activity-list">
@@ -114,7 +114,7 @@ export function RecentTransactions({ transactions }) {
             <ActivityRow
               key={transaction.id}
               icon={getTransactionIcon(transaction)}
-              title={getTransactionLabel(transaction.type)}
+              title={getActivityLabel(transaction)}
               description={getTransactionDescription(transaction)}
               status={
                 isRejectedTransaction(transaction)

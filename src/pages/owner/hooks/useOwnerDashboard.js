@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../../../firebase/firebase";
 import { calculateAnalytics, timestampValue } from "../utils/ownerDashboard";
+import { mergeOwnerActivity } from "../utils/ownerActivity";
+import useMachineCollection from "./useMachineCollection";
 
 const EMPTY_RECORDS = [];
 const SECTIONS = ["recycling", "transactions", "alerts"];
@@ -13,6 +15,7 @@ const sortNewest = (items) =>
   );
 
 function useOwnerDashboard(machineId) {
+  const refills = useMachineCollection("water_refill_sessions", machineId, Infinity);
   const [result, setResult] = useState({
     machineId: null,
     recyclingRecords: [],
@@ -106,7 +109,7 @@ function useOwnerDashboard(machineId) {
       (snapshot) => {
         const records = sortNewest(
           snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-        ).slice(0, 5);
+        );
         setResult((current) =>
           current.machineId === machineId
             ? { ...current, recentTransactions: records }
@@ -142,7 +145,11 @@ function useOwnerDashboard(machineId) {
 
   const matchesMachine = result.machineId === machineId;
   const recyclingRecords = matchesMachine ? result.recyclingRecords : EMPTY_RECORDS;
-  const recentTransactions = matchesMachine ? result.recentTransactions : EMPTY_RECORDS;
+  const transactions = matchesMachine ? result.recentTransactions : EMPTY_RECORDS;
+  const recentTransactions = useMemo(
+    () => mergeOwnerActivity(transactions, recyclingRecords, refills.records, 5),
+    [transactions, recyclingRecords, refills.records]
+  );
   const recentAlerts = matchesMachine ? result.recentAlerts : EMPTY_RECORDS;
 
   const analytics = useMemo(
@@ -155,9 +162,9 @@ function useOwnerDashboard(machineId) {
     [recyclingRecords]
   );
 
-  const error = matchesMachine && Object.keys(result.errors).length
+  const error = refills.error || (matchesMachine && Object.keys(result.errors).length
     ? "Some dashboard information could not be loaded. Check your Firestore rules and collection names."
-    : "";
+    : "");
 
   return {
     analytics,
@@ -166,7 +173,7 @@ function useOwnerDashboard(machineId) {
     recentAlerts,
     loading:
       Boolean(machineId) &&
-      (!matchesMachine || !SECTIONS.every((section) => result.loadedSections.includes(section))),
+      (refills.loading || !matchesMachine || !SECTIONS.every((section) => result.loadedSections.includes(section))),
     error,
   };
 }

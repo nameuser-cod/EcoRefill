@@ -1,21 +1,25 @@
-import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { useEffect, useState } from "react";
+import {
+  browserLocalPersistence,
+  browserSessionPersistence,
+  setPersistence,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  AlertCircle,
-  ArrowRight,
-  Eye,
-  EyeOff,
-  Leaf,
-  LoaderCircle,
-  LockKeyhole,
-  Mail,
-  Recycle,
-  ShieldCheck,
-} from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
 import "../../styles/auth.css";
+
+async function getDashboardPath(user) {
+  const userDocSnap = await getDoc(doc(db, "users", user.uid));
+
+  if (!userDocSnap.exists()) return null;
+
+  return userDocSnap.data().role === "device_owner"
+    ? "/owner/dashboard"
+    : "/user/dashboard";
+}
 
 function Login() {
   const navigate = useNavigate();
@@ -23,9 +27,37 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function restoreSession() {
+      try {
+        await auth.authStateReady();
+        const user = auth.currentUser;
+        if (!user || cancelled) return;
+
+        const dashboardPath = await getDashboardPath(user);
+        if (dashboardPath && !cancelled && auth.currentUser?.uid === user.uid) {
+          navigate(dashboardPath, { replace: true });
+        }
+      } catch (err) {
+        console.error("Session restore error:", err);
+      } finally {
+        if (!cancelled) setCheckingSession(false);
+      }
+    }
+
+    restoreSession();
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
 
   const getFriendlyError = (errorCode) => {
     switch (errorCode) {
@@ -54,7 +86,7 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (loading) return;
+    if (loading || checkingSession) return;
 
     setError("");
     setLoading(true);
@@ -62,30 +94,27 @@ function Login() {
     try {
       const normalizedEmail = email.trim().toLowerCase();
 
+      await setPersistence(
+        auth,
+        rememberMe ? browserLocalPersistence : browserSessionPersistence
+      );
+
       const userCredential = await signInWithEmailAndPassword(
         auth,
         normalizedEmail,
         password
       );
 
-      const user = userCredential.user;
-      const userDocRef = doc(db, "users", user.uid);
-      const userDocSnap = await getDoc(userDocRef);
+      const dashboardPath = await getDashboardPath(userCredential.user);
 
-      if (!userDocSnap.exists()) {
+      if (!dashboardPath) {
         setError(
           "Your account was authenticated, but its user record was not found."
         );
         return;
       }
 
-      const userData = userDocSnap.data();
-
-      if (userData.role === "device_owner") {
-        navigate("/owner/dashboard", { replace: true });
-      } else {
-        navigate("/user/dashboard", { replace: true });
-      }
+      navigate(dashboardPath, { replace: true });
     } catch (err) {
       console.error("Login error:", err);
       setError(getFriendlyError(err.code));
@@ -140,10 +169,21 @@ function Login() {
   </span>
 </div>
 
+          <label className="remember-me">
+            <input
+              type="checkbox"
+              name="rememberMe"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              disabled={loading || checkingSession}
+            />
+            <span>Remember me</span>
+          </label>
+
           {error && <p className="error-message">{error}</p>}
 
-          <button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+          <button type="submit" disabled={loading || checkingSession}>
+            {checkingSession ? "Checking session..." : loading ? "Logging in..." : "Login"}
           </button>
         </form>
 

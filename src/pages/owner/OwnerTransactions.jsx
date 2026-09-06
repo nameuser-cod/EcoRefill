@@ -17,12 +17,13 @@ import useOwnerMachine from "./hooks/useOwnerMachine";
 import GcashPaymentReviews from "./components/GcashPaymentReviews";
 import {
   formatTimestamp,
+  getActivityLabel,
   getStatusTone,
   getTransactionDescription,
-  getTransactionLabel,
   isRejectedTransaction,
   normalizeText,
 } from "./utils/ownerDashboard";
+import { mergeOwnerActivity } from "./utils/ownerActivity";
 
 const FILTERS = [
   { label: "All", value: "all" },
@@ -48,22 +49,38 @@ function OwnerTransactions() {
     records: transactions,
     loading: transactionsLoading,
     error: transactionsError,
-  } = useMachineCollection("transactions", machine?.id, 50);
+  } = useMachineCollection("transactions", machine?.id, Infinity);
+  const {
+    records: recyclingRecords,
+    loading: recyclingLoading,
+    error: recyclingError,
+  } = useMachineCollection("recycling_records", machine?.id, Infinity);
+  const {
+    records: refillSessions,
+    loading: refillsLoading,
+    error: refillsError,
+  } = useMachineCollection("water_refill_sessions", machine?.id, Infinity);
+
+  const activity = useMemo(
+    () => mergeOwnerActivity(transactions, recyclingRecords, refillSessions),
+    [transactions, recyclingRecords, refillSessions]
+  );
+  const activityError = transactionsError || recyclingError || refillsError;
 
   const filteredTransactions = useMemo(() => {
-    if (activeFilter === "all") return transactions;
-    return transactions.filter(
+    if (activeFilter === "all") return activity;
+    return activity.filter(
       (transaction) => normalizeText(transaction.type) === activeFilter
     );
-  }, [activeFilter, transactions]);
+  }, [activeFilter, activity]);
 
   return (
     <OwnerPageShell
       eyebrow="Machine records"
       title="Transactions"
-      subtitle="Review recycling rewards, refills, and point purchases."
+      subtitle="Review machine scans, recycling rewards, refills, and point purchases."
     >
-      <OwnerError message={machineError || transactionsError} />
+      <OwnerError message={machineError || activityError} />
 
       {!machineLoading && !machineError && <GcashPaymentReviews />}
 
@@ -71,7 +88,7 @@ function OwnerTransactions() {
         <div>
           <strong>Activity log</strong>
           <span>
-            Showing {filteredTransactions.length} of {transactions.length} records
+            Showing {filteredTransactions.length} of {activity.length} recent records
           </span>
         </div>
         <div className="owner-filter-row" aria-label="Transaction filters">
@@ -90,13 +107,21 @@ function OwnerTransactions() {
       </div>
 
       <section className="owner-panel owner-page-list-panel">
-        {machineLoading || transactionsLoading ? (
-          <OwnerLoading label="Loading transactions..." />
-        ) : filteredTransactions.length === 0 ? (
+        {machineLoading || transactionsLoading || recyclingLoading || refillsLoading ? (
+          <OwnerLoading label="Loading activity..." />
+        ) : machineError ? null : !machine ? (
           <OwnerEmpty
             icon={ReceiptText}
-            title="No matching transactions"
-            description="Try another filter or check back after the machine is used."
+            title="No machine connected"
+            description="Ask an administrator to assign a machine to this owner account."
+          />
+        ) : activity.length === 0 && activityError ? null : filteredTransactions.length === 0 ? (
+          <OwnerEmpty
+            icon={ReceiptText}
+            title={activeFilter === "all" ? "No activity yet" : "No matching activity"}
+            description={activeFilter === "all"
+              ? "Scanned items, claimed rewards, refills, and approved purchases for this machine will appear here."
+              : "Try another filter or check back after the machine is used."}
           />
         ) : (
           <div className="owner-record-list" aria-live="polite">
@@ -112,7 +137,7 @@ function OwnerTransactions() {
                     <Icon size={21} />
                   </span>
                   <div>
-                    <strong>{getTransactionLabel(transaction.type)}</strong>
+                    <strong>{getActivityLabel(transaction)}</strong>
                     <p>{getTransactionDescription(transaction)}</p>
                     <time>{formatTimestamp(transaction.createdAt)}</time>
                   </div>

@@ -21,8 +21,10 @@ function Register() {
   const [machineId, setMachineId] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -87,6 +89,11 @@ function Register() {
 
     if (password.length < 6) {
       setError("Password must contain at least 6 characters.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match. Please confirm your password.");
       return;
     }
 
@@ -371,6 +378,42 @@ function Register() {
               ) : (
                 <EyeOff size={25} />
               )}
+            </span>
+          </div>
+
+          <label htmlFor="register-confirm-password">Confirm Password</label>
+
+          <div className="password-field">
+            <input
+              id="register-confirm-password"
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Re-enter your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              autoComplete="new-password"
+              minLength={6}
+              disabled={loading}
+              required
+            />
+
+            <span
+              className="password-eye"
+              role="button"
+              tabIndex={0}
+              aria-label={
+                showConfirmPassword
+                  ? "Hide confirm password"
+                  : "Show confirm password"
+              }
+              onClick={() => setShowConfirmPassword((current) => !current)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setShowConfirmPassword((current) => !current);
+                }
+              }}
+            >
+              {showConfirmPassword ? <Eye size={25} /> : <EyeOff size={25} />}
             </span>
           </div>
 
