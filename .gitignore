@@ -29,6 +29,9 @@ runs/
 
 __pycache__/
 *.pyc
+inspection_samples/
+cleanliness_dataset/
+ecorefill-pi/inspection.local.json
 
 # EcoRefill datasets
 aluminum_can_dataset/

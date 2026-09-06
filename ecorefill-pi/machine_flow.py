@@ -3,6 +3,7 @@ from flask_cors import CORS
 from picamera2 import Picamera2
 from ultralytics import YOLO
 from serial.tools import list_ports
+from visual_inspection import VisualInspector
 
 try:
     from gpiozero import Button
@@ -645,6 +646,8 @@ if not os.path.exists(MODEL_PATH):
 print("Loading EcoRefill model...")
 model = YOLO(MODEL_PATH)
 print("Model classes:", model.names)
+visual_inspector = VisualInspector.from_file(os.getenv("ECOREFILL_INSPECTION_CONFIG"))
+print("Visual inspection mode:", visual_inspector.mode)
 
 picam2 = None
 camera_lock = threading.Lock()
@@ -943,6 +946,7 @@ def verify_item(frame):
                 "item": item,
                 "confidence": confidence,
                 "area_ratio": box_area_ratio,
+                "box": [x1, y1, x2, y2],
             })
 
     if not detections:
@@ -993,28 +997,28 @@ def verify_item(frame):
 
     if best_item in BOTTLE_ITEMS:
         print(
-            "ACCEPTED: plastic bottle",
+            "Material matched: plastic bottle",
             f"confidence={best_confidence:.3f}",
         )
-        return {
+        return visual_inspector.apply({
             "accepted": True,
             "category": "bottle",
             "item": "plastic_bottle",
             "points": POINTS.get(best_item, 1),
             "confidence": best_confidence,
-        }
+        }, frame, detections)
 
     print(
-        "ACCEPTED: aluminum can",
+        "Material matched: aluminum can",
         f"confidence={best_confidence:.3f}",
     )
-    return {
+    return visual_inspector.apply({
         "accepted": True,
         "category": "can",
         "item": "aluminum_can",
         "points": POINTS.get(best_item, 1),
         "confidence": best_confidence,
-    }
+    }, frame, detections)
 
 
 def sort_item(result):
@@ -1035,6 +1039,8 @@ Category: {result["category"]}
 Item Type: {result["item"]}
 Points: {result["points"]}
 Confidence: {result["confidence"]:.2f}
+Inspection: {json.dumps(result.get("inspection"), allow_nan=False)}
+Rejection reason: {result.get("rejection_reason", "")}
 QR Data: {qr_code}
 Created At: {time.time()}
 -----------------------------
@@ -1094,6 +1100,8 @@ def save_recycling_to_firestore(
         "materialType": material_type,
         "pointsEarned": points_earned,
         "confidence": confidence,
+        "inspection": result.get("inspection"),
+        "rejectionReason": result.get("rejection_reason"),
         "qrCode": None,
         "imageDataUrl": image_data_url,
         "imageUrl": None,
@@ -1561,8 +1569,10 @@ def machine_worker():
                 update_state(
                     phase="rejected",
                     message=(
-                        "Item rejected. Use a clean plastic bottle or "
-                        "aluminum can. Your accepted-item total is safe."
+                        result.get("rejection_reason")
+                        or "Item rejected. Use a plastic bottle or aluminum can."
+                    ) + (
+                        " Your accepted-item total is safe."
                     ),
                     accepted=False,
                     materialType=result["item"],
