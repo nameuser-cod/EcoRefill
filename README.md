@@ -15,7 +15,7 @@ This README describes the implementation in this repository. Hardware behavior d
 | Recycling machine | Receives items one at a time, captures images, identifies supported materials, and sends sorting commands. |
 | Water dispenser | Receives commands for a selected refill amount through the ESP32. |
 | Machine screen | Shows scanning progress, accepted or rejected results, session totals, reward QR codes, and refill status. |
-| User app | Provides registration, login, QR scanning, point balances, refill selection, point purchase simulation, and transaction history. |
+| User app | Provides registration, login, QR scanning, point balances, refill selection, owner-verified GCash point purchases, and transaction history. |
 | Device owner dashboard | Shows the assigned machine, recycling statistics, recent scan photos, transactions, alerts, and reported machine readings. |
 | Firebase | Stores accounts, points, recycling records, reward codes, refill sessions, and transactions. |
 
@@ -110,7 +110,7 @@ Five accepted recyclable items earn 5 points, enough for a **500 mL refill** und
 - Scan recycling reward codes and water refill codes.
 - Select water amounts and follow refill progress.
 - View recycling rewards, point purchases, and refill transactions.
-- Add points through the current purchase simulation.
+- Buy points from a device owner using GCash, with owner verification.
 
 ### Device owner
 
@@ -118,7 +118,7 @@ Owners register using an existing, available machine ID. Registration links the 
 
 Owners can view machine details, accepted bottle and can counts, rejected items, acceptance rate, recent scan images, transactions, and alerts. The interface also displays water level, water-quality status, and tamper status when those fields are provided in Firestore. These displays depend on actual data being supplied; their presence in the interface does not establish that the corresponding sensors are implemented here.
 
-### Point purchase simulation
+### GCash point purchases
 
 | Package | EcoPoints | Displayed price |
 | --- | --- | --- |
@@ -127,7 +127,7 @@ Owners can view machine details, accepted bottle and can counts, rejected items,
 | Green Hero Pack | 500 | ₱85 |
 | Eco Champion Pack | 1,000 | ₱160 |
 
-The current **Confirm Purchase** action directly credits points and saves a purchase with `paymentMethod: "manual/simulation"`. No payment gateway or real payment verification is implemented in this flow.
+Users select an owner and package, send GCash to the displayed account, and submit their receipt reference. The owner verifies the received payment in **Transactions** before approving it. Only approval credits points. Owners configure their GCash account in **Profile**. Payments run on the existing Raspberry Pi and do not require the Firebase Blaze plan. See [GCash setup and required Firestore protections](docs/GCASH_PAYMENTS.md) before accepting real payments.
 
 ## How the components communicate
 
@@ -175,7 +175,10 @@ The Pi waits up to **120 seconds** for a water command to finish. It does not au
 | `water_refill_sessions` | Refill QR sessions, selected amount, customer, points used, and progress |
 | `water_refill_requests` | App-submitted refill requests processed by the Pi |
 | `transactions` | Recycling reward claims, point purchases, and water refill transactions |
-| `pointPurchases` | Purchase simulation records |
+| `pointPurchases` | GCash orders, references, and owner review status |
+| `gcashAccounts` | Owner GCash receiving settings, accessed through the Pi payment API |
+| `gcashPaymentReferences` | Server-only reference reservations to prevent payment reuse |
+| `serviceEndpoints/pointPayments` | Server-written public Pi URL for payment API discovery |
 | `alerts` | Machine alerts shown to the owner |
 | `machine_commands` | Command records created by the separate Cloud Function refill implementation |
 
@@ -253,7 +256,7 @@ npm run lint
 
 The physical workflow requires a configured Raspberry Pi camera, the material checkpoint, the ESP32 with compatible firmware, and Firebase Admin credentials. Starting only the web app does not start the machine service.
 
-1. Prepare a Python environment on the Pi with the packages in `requirements.txt` and **`firebase-admin`**, which the service imports but the current requirements file omits. Picamera2 also requires a working Raspberry Pi camera software installation.
+1. Prepare a Python environment on the Pi with the packages in `requirements.txt` including **`firebase-admin`**. Picamera2 also requires a working Raspberry Pi camera software installation.
 2. Ensure the checkpoint is available at `ecorefill-pi/models/ecorefill_best.pt`.
 3. Configure `FIREBASE_SERVICE_ACCOUNT` with an absolute path to the Firebase service-account JSON outside the repository, or use Application Default Credentials.
 4. Connect the ESP32 and buttons. The default machine ID is `machine_001` in `machine_flow.py`; it must match the intended Firestore machine document.

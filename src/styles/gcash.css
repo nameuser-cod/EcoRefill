@@ -1,0 +1,37 @@
+.gcash-settings { padding: 24px; margin-bottom: 24px; min-width: 0; }
+.gcash-settings > h2, .gcash-section-heading h2 { margin: 0; }
+.gcash-settings p, .gcash-purchase p { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.gcash-section-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+.gcash-form { display: grid; gap: 14px; }
+.gcash-form h3, .gcash-form p { margin: 0; }
+.gcash-form label { display: grid; gap: 7px; font-size: 14px; font-weight: 700; }
+.gcash-form input, .gcash-form select, .gcash-form textarea {
+  box-sizing: border-box; width: 100%; min-width: 0; padding: 12px; border: 1px solid #799a89;
+  border-radius: 10px; background: white; color: #153b2c; font: inherit;
+}
+.gcash-form input:focus-visible, .gcash-form select:focus-visible, .gcash-form textarea:focus-visible,
+.gcash-settings button:focus-visible { outline: 3px solid #3b82f6; outline-offset: 3px; }
+.gcash-form .gcash-checkbox { display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; }
+.gcash-checkbox input { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 2px; }
+.gcash-details { display: grid; gap: 10px; margin: 12px 0; padding: 16px; border-radius: 12px; background: #eef5ff; }
+.gcash-details > div { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.gcash-details dt { color: #475569; font-size: 13px; }
+.gcash-details dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.gcash-purchase { border-top: 1px solid #cfdfd6; padding: 20px 0; }
+.gcash-purchase h3 { margin: 0 0 8px; font-size: 17px; }
+.gcash-status { display: inline-block; margin: 6px 0; padding: 5px 10px; border-radius: 8px; background: #eef2f7; color: #334155; font-weight: 700; }
+.gcash-status-pending { background: #fff3cd; color: #775500; }
+.gcash-status-approved, .gcash-success { background: #dcfce7; color: #14532d; }
+.gcash-status-rejected, .gcash-error { background: #fee2e2; color: #991b1b; }
+.gcash-error, .gcash-success { padding: 12px; border-radius: 10px; line-height: 1.5; }
+.gcash-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.gcash-settings button, .gcash-purchase > button, .gcash-section-heading > button {
+  cursor: pointer; min-height: 44px; padding: 10px 15px; border: 1px solid #14532d; border-radius: 10px;
+  background: #166534; color: white; font: inherit; font-size: 14px; font-weight: 700;
+}
+.gcash-settings .gcash-reject { background: white; color: #991b1b; border-color: #991b1b; }
+.gcash-settings button:disabled, .gcash-form button:disabled { opacity: .55; cursor: not-allowed; }
+@media (max-width: 540px) {
+  .gcash-settings { padding: 16px; }
+  .gcash-actions button { width: 100%; }
+}

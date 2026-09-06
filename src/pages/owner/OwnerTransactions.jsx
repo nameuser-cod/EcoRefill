@@ -14,6 +14,7 @@ import {
 } from "./components/OwnerFeedback";
 import useMachineCollection from "./hooks/useMachineCollection";
 import useOwnerMachine from "./hooks/useOwnerMachine";
+import GcashPaymentReviews from "./components/GcashPaymentReviews";
 import {
   formatTimestamp,
   getStatusTone,
@@ -63,6 +64,8 @@ function OwnerTransactions() {
       subtitle="Review recycling rewards, refills, and point purchases."
     >
       <OwnerError message={machineError || transactionsError} />
+
+      {!machineLoading && !machineError && <GcashPaymentReviews />}
 
       <div className="owner-list-toolbar">
         <div>

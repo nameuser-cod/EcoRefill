@@ -14,6 +14,7 @@ import LogoutButton from "../../components/LogoutButton";
 import OwnerPageShell from "./components/OwnerPageShell";
 import { OwnerError, OwnerLoading } from "./components/OwnerFeedback";
 import useOwnerMachine from "./hooks/useOwnerMachine";
+import GcashSettings from "./components/GcashSettings";
 
 function ProfileForm({ owner, machine }) {
   const [fullName, setFullName] = useState(owner?.fullName || "");
@@ -135,6 +136,8 @@ function OwnerProfile() {
               </div>
             </dl>
           </aside>
+
+          <GcashSettings />
 
           <LogoutButton className="owner-logout-button">
             <LogOut size={19} />
