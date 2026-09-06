@@ -1,7 +1,7 @@
 # Free Cloudflare redemption tunnel
 
-EcoRefill uses a Cloudflare Quick Tunnel to expose only the authenticated
-recycling redemption endpoint. Machine-control routes remain available only on
+EcoRefill uses a Cloudflare Quick Tunnel to expose the authenticated recycling
+redemption and GCash payment endpoints. Machine-control routes remain available only on
 the local network.
 
 ## Install `cloudflared` on the Raspberry Pi
@@ -29,3 +29,20 @@ Quick Tunnel URLs change whenever `cloudflared` restarts. Rewards created before
 a restart may retain an unavailable URL; reset the machine and create a new
 reward in that case. Set `CLOUDFLARE_TUNNEL_ENABLED=false` to disable automatic
 tunneling and use local-network redemption only.
+
+## GCash payment connection
+
+The same public app on port 5001 now accepts `/api/points/<action>`. Every payment
+request requires a verified Firebase ID token; the server checks the caller's
+account role and purchase ownership before changing data. No additional tunnel
+or Firebase Cloud Functions deployment is needed.
+
+When the tunnel starts, the Pi publishes its URL to
+`serviceEndpoints/pointPayments` using the Admin SDK. Signed-in clients may read
+this document, but **all client writes must be denied**, including through broad
+Firestore rules. The app fetches this document before sending its token. See
+[GCash setup and rule requirements](../docs/GCASH_PAYMENTS.md).
+
+Quick Tunnels are intended for development/testing and provide no uptime
+promise. A stable tunnel is preferable for regular operation; set
+`VITE_PAYMENT_API_URL` to its HTTPS origin when building the frontend.

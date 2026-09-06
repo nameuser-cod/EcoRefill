@@ -4,6 +4,7 @@ from picamera2 import Picamera2
 from ultralytics import YOLO
 from serial.tools import list_ports
 from visual_inspection import VisualInspector
+from point_payments import register_payment_routes
 
 try:
     from gpiozero import Button
@@ -2504,6 +2505,9 @@ CORS(app)
 public_redeem_app = Flask(f"{__name__}.public_redeem")
 CORS(public_redeem_app)
 
+register_payment_routes(app, lambda: db, require_firebase_user)
+register_payment_routes(public_redeem_app, lambda: db, require_firebase_user)
+
 
 # =========================================================
 # MACHINE / RECYCLING API
@@ -3504,6 +3508,19 @@ def watch_redemption_tunnel(process):
                 "Public recycling redemption URL:",
                 tunnel_url,
             )
+
+            # Only the Admin SDK may write this discovery document. Clients
+            # read it before sending their ID token to the current Pi endpoint.
+            if db is not None:
+                try:
+                    db.collection("serviceEndpoints").document("pointPayments").set({
+                        "url": tunnel_url,
+                        "machineId": MACHINE_ID,
+                        "updatedAt": firestore.SERVER_TIMESTAMP,
+                    })
+                    print("Public GCash payment URL:", tunnel_url)
+                except Exception as error:
+                    print("Could not publish the payment endpoint:", repr(error))
 
     with redemption_tunnel_lock:
         redemption_tunnel_url = None
