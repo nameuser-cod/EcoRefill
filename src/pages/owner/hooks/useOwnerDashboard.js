@@ -158,7 +158,7 @@ function useOwnerDashboard(machineId) {
   );
 
   const recentItems = useMemo(
-    () => sortNewest(recyclingRecords).slice(0, 6),
+    () => sortNewest(recyclingRecords),
     [recyclingRecords]
   );
 

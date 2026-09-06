@@ -479,6 +479,63 @@
   color: var(--owner-ink);
 }
 
+.owner-scan-filters {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.owner-scan-filters fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.owner-scan-filters legend {
+  margin-bottom: 8px;
+  padding: 0;
+  color: var(--owner-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.owner-scan-filters .owner-filter-row {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.owner-scan-summary {
+  margin: 0 0 14px;
+  color: var(--owner-muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.owner-scan-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.owner-scan-pagination button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--owner-card);
+  color: var(--owner-ink);
+  font-size: inherit;
+}
+
 .owner-scan-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

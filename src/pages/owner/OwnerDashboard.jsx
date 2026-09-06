@@ -85,7 +85,7 @@ function OwnerDashboard() {
           <div className="owner-dashboard-layout">
             <div className="owner-dashboard-main">
               <RecyclingOverview analytics={dashboard.analytics} />
-              <RecentScans items={dashboard.recentItems} />
+              <RecentScans key={machine.id} items={dashboard.recentItems} />
             </div>
 
             <aside className="owner-dashboard-side">
