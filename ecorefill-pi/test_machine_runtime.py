@@ -83,6 +83,78 @@ machine.close()
         self.assertTrue(self.machine.recycling_paused.is_set())
 
 
+class ButtonTests(unittest.TestCase):
+    def test_gpio_callbacks_reach_the_machine_state(self):
+        machine = MachineRuntime()
+        green, blue = Mock(), Mock()
+        factory = Mock(side_effect=[green, blue])
+        with patch.dict(sys.modules, {"gpiozero": SimpleNamespace(Button=factory)}):
+            machine.initialize_buttons()
+        self.addCleanup(machine.close)
+        machine.update_state(itemCount=1)
+        green.when_pressed()
+        self.assertTrue(machine.finish_session_event.is_set())
+        machine.reset_state()
+        blue.when_pressed()
+        self.assertEqual(machine.get_state()["phase"], "water_refill_requested")
+
+    def test_callback_setup_failure_releases_pin_and_still_initializes_other_button(self):
+        class BrokenButton:
+            close = Mock()
+
+            @property
+            def when_pressed(self):
+                return None
+
+            @when_pressed.setter
+            def when_pressed(self, callback):
+                raise RuntimeError("edge detection unavailable")
+
+        for broken_index in (0, 1):
+            with self.subTest(broken_index=broken_index):
+                machine = MachineRuntime()
+                broken = BrokenButton()
+                broken.close = Mock()
+                buttons = [Mock(), Mock()]
+                buttons[broken_index] = broken
+                with patch.dict(sys.modules, {
+                    "gpiozero": SimpleNamespace(Button=Mock(side_effect=buttons)),
+                }), self.assertLogs("ecorefill.machine", level="ERROR"):
+                    machine.initialize_buttons()
+                broken.close.assert_called_once_with()
+                actual = [machine.green_button, machine.blue_button]
+                self.assertIsNone(actual[broken_index])
+                self.assertIs(actual[1 - broken_index], buttons[1 - broken_index])
+                machine.close()
+
+    def test_standalone_check_reports_presses_without_initializing_other_hardware(self):
+        import check_buttons
+
+        machine = MachineRuntime()
+        green, blue = Mock(is_pressed=False), Mock(is_pressed=False)
+
+        def press_buttons():
+            green.when_pressed()
+            blue.when_pressed()
+            raise KeyboardInterrupt
+
+        with patch.object(check_buttons, "MachineRuntime", return_value=machine), \
+             patch.object(check_buttons, "configure_logging"), \
+             patch.dict(sys.modules, {"gpiozero": SimpleNamespace(
+                 Button=Mock(side_effect=[green, blue]),
+             )}), \
+             patch.object(check_buttons.signal, "pause", side_effect=press_buttons), \
+             patch("builtins.print") as output:
+            self.assertEqual(check_buttons.main(), 0)
+        output.assert_any_call("GREEN pressed", flush=True)
+        output.assert_any_call("BLUE pressed", flush=True)
+        green.close.assert_called_once_with()
+        blue.close.assert_called_once_with()
+        self.assertIsNone(machine.db)
+        self.assertIsNone(machine.picam2)
+        self.assertIsNone(machine.esp32)
+
+
 class SerialTests(unittest.TestCase):
     def setUp(self):
         self.machine = MachineRuntime()

@@ -11,6 +11,58 @@ alongside `machine_flow.py`, `point_payments.py`, and `visual_inspection.py`.
 Keep the existing model, credentials, and local inspection configuration.
 The launcher is no longer a standalone copy of the controller.
 
+## Green or blue physical button does not respond
+
+Stop the running machine controller first so two processes do not claim the
+same GPIO pins. From `ecorefill-pi`, use the same Python interpreter and
+environment as the controller:
+
+```sh
+python3 check_buttons.py
+```
+
+This uses the controller's button configuration and prints press/release events
+without starting Firebase, the camera, the ESP32, or any machine workers.
+Ctrl+C releases the GPIO inputs and exits; restart the controller afterward.
+
+Default wiring uses BCM numbering (not physical header numbering):
+
+| Button | BCM GPIO | Physical header pin | Other switch terminal |
+| --- | --- | --- | --- |
+| Green | 17 | 11 | GND |
+| Blue | 27 | 13 | GND |
+
+`GREEN_BUTTON_GPIO` and `BLUE_BUTTON_GPIO` environment variables override the
+BCM pin numbers. A released switch should report `released`; pressing it
+connects its input to ground. If it is already `PRESSED` while untouched,
+check the switch terminals and wiring. If initialization succeeds but pressing
+does nothing, check the actual wired pins against the numbers printed.
+
+If a button is `unavailable`, read the initialization traceback. Missing
+`gpiozero`, an unavailable GPIO backend, permissions, or another process using
+the pins can prevent initialization. The diagnostic prints the Python path
+to help detect an interpreter/environment mismatch. On Raspberry Pi OS the
+packages can be installed with:
+
+```sh
+sudo apt install python3-gpiozero python3-lgpio
+```
+
+The selected Python environment must be able to import those packages. For
+Pi 5, GPIO Zero documents `lgpio` as the supported backend; see
+[GPIO Zero pin factories](https://gpiozero.readthedocs.io/en/stable/api_pins.html).
+To explicitly select it for a diagnostic run:
+
+```sh
+GPIOZERO_PIN_FACTORY=lgpio python3 check_buttons.py
+```
+
+If both events appear in the standalone check, restart the controller and
+check its logs and `/api/machine/state`. Green needs at least one accepted item
+and queues reward creation in the recycling worker. Blue requires an empty
+batch and an idle, rejected, or error phase. It sets `water_refill_requested`,
+which the kiosk must read to open the water screen.
+
 ## Find the right file
 
 | Problem or change | Start here | Useful methods or settings |

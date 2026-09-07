@@ -111,6 +111,9 @@ class MachineRuntime(
                 )
             except Exception as error:
                 log("Could not initialize green GPIO button:", error)
+                if self.green_button is not None:
+                    self.green_button.close()
+                    self.green_button = None
 
 
         # Configure the physical blue WATER REFILL push button.
@@ -134,6 +137,9 @@ class MachineRuntime(
                 )
             except Exception as error:
                 log("Could not initialize blue GPIO button:", error)
+                if self.blue_button is not None:
+                    self.blue_button.close()
+                    self.blue_button = None
 
 
     def start(self):
