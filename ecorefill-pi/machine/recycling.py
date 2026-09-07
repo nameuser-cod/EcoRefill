@@ -230,6 +230,60 @@ Created At: {time.time()}
 
         return firebase_saved
 
+    def resume_recycling_session(self):
+        """Withdraw the unclaimed QR before allowing more items in this batch."""
+        from firebase_admin import firestore
+
+        self.resume_session_event.clear()
+        current = self.get_state()
+        if current.get("phase") != "reward_ready":
+            return False
+
+        session_id = current.get("sessionId")
+        claimed = False
+        try:
+            if self.db is None:
+                if current.get("firebaseSaved"):
+                    raise RuntimeError("Firebase is unavailable; cannot withdraw the reward.")
+            else:
+                reward_ref = self.db.collection("redeem_qr_codes").document(session_id)
+
+                @firestore.transactional
+                def withdraw_reward(transaction):
+                    snapshot = reward_ref.get(transaction=transaction)
+                    reward = snapshot.to_dict() or {} if snapshot.exists else {}
+                    if reward.get("status") == "claimed":
+                        return True
+                    if snapshot.exists:
+                        transaction.update(reward_ref, {
+                            "status": "cancelled",
+                            "updatedAt": firestore.SERVER_TIMESTAMP,
+                        })
+                    return False
+
+                # Redemption reads and writes this same document in a transaction.
+                # If a scan wins the race, its points cannot be carried forward.
+                claimed = withdraw_reward(self.db.transaction())
+        except Exception as error:
+            log("Could not return to recycling session:", error)
+            with self.state_lock:
+                latest = self.get_state()
+                if latest.get("phase") == "reward_ready" and latest.get("sessionId") == session_id:
+                    self.update_state(error="Unable to return to your session. Press GREEN to try again.")
+            return False
+
+        with self.state_lock:
+            latest = self.get_state()
+            if latest.get("phase") != "reward_ready" or latest.get("sessionId") != session_id:
+                return False
+            self.finish_session_event.clear()
+            if claimed:
+                self.reset_state()
+                return False
+            self.rearm_for_next_item()
+            self.update_state(firebaseSaved=False)
+        return True
+
     def machine_worker(self):
         """
         Multi-item recycling watcher.
@@ -240,6 +294,7 @@ Created At: {time.time()}
         3. Camera automatically rearms for the next item.
         4. Customer presses the GREEN GPIO button when finished.
         5. Pi creates one QR reward containing the TOTAL points.
+        6. Another GREEN press withdraws the QR and resumes the same batch.
         """
         import cv2
         from firebase_admin import firestore
@@ -263,6 +318,10 @@ Created At: {time.time()}
             # Hold the final QR briefly. If nobody claims it within one minute,
             # expire it and automatically prepare the machine for the next user.
             if current_state["phase"] == "reward_ready":
+                if self.resume_session_event.is_set():
+                    self.resume_recycling_session()
+                    continue
+
                 reward_age = time.time() - float(current_state.get("updatedAt") or 0)
 
                 if reward_age >= REWARD_READY_TIMEOUT_SECONDS:

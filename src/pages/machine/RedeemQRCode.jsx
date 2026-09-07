@@ -27,7 +27,7 @@ function RedeemQRCode() {
     location.state;
 
   // Note: the reward doc in `redeem_qr_codes` is written server-side
-  // (Admin SDK) by machine_flow.py the moment the item is accepted —
+  // (Admin SDK) when the customer finishes their recycling session —
   // this screen only ever *displays* it. It must never write to
   // Firestore itself: an unauthenticated kiosk browser writing reward
   // documents directly would let anyone forge their own point values.
@@ -225,6 +225,10 @@ function RedeemQRCode() {
 
               QR expires in 1 minute
             </div>
+
+            <p>Press the GREEN button again to add more items to this session. Your items and points will be kept.</p>
+
+            {machineResult.error && <p role="alert">{machineResult.error}</p>}
           </section>
         </main>
 

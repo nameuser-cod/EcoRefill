@@ -34,7 +34,7 @@ class MachineRuntime(
     MachineAPI, WaterAPI, RewardsAPI, RedemptionTunnel,
 ):
     def __init__(self):
-        self.state_lock = threading.Lock()
+        self.state_lock = threading.RLock()
         self.camera_lock = threading.Lock()
         self.serial_lock = threading.Lock()
         self.esp32_connection_lock = threading.Lock()
@@ -42,6 +42,7 @@ class MachineRuntime(
         self.shutdown_event = threading.Event()
         self.recycling_paused = threading.Event()
         self.finish_session_event = threading.Event()
+        self.resume_session_event = threading.Event()
         self.db = None
         self.model = None
         self.visual_inspector = None

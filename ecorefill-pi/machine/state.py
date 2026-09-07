@@ -19,6 +19,7 @@ class MachineState:
     def reset_state(self):
         """Start a completely new customer recycling session."""
         self.finish_session_event.clear()
+        self.resume_session_event.clear()
         self.update_state(
             phase="idle",
             message="Insert bottles or cans. Press the green button when finished.",
@@ -61,12 +62,14 @@ class MachineState:
 
     def request_finish_recycling_session(self):
         """
-        GPIO callback. It only requests finalization; the machine worker performs
-        the actual Firestore write so a button press cannot interrupt sorting.
+        GPIO callback. Queue finish or resume; the worker handles Firestore
+        writes so a button press cannot interrupt sorting.
         """
         current = self.get_state()
 
         if current.get("phase") == "reward_ready":
+            log("Green button pressed. Returning to the recycling session...")
+            self.resume_session_event.set()
             return
 
         if int(current.get("itemCount") or 0) <= 0:
