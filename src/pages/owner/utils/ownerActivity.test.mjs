@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mergeOwnerActivity } from "./ownerActivity.js";
-import { getActivityLabel, getTransactionDescription } from "./ownerDashboard.js";
+import { getActivityLabel, getTransactionDescription, normalizeText } from "./ownerDashboard.js";
 
 test("inserted bottles and rejected cans appear without claimed rewards", () => {
   const activity = mergeOwnerActivity([], [
@@ -67,4 +67,32 @@ test("combined activity is sorted before limiting, with distinct IDs across coll
   assert.deepEqual(activity.map((item) => item.id), ["refill:same", "transaction:same"]);
   assert.equal(scans[0].id, "same");
   assert.equal(transactions[0].id, "same");
+});
+
+test("purchase and refill filters retain records older than the latest 50 scans", () => {
+  const transactions = [
+    { id: "purchase", type: "point_purchase", status: "completed", createdAt: 10 },
+    { id: "refill", type: "water_refill", status: "completed", createdAt: 20 },
+  ];
+  const scans = Array.from({ length: 60 }, (_, index) => ({
+    id: `scan-${index}`,
+    accepted: true,
+    createdAt: 30 + index,
+  }));
+
+  const activity = mergeOwnerActivity(transactions, scans);
+
+  assert.equal(activity.length, 62);
+  assert.deepEqual(
+    activity.filter((record) => normalizeText(record.type) === "point purchase").map((record) => record.id),
+    ["transaction:purchase"]
+  );
+  assert.deepEqual(
+    activity.filter((record) => normalizeText(record.type) === "water refill").map((record) => record.id),
+    ["transaction:refill"]
+  );
+  assert.equal(activity.at(-1).id, "transaction:purchase");
+
+  const preview = mergeOwnerActivity(transactions, scans, [], 5);
+  assert.deepEqual(preview, activity.slice(0, 5));
 });

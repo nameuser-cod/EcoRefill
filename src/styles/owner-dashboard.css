@@ -883,6 +883,33 @@
   padding: 16px 0;
 }
 
+/* Keep filters visible while the full transaction history scrolls in its card. */
+.owner-transactions-activity {
+  display: flex;
+  flex-direction: column;
+  max-height: max(160px, calc(100dvh - 160px - env(safe-area-inset-bottom)));
+  margin-bottom: 24px;
+}
+
+.owner-transactions-activity > .owner-list-toolbar {
+  flex-shrink: 0;
+}
+
+.owner-transactions-activity > .owner-transactions-scroll {
+  min-height: 0;
+  margin-bottom: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--owner-green-dark) var(--owner-green-soft);
+}
+
+.owner-transactions-scroll:focus-visible {
+  outline: 4px solid #ffd43b;
+  outline-offset: 3px;
+}
+
 .owner-record-icon {
   width: 44px;
   height: 44px;

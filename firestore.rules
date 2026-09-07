@@ -13,6 +13,14 @@ service cloud.firestore {
         && request.auth.uid == userId;
     }
 
+    function ownsMachine(machineId) {
+      return isSignedIn()
+        && machineId is string
+        && machineId != ""
+        && get(/databases/$(database)/documents/machines/$(machineId))
+             .data.ownerId == request.auth.uid;
+    }
+
     // User accounts
     match /users/{userId} {
       allow create: if isOwner(userId)
@@ -128,8 +136,12 @@ service cloud.firestore {
     // Main transaction history
     match /transactions/{documentId} {
       allow read: if isSignedIn()
-        && ("userId" in resource.data)
-        && resource.data.userId == request.auth.uid;
+        && (
+          (("userId" in resource.data)
+            && resource.data.userId == request.auth.uid)
+          || (("machineId" in resource.data)
+            && ownsMachine(resource.data.machineId))
+        );
 
       allow create, update, delete: if false;
     }

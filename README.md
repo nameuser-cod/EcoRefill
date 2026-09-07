@@ -227,7 +227,7 @@ Use Node.js **22.12 or later** and npm for the frontend; the optional Firebase F
    npm install
    ```
 
-2. Check [the Firebase web configuration](src/firebase/firebase.js). For a separate installation, supply your Firebase project's settings, enable email/password authentication, and configure Firestore access rules. This repository does not include a Firestore rules file.
+2. Check [the Firebase web configuration](src/firebase/firebase.js). For a separate installation, supply your Firebase project's settings, enable email/password authentication, and deploy [the Firestore rules](firestore.rules) with `firebase deploy --only firestore:rules`. These rules let buyers read their own transactions and machine owners read transactions for their machines.
 3. Create `.env.local` in the project root with the machine API address:
 
    ```dotenv
@@ -243,6 +243,8 @@ Use Node.js **22.12 or later** and npm for the frontend; the optional Firebase F
    ```
 
 5. Open the URL printed by Vite. Use `/login` for accounts and `/machine` for the kiosk. Camera scanning requires camera permission and an appropriate browser context, such as HTTPS or localhost.
+
+Run `npm run test:rules` to check transaction access using synthetic data in the local Firestore emulator. This requires the Firebase CLI and Java 21 or later; the tests use a demo project and do not access production records.
 
 Other available commands:
 

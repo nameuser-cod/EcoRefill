@@ -84,72 +84,82 @@ function OwnerTransactions() {
 
       {!machineLoading && !machineError && <GcashPaymentReviews />}
 
-      <div className="owner-list-toolbar">
-        <div>
-          <strong>Activity log</strong>
-          <span>
-            Showing {filteredTransactions.length} of {activity.length} recent records
-          </span>
-        </div>
-        <div className="owner-filter-row" aria-label="Transaction filters">
-          {FILTERS.map((filter) => (
-            <button
-              type="button"
-              key={filter.value}
-              className={activeFilter === filter.value ? "active" : ""}
-              onClick={() => setActiveFilter(filter.value)}
-              aria-pressed={activeFilter === filter.value}
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <section className="owner-panel owner-page-list-panel">
-        {machineLoading || transactionsLoading || recyclingLoading || refillsLoading ? (
-          <OwnerLoading label="Loading activity..." />
-        ) : machineError ? null : !machine ? (
-          <OwnerEmpty
-            icon={ReceiptText}
-            title="No machine connected"
-            description="Ask an administrator to assign a machine to this owner account."
-          />
-        ) : activity.length === 0 && activityError ? null : filteredTransactions.length === 0 ? (
-          <OwnerEmpty
-            icon={ReceiptText}
-            title={activeFilter === "all" ? "No activity yet" : "No matching activity"}
-            description={activeFilter === "all"
-              ? "Scanned items, claimed rewards, refills, and approved purchases for this machine will appear here."
-              : "Try another filter or check back after the machine is used."}
-          />
-        ) : (
-          <div className="owner-record-list" aria-live="polite">
-            {filteredTransactions.map((transaction) => {
-              const Icon = getIcon(transaction);
-              const status = isRejectedTransaction(transaction)
-                ? "rejected"
-                : transaction.status || "completed";
-
-              return (
-                <article className="owner-record-row" key={transaction.id}>
-                  <span className="owner-record-icon">
-                    <Icon size={21} />
-                  </span>
-                  <div>
-                    <strong>{getActivityLabel(transaction)}</strong>
-                    <p>{getTransactionDescription(transaction)}</p>
-                    <time>{formatTimestamp(transaction.createdAt)}</time>
-                  </div>
-                  <span className={`owner-status tone-${getStatusTone(status)}`}>
-                    {status}
-                  </span>
-                </article>
-              );
-            })}
+      <div className="owner-transactions-activity">
+        <div className="owner-list-toolbar">
+          <div>
+            <strong>Activity log</strong>
+            <span>
+              Showing {filteredTransactions.length} of {activity.length} records
+            </span>
           </div>
-        )}
-      </section>
+          <div className="owner-filter-row" aria-label="Transaction filters">
+            {FILTERS.map((filter) => (
+              <button
+                type="button"
+                key={filter.value}
+                className={activeFilter === filter.value ? "active" : ""}
+                onClick={() => setActiveFilter(filter.value)}
+                aria-pressed={activeFilter === filter.value}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <section
+          key={activeFilter}
+          className="owner-panel owner-page-list-panel owner-transactions-scroll"
+          role="region"
+          aria-label="Transaction activity"
+          tabIndex={0}
+        >
+          {machineLoading || transactionsLoading || recyclingLoading || refillsLoading ? (
+            <OwnerLoading label="Loading activity..." />
+          ) : machineError ? null : !machine ? (
+            <OwnerEmpty
+              icon={ReceiptText}
+              title="No machine connected"
+              description="Ask an administrator to assign a machine to this owner account."
+            />
+          ) : filteredTransactions.length === 0 && activityError ? (
+            <OwnerError message={activityError} />
+          ) : filteredTransactions.length === 0 ? (
+            <OwnerEmpty
+              icon={ReceiptText}
+              title={activeFilter === "all" ? "No activity yet" : "No matching activity"}
+              description={activeFilter === "all"
+                ? "Scanned items, claimed rewards, refills, and approved purchases for this machine will appear here."
+                : "Try another filter or check back after the machine is used."}
+            />
+          ) : (
+            <div className="owner-record-list" aria-live="polite">
+              {filteredTransactions.map((transaction) => {
+                const Icon = getIcon(transaction);
+                const status = isRejectedTransaction(transaction)
+                  ? "rejected"
+                  : transaction.status || "completed";
+
+                return (
+                  <article className="owner-record-row" key={transaction.id}>
+                    <span className="owner-record-icon">
+                      <Icon size={21} />
+                    </span>
+                    <div>
+                      <strong>{getActivityLabel(transaction)}</strong>
+                      <p>{getTransactionDescription(transaction)}</p>
+                      <time>{formatTimestamp(transaction.createdAt)}</time>
+                    </div>
+                    <span className={`owner-status tone-${getStatusTone(status)}`}>
+                      {status}
+                    </span>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </div>
     </OwnerPageShell>
   );
 }

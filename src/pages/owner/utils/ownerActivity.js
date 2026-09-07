@@ -1,6 +1,7 @@
 import { isRejectedTransaction, normalizeText, timestampValue } from "./ownerDashboard.js";
 
-export function mergeOwnerActivity(transactions, recyclingRecords, refillSessions = [], maximum = 50) {
+// Keep the full history for transaction filters; dashboard previews pass a limit.
+export function mergeOwnerActivity(transactions, recyclingRecords, refillSessions = [], maximum = Infinity) {
   const rewardedSessions = new Set(
     transactions
       .filter((record) => normalizeText(record.type) === "recycling" && !isRejectedTransaction(record))
