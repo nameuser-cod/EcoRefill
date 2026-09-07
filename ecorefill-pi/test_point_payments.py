@@ -94,7 +94,7 @@ class PaymentTests(unittest.TestCase):
         return self.api.handle(action, uid, data)
 
     def create(self, order='order1', uid='buyer', **extra):
-        return self.call('createPointPurchase', uid, **{'purchaseId': order, 'machineId': 'machine_001', 'packageId': 1, **extra})
+        return self.call('createPointPurchase', uid, **{'purchaseId': order, 'machineId': 'machine_001', 'points': 100, **extra})
 
     def submit(self, order='order1', uid='buyer', reference='1234567890123'):
         return self.call('submitGcashPayment', uid, purchaseId=order, referenceNumber=reference, senderName='Buyer')
@@ -113,8 +113,8 @@ class PaymentTests(unittest.TestCase):
                 self.assert_code('unauthenticated', lambda: self.call(action, uid=None))
 
     def test_server_controls_price_and_owner_and_submission_does_not_credit(self):
-        purchase = self.create(points=999999, price=0, ownerId='stranger')['purchase']
-        self.assertEqual((purchase['points'], purchase['price'], purchase['ownerId']), (100, 20, 'owner'))
+        purchase = self.create(points=137, price=0, ownerId='stranger')['purchase']
+        self.assertEqual((purchase['points'], purchase['price'], purchase['ownerId']), (137, 137, 'owner'))
         self.submit()
         self.assertEqual(self.db.records['users/buyer']['points'], 7)
         self.assertEqual(self.db.records['pointPurchases/order1']['status'], 'pending')
@@ -148,7 +148,27 @@ class PaymentTests(unittest.TestCase):
         self.create(); self.create()
         self.assertEqual(len([k for k in self.db.records if k.startswith('pointPurchases/')]), 1)
         self.assert_code('already-exists', lambda: self.create(uid='other'))
-        self.assert_code('already-exists', lambda: self.create(packageId=2))
+        self.assert_code('already-exists', lambda: self.create(points=101))
+
+    def test_custom_amounts_credit_exact_points_and_record_peso_total(self):
+        for points in (1, 37, 150, 1234):
+            with self.subTest(points=points):
+                self.setUp()
+                self.create(points=points)
+                self.submit(); self.review()
+                self.assertEqual(self.db.records['users/buyer']['points'], 7 + points)
+                transaction = self.db.records['transactions/gcash_order1']
+                self.assertEqual((transaction['pointsBought'], transaction['amountPaid']), (points, points))
+
+    def test_existing_package_purchase_keeps_original_price_on_approval(self):
+        self.create()
+        self.db.records['pointPurchases/order1'].update(packageId=1, packageName='Starter Pack', price=20)
+        self.assert_code('already-exists', self.create)
+        self.submit(); self.review()
+        transaction = self.db.records['transactions/gcash_order1']
+        self.assertEqual((transaction['pointsBought'], transaction['amountPaid'], transaction['packageName']),
+                         (100, 20, 'Starter Pack'))
+        self.assertEqual(self.db.records['users/buyer']['points'], 107)
 
     def test_rejection_requires_note_and_cannot_later_credit(self):
         self.create(); self.submit()
@@ -185,8 +205,12 @@ class PaymentTests(unittest.TestCase):
             self.assertEqual(self.call('listPointPurchases', uid)['purchases'], [])
 
     def test_invalid_input_rejected(self):
-        for package in (True, 99, '1'):
-            self.assert_code('invalid-argument', lambda: self.create(packageId=package))
+        for points in (None, True, False, 0, -1, 1.5, '1', [], {}, 9007199254740992):
+            with self.subTest(points=points):
+                self.assert_code('invalid-argument', lambda: self.create(points=points))
+        self.assert_code('invalid-argument', lambda: self.call('createPointPurchase',
+                         purchaseId='legacy', machineId='machine_001', packageId=1))
+        self.assertFalse(any(key.startswith('pointPurchases/') for key in self.db.records))
         self.assert_code('invalid-argument', lambda: self.create('../order'))
         self.create()
         self.assert_code('invalid-argument', lambda: self.submit(reference='ABC'))
@@ -228,10 +252,11 @@ class RouteTests(unittest.TestCase):
             register_payment_routes(app, lambda: db, lambda: {'uid': request.headers.get('Test-User')})
         client = app.test_client()
         response = client.post('/api/points/createPointPurchase', headers={'Test-User': 'buyer'}, json={
-            'purchaseId': 'order1', 'machineId': 'machine_001', 'packageId': 1, 'userId': 'other',
+            'purchaseId': 'order1', 'machineId': 'machine_001', 'points': 73, 'price': 1, 'userId': 'other',
         })
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['data']['purchase']['userId'], 'buyer')
+        self.assertEqual(response.json['data']['purchase']['price'], 73)
         response = client.post('/api/points/submitGcashPayment', headers={'Test-User': 'buyer'}, json={
             'purchaseId': 'order1', 'senderName': 'Buyer', 'referenceNumber': '1234567890123',
         })
@@ -241,7 +266,7 @@ class RouteTests(unittest.TestCase):
                 'purchaseId': 'order1', 'decision': 'approved',
             })
             self.assertEqual(response.status_code, status)
-        self.assertEqual(db.records['users/buyer']['points'], 107)
+        self.assertEqual(db.records['users/buyer']['points'], 80)
         response = client.post('/api/points/createPointPurchase', headers={'Test-User': 'buyer'}, json=['invalid'])
         self.assertEqual(response.status_code, 400)
 

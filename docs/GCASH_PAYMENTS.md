@@ -11,7 +11,7 @@ The Pi and its internet connection must stay online for payment settings, purcha
 ## Setup
 
 1. Merge the Firestore protections below into the installation's existing rules and verify them before accepting money. The repository does not contain the installation's full rules or deploy them automatically.
-2. Update the files on the existing Raspberry Pi, including `ecorefill-pi/point_payments.py` and `ecorefill-pi/point-packages.json`. In the Pi's Python environment, install `firebase-admin` if it is missing. Start the updated machine service as usual:
+2. Update the files on the existing Raspberry Pi, including `ecorefill-pi/point_payments.py`. In the Pi's Python environment, install `firebase-admin` if it is missing. Start the updated machine service as usual:
 
    ```bash
    cd ecorefill-pi
@@ -26,9 +26,11 @@ The Pi and its internet connection must stay online for payment settings, purcha
    For a fixed HTTPS endpoint, set `VITE_PAYMENT_API_URL=https://your-payment-host.example` in the frontend environment instead. It must route to the Pi's public app on port 5001. For local Vite development only, `VITE_PAYMENT_API_URL=http://<pi-lan-ip>:5000` is supported. Production builds require HTTPS. The endpoint must be an origin, without a URL path or query.
 
 3. Build and publish the frontend using the installation's existing hosting process. For Android, also sync the built assets and rebuild the installed app.
-4. Sign in as the machine owner. In **Profile → GCash payments**, enter the account name and mobile number, enable purchases, and save. The owner must be linked to a machine before appearing in the buyer's list.
-5. As a user, open **Buy Points**, select an owner/machine and package, and continue. Send the exact amount in GCash to the displayed recipient. Enter the sender name and receipt reference, then submit for verification.
+4. Sign in as the machine owner. In **Profile → GCash payments**, enter the account name and mobile number, enable purchases, and save. The owner must be linked to the refill machine to receive its point purchases.
+5. As a user, scan a water refill QR and tap **Buy Points** on the water amount page. The app automatically selects that machine's owner. Enter a whole number of points (minimum 1). The rate is **1 point = ₱1**; for example, 150 points costs ₱150. Continue and send the exact amount in GCash to the displayed recipient. Enter the sender name and receipt reference, then submit for verification.
 6. The owner opens **Transactions → GCash payments**, checks their received transaction in GCash, confirms the reference/sender/amount match, and approves. Rejection requires a note. Users can press **Refresh** in My GCash purchases to check the result. Approved purchases also appear in the existing transaction history.
+
+**Buy Points** is available only from the scanned water refill page, even when users already have enough points. The dashboard shortcut, Points navigation tab, and **Buy from** selector are removed. Opening the purchase URL without a machine and refill session redirects to the QR scanner. If that machine's owner has not enabled GCash, new purchases are disabled and the app explains why. **Back to water refill** restores the session and selected water amount. The refill balance updates live when the owner approves payment. If the session expires while waiting, the user must scan a new refill QR; buying points does not extend the session or automatically start dispensing.
 
 No GCash account credentials, PINs or OTPs are collected. Payment receipt screenshots are not uploaded. Owners verify against their own received transactions, using the submitted reference and sender name.
 
@@ -76,9 +78,9 @@ Keep the installation's other kiosk/refill permissions intact. Before deployment
 
 ## Data and behavior
 
-- `ecorefill-pi/point-packages.json` is the package catalog for both the server and UI. Clients send only package IDs; supplied prices, point amounts and owner IDs are ignored.
+- Clients send the requested `points` as a positive integer, up to JavaScript's safe integer limit (9,007,199,254,740,991). The server validates it and sets the peso price equal to the points. Supplied prices and owner IDs are ignored. Update both the Pi service and frontend together: old clients that send only package IDs cannot create new purchases.
 - `gcashAccounts/<ownerUid>` stores the owner-managed receiving account.
-- `pointPurchases/<purchaseId>` moves through `awaiting_payment → pending → approved | rejected`. The recipient, package price/points and owner are frozen when the order is created. Disabling payments stops new orders; already-created orders retain their payment instructions.
+- `pointPurchases/<purchaseId>` moves through `awaiting_payment → pending → approved | rejected`. The recipient, price, points and owner are frozen when the order is created. Existing package purchases retain their original price and points and can still be submitted and reviewed. Disabling payments stops new orders; already-created orders retain their payment instructions.
 - `gcashPaymentReferences/<hash>` reserves each normalized reference per recipient mobile number atomically. Repeated submission of the same order/reference is idempotent. Reservations remain after rejection to prevent reuse; disputed or mistyped submissions should be resolved with the owner, without sending another payment. A rejected order cannot be approved by this UI; correcting an erroneous rejection currently requires trusted administrator support.
 - Approval atomically updates the purchase and buyer balance and creates `transactions/gcash_<purchaseId>`. Repeated/concurrent approvals cannot credit twice. A pending request alone never changes points. Rejection does not issue a refund.
 - Buyers see only their own purchases; owners see purchases addressed to them, including payments for previously owned machines. Purchase list refresh is manual. Current queries load all matching history and sort it in memory; pagination should be added if payment volume grows.

@@ -37,7 +37,7 @@ function TransactionDetails({ transaction }) {
   if (transaction.type === "point_purchase") {
     return (
       <>
-        <p>{transaction.packageName || "Point package"} • ₱{transaction.amountPaid || 0}</p>
+        <p>{transaction.packageName || "Points purchase"} • ₱{transaction.amountPaid || 0}</p>
         <p className="points-earned">+{transaction.pointsBought || 0} points</p>
       </>
     );

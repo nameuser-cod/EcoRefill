@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { ArrowLeft, ShoppingBag } from "lucide-react";
 import { auth } from "../../firebase/firebase";
@@ -47,12 +47,12 @@ function PaymentInstructions({ purchase, onSubmitted }) {
   );
 }
 
-function BuyPoints() {
+function RefillPointPurchase({ machineId, refillSessionId, waterAmountMl }) {
   const navigate = useNavigate();
-  const [packages, setPackages] = useState([]);
+  const returnPath = `/user/water-refill/${encodeURIComponent(refillSessionId)}?${new URLSearchParams({ waterAmountMl })}`;
   const [sellers, setSellers] = useState([]);
-  const [machineId, setMachineId] = useState("");
-  const [packageId, setPackageId] = useState(null);
+  const seller = sellers.find((item) => item.machineId === machineId);
+  const [pointsInput, setPointsInput] = useState("");
   const [purchases, setPurchases] = useState([]);
   const [activePurchaseId, setActivePurchaseId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -60,7 +60,8 @@ function BuyPoints() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const requestId = useRef(null);
-  const selectedPackage = packages.find((item) => item.id === packageId);
+  const points = Number(pointsInput);
+  const validPoints = /^[0-9]+$/.test(pointsInput) && Number.isSafeInteger(points) && points > 0;
 
   useEffect(() => {
     let active = true;
@@ -69,9 +70,7 @@ function BuyPoints() {
       try {
         const [options, history] = await Promise.all([callPoints("getGcashOptions"), callPoints("listPointPurchases")]);
         if (!active) return;
-        setPackages(options.packages);
         setSellers(options.sellers);
-        setMachineId(options.sellers[0]?.machineId || "");
         setPurchases(history.purchases);
       } catch (err) {
         if (active) setError(paymentError(err));
@@ -87,27 +86,25 @@ function BuyPoints() {
     setError("");
     try {
       const [options, history] = await Promise.all([callPoints("getGcashOptions"), callPoints("listPointPurchases")]);
-      setPackages(options.packages);
       setSellers(options.sellers);
       setPurchases(history.purchases);
-      setMachineId((current) => options.sellers.some((item) => item.machineId === current) ? current : options.sellers[0]?.machineId || "");
     } catch (err) { setError(paymentError(err)); }
     finally { setBusy(false); }
   }
 
   async function createPurchase() {
-    if (!selectedPackage || !machineId || busy) return;
+    if (!validPoints || !seller || busy) return;
     setBusy(true);
     setError("");
     setMessage("");
     // Preserve this ID across network retries so the same request cannot create two orders.
     try {
       requestId.current ||= crypto.randomUUID();
-      const { purchase } = await callPoints("createPointPurchase", { purchaseId: requestId.current, machineId, packageId });
+      const { purchase } = await callPoints("createPointPurchase", { purchaseId: requestId.current, machineId, points });
       setPurchases((current) => [purchase, ...current.filter((item) => item.id !== purchase.id)]);
       setActivePurchaseId(purchase.id);
       requestId.current = null;
-      setPackageId(null);
+      setPointsInput("");
     } catch (err) { setError(paymentError(err)); }
     finally { setBusy(false); }
   }
@@ -122,43 +119,44 @@ function BuyPoints() {
     <div className="user-dashboard-page user-page-with-nav">
       <div className="user-dashboard-container">
         <header className="history-header">
-          <button className="back-button" onClick={() => navigate("/user/dashboard")} aria-label="Back to dashboard"><ArrowLeft size={20} /></button>
+          <button className="back-button" onClick={() => navigate(returnPath)} aria-label="Back to water refill"><ArrowLeft size={20} /></button>
           <div><p className="small-title">EcoRefill</p><h1>Buy Points</h1></div>
         </header>
         <section className="purchase-intro-card">
           <ShoppingBag size={34} />
-          <div><h2>Buy points with GCash</h2><p>Choose an owner and package, send your payment, then submit it for owner verification.</p></div>
+          <div><h2>Buy points with GCash</h2><p>Buy points from this refill machine’s owner. Enter how many points you want. 1 point = ₱1. Send your payment, then submit it for owner verification.</p></div>
+        </section>
+        <section className="purchase-summary-card">
+          <p>After the owner approves your payment, return to your refill. If the QR has expired, scan a new refill QR at the machine.</p>
+          <button type="button" className="buy-points-btn" onClick={() => navigate(returnPath)}>Back to water refill</button>
         </section>
         {error && <p className="gcash-error" role="alert">{error}</p>}
         {message && <p className="gcash-success" role="status">{message}</p>}
         {loading ? <p role="status">Loading GCash payments...</p> : <>
           <section className="purchase-summary-card gcash-form">
-            <label>Buy from
-              <select value={machineId} disabled={busy || !sellers.length} onChange={(event) => { setMachineId(event.target.value); requestId.current = null; }}>
-                {!sellers.length && <option value="">No owners accepting GCash yet</option>}
-                {sellers.map((seller) => <option key={seller.machineId} value={seller.machineId}>{seller.ownerName} · {seller.machineName}{seller.location ? ` · ${seller.location}` : ""}</option>)}
-              </select>
-            </label>
-            {!sellers.length && <p>An owner must add their GCash details in Profile before you can buy points.</p>}
+            <h2>Your refill machine</h2>
+            {seller ? <p>{seller.machineName} · {seller.ownerName}{seller.location ? ` · ${seller.location}` : ""}</p>
+              : <p>This machine’s owner is not accepting GCash payments right now. Contact the owner or refresh to check again.</p>}
           </section>
-          <div className="points-package-grid">
-            {packages.map((item) => <button type="button" key={item.id} disabled={busy || !machineId}
-              className={`buy-points-card${packageId === item.id ? " selected-points-card" : ""}`}
-              onClick={() => { setPackageId(item.id); requestId.current = null; }} aria-pressed={packageId === item.id}>
-              <h2>{item.name}</h2><p className="points-value">{item.points} Points</p><p className="points-price">₱{item.price}</p><p className="points-description">{item.description}</p>
-            </button>)}
-          </div>
-          <section className="purchase-summary-card">
+          <section className="purchase-summary-card gcash-form">
+            <label>How many points do you want?
+              <input type="text" inputMode="numeric" pattern="[0-9]+" value={pointsInput}
+                placeholder="Enter points, e.g. 100" disabled={busy || !seller}
+                aria-describedby="points-help" aria-invalid={pointsInput !== "" && !validPoints}
+                onChange={(event) => { setPointsInput(event.target.value); requestId.current = null; }} />
+            </label>
+            <p id="points-help">1 point = ₱1. Enter a whole number of at least 1 point.</p>
+            {pointsInput !== "" && !validPoints && <p className="gcash-error" role="alert">Enter a valid whole number of points, at least 1.</p>}
             <h2>Purchase summary</h2>
-            <p>{selectedPackage ? `${selectedPackage.points} points for ₱${selectedPackage.price}` : "Select a points package to continue."}</p>
-            <button className="buy-points-btn" onClick={createPurchase} disabled={!selectedPackage || !machineId || busy}>{busy ? "Please wait..." : "Continue to GCash payment"}</button>
+            <p aria-live="polite">{validPoints ? `${points} points for ₱${points}` : "Enter how many points you want to continue."}</p>
+            <button className="buy-points-btn" onClick={createPurchase} disabled={!validPoints || !seller || busy}>{busy ? "Please wait..." : "Continue to GCash payment"}</button>
           </section>
         </>}
         <section className="purchase-summary-card">
           <div className="gcash-section-heading"><h2>My GCash purchases</h2><button type="button" onClick={refresh} disabled={loading || busy}>Refresh</button></div>
           {!loading && !purchases.length && <p>Your payment requests will appear here.</p>}
           {purchases.map((purchase) => <article key={purchase.id} className="gcash-purchase">
-            <h3>{purchase.packageName} · ₱{purchase.price}</h3>
+            <h3>{purchase.packageName || "Points purchase"} · ₱{purchase.price}</h3>
             <p>{purchase.points} points · {purchase.ownerName} · {purchase.machineName}</p>
             <p className={`gcash-status gcash-status-${purchase.status}`}>{PURCHASE_STATUS[purchase.status] || purchase.status}</p>
             {purchase.referenceNumber && <p>Reference: {purchase.referenceNumber}</p>}
@@ -175,4 +173,16 @@ function BuyPoints() {
   );
 }
 
-export default BuyPoints;
+export default function BuyPoints() {
+  const [searchParams] = useSearchParams();
+  const machineId = searchParams.get("machineId");
+  const refillSessionId = searchParams.get("refillSessionId");
+
+  if (!machineId || !refillSessionId) {
+    return <Navigate to="/user/scan-qr" replace />;
+  }
+
+  return <RefillPointPurchase key={`${machineId}:${refillSessionId}`}
+    machineId={machineId} refillSessionId={refillSessionId}
+    waterAmountMl={searchParams.get("waterAmountMl") || "500"} />;
+}

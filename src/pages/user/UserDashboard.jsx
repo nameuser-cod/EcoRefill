@@ -17,7 +17,6 @@ import {
   LogOut,
   QrCode,
   Recycle,
-  ShoppingBag,
 } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
 import LogoutButton from "../../components/LogoutButton";
@@ -169,19 +168,6 @@ function UserDashboard() {
               </span>
             </button>
 
-            <button
-              type="button"
-              className="dashboard-action-card dashboard-action-card-alt"
-              onClick={() => navigate("/user/buy-points")}
-            >
-              <span className="dashboard-action-icon">
-                <ShoppingBag size={26} />
-              </span>
-              <span>
-                <strong>Buy Points</strong>
-                <small>Add points to your balance</small>
-              </span>
-            </button>
           </div>
         </section>
 

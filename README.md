@@ -120,14 +120,11 @@ Owners can view machine details, accepted bottle and can counts, rejected items,
 
 ### GCash point purchases
 
-| Package | EcoPoints | Displayed price |
-| --- | --- | --- |
-| Starter Pack | 100 | ₱20 |
-| Eco Saver Pack | 250 | ₱45 |
-| Green Hero Pack | 500 | ₱85 |
-| Eco Champion Pack | 1,000 | ₱160 |
+Users enter the number of EcoPoints they want at **1 point = ₱1**, with a minimum of 1 whole point. For example, 150 points costs ₱150.
 
-Users select an owner and package, send GCash to the displayed account, and submit their receipt reference. The owner verifies the received payment in **Transactions** before approving it. Only approval credits points. Owners configure their GCash account in **Profile**. Payments run on the existing Raspberry Pi and do not require the Firebase Blaze plan. See [GCash setup and required Firestore protections](docs/GCASH_PAYMENTS.md) before accepting real payments.
+After scanning a water refill QR, users can tap **Buy Points** on the water amount page. The app automatically selects that machine's owner and provides a return button to resume the refill with the selected water amount. The refill balance updates when the owner approves payment. If the QR expires during payment verification, users can scan a new one.
+
+Point purchases are available only through the scanned water refill page; there is no dashboard purchase shortcut or owner selector. Users enter their points amount, send GCash to the displayed account, and submit their receipt reference. The owner verifies the received payment in **Transactions** before approving it. Only approval credits points. Owners configure their GCash account in **Profile**. Payments run on the existing Raspberry Pi and do not require the Firebase Blaze plan. See [GCash setup and required Firestore protections](docs/GCASH_PAYMENTS.md) before accepting real payments.
 
 ## How the components communicate
 

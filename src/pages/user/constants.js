@@ -1,4 +1,4 @@
-import { History, Home, QrCode, ShoppingBag, User } from "lucide-react";
+import { History, Home, QrCode, User } from "lucide-react";
 
 export const WATER_OPTIONS = [
   { waterAmountMl: 250, pointsRequired: 3, label: "Small" },
@@ -9,7 +9,6 @@ export const WATER_OPTIONS = [
 export const USER_NAV_ITEMS = [
   { label: "Home", path: "/user/dashboard", icon: Home },
   { label: "Scan", path: "/user/scan-qr", icon: QrCode },
-  { label: "Points", path: "/user/buy-points", icon: ShoppingBag },
   { label: "History", path: "/user/history", icon: History },
   { label: "Profile", path: "/user/profile", icon: User },
 ];

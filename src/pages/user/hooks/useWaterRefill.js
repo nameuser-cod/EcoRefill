@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../../../firebase/firebase";
 
@@ -38,27 +38,33 @@ export function useWaterRefill(sessionId) {
     sessionId ? "" : "No refill session was provided."
   );
 
-  useEffect(() =>
-    onAuthStateChanged(auth, async (user) => {
+  useEffect(() => {
+    let unsubscribePoints;
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      unsubscribePoints?.();
       if (!user) {
+        setCurrentUser(null);
         navigate("/login", { replace: true });
         return;
       }
 
-      try {
-        setCurrentUser(user);
-        const userSnapshot = await getDoc(doc(db, "users", user.uid));
-
+      setCurrentUser(user);
+      unsubscribePoints = onSnapshot(doc(db, "users", user.uid), (userSnapshot) => {
         if (!userSnapshot.exists()) {
-          throw new Error("Your EcoRefill account could not be found.");
+          setError("Your EcoRefill account could not be found.");
+          return;
         }
-
         setUserPoints(Number(userSnapshot.data()?.points || 0));
-      } catch (accountError) {
+      }, (accountError) => {
         console.error("LOAD USER ERROR:", accountError);
         setError(getAccountError(accountError));
-      }
-    }), [navigate]);
+      });
+    });
+    return () => {
+      unsubscribeAuth();
+      unsubscribePoints?.();
+    };
+  }, [navigate]);
 
   useEffect(() => {
     if (!sessionId) return undefined;
@@ -76,10 +82,6 @@ export function useWaterRefill(sessionId) {
 
         const sessionData = { sessionId: snapshot.id, ...snapshot.data() };
         setSession(sessionData);
-
-        if (sessionData.remainingPoints !== undefined) {
-          setUserPoints(Number(sessionData.remainingPoints));
-        }
 
         if (sessionData.status === "expired") {
           setError("This refill QR code has expired.");

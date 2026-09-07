@@ -3,6 +3,7 @@ import { WATER_OPTIONS } from "../constants";
 
 function WaterAmountSelector({
   confirming,
+  canBuyPoints,
   hasEnoughPoints,
   onBuyPoints,
   onConfirm,
@@ -18,6 +19,10 @@ function WaterAmountSelector({
           <p>Available Points</p>
           <h2>{userPoints.toLocaleString()}</h2>
           <span>Select the amount of water you need.</span>
+          <button type="button" className="buy-points-btn" onClick={onBuyPoints} disabled={confirming || !canBuyPoints}>
+            Buy Points
+          </button>
+          <span>1 point = ₱1 via GCash. Owner approval required.</span>
         </div>
         <div className="points-icon">
           <Droplets size={42} />
@@ -67,7 +72,6 @@ function WaterAmountSelector({
       {!hasEnoughPoints && (
         <div className="scan-error-message">
           <p>You do not have enough points for this amount.</p>
-          <button type="button" onClick={onBuyPoints}>Buy Points</button>
         </div>
       )}
 

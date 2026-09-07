@@ -1,10 +1,8 @@
 """Owner-verified payments on the existing Pi, without Cloud Functions."""
 import hashlib
-import json
 import re
-from pathlib import Path
 
-PACKAGES = json.loads((Path(__file__).resolve().parent / "point-packages.json").read_text())
+MAX_POINTS = 9007199254740991
 
 
 class PaymentError(Exception):
@@ -74,7 +72,7 @@ class PointPayments:
             sellers.append({"machineId": snapshot.id, "machineName": machine.get("machineName") or snapshot.id,
                             "ownerName": machine.get("ownerName") or payment["accountName"], "location": machine.get("location") or ""})
         own = accounts.get(user["id"])
-        return {"sellers": sellers, "packages": PACKAGES,
+        return {"sellers": sellers,
                 "account": {key: own[key] for key in ("accountName", "mobileNumber", "enabled")}
                 if own and user.get("role") == "device_owner" else None}
 
@@ -91,16 +89,15 @@ class PointPayments:
     def createPointPurchase(self, user, data):
         machine_id = document_id(data.get("machineId"))
         purchase_ref = self.ref("pointPurchases", document_id(data.get("purchaseId")))
-        package_id = data.get("packageId")
-        pack = next((p for p in PACKAGES if type(package_id) is int and p["id"] == package_id), None)
-        if not pack:
-            fail("invalid-argument", "Select a valid points package.")
+        points = data.get("points")
+        if type(points) is not int or not 1 <= points <= MAX_POINTS:
+            fail("invalid-argument", "Enter a valid whole number of points, at least 1. Each point costs ₱1.")
 
         def create(tx):
             existing = purchase_ref.get(transaction=tx)
             if existing.exists:
                 purchase = existing.to_dict()
-                if (purchase["userId"], purchase["machineId"], purchase["packageId"]) != (user["id"], machine_id, pack["id"]):
+                if (purchase["userId"], purchase["machineId"], purchase["points"], purchase["price"]) != (user["id"], machine_id, points, points):
                     fail("already-exists", "This purchase ID is already in use.")
                 return
             machine = self.ref("machines", machine_id).get(transaction=tx).to_dict() or {}
@@ -115,7 +112,7 @@ class PointPayments:
                 "userId": user["id"], "userEmail": user.get("email", ""), "userName": user.get("fullName", ""),
                 "ownerId": owner_id, "ownerName": owner.get("fullName") or "Device owner",
                 "machineId": machine_id, "machineName": machine.get("machineName") or machine_id,
-                "packageId": pack["id"], "packageName": pack["name"], "points": pack["points"], "price": pack["price"],
+                "points": points, "price": points,
                 "recipientName": payment["accountName"], "recipientNumber": payment["mobileNumber"],
                 "paymentMethod": "gcash", "status": "awaiting_payment",
                 "createdAt": self.timestamp, "updatedAt": self.timestamp,
@@ -173,12 +170,12 @@ class PointPayments:
                 balance = buyer.get("points", 0) if buyer else None
                 points = purchase.get("points")
                 if (type(balance) is not int or type(points) is not int or balance < 0 or points <= 0
-                        or balance + points > 9007199254740991):
+                        or balance + points > MAX_POINTS):
                     fail("failed-precondition", "The buyer's point balance or purchase is invalid.")
                 tx.update(buyer_ref, {"points": balance + points, "updatedAt": self.timestamp})
                 tx.set(self.ref("transactions", f"gcash_{purchase_ref.id}"), {
                     "type": "point_purchase", "purchaseId": purchase_ref.id, "userId": purchase["userId"],
-                    "ownerId": user["id"], "machineId": purchase["machineId"], "packageName": purchase["packageName"],
+                    "ownerId": user["id"], "machineId": purchase["machineId"], "packageName": purchase.get("packageName", "Points purchase"),
                     "pointsBought": points, "amountPaid": purchase["price"], "paymentMethod": "gcash",
                     "previousPoints": balance, "pointsAfter": balance + points, "status": "completed",
                     "createdAt": self.timestamp, "updatedAt": self.timestamp,

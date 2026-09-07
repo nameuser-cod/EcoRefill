@@ -22,7 +22,7 @@ function PaymentReview({ purchase, onReviewed }) {
   return (
     <article className="gcash-purchase">
       <h3>{purchase.userName || purchase.userEmail || "Buyer"} · ₱{purchase.price}</h3>
-      <p>{purchase.packageName} · {purchase.points} points · {purchase.machineName}</p>
+      <p>{purchase.packageName ? `${purchase.packageName} · ` : ""}{purchase.points} points · {purchase.machineName}</p>
       <p className={`gcash-status gcash-status-${purchase.status}`}>{PURCHASE_STATUS[purchase.status] || purchase.status}</p>
       <dl className="gcash-details">
         <div><dt>Sender</dt><dd>{purchase.senderName || "Not submitted"}</dd></div>

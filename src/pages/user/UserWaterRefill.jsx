@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, LoaderCircle } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import RefillStatusCard from "./components/RefillStatusCard";
 import WaterAmountSelector from "./components/WaterAmountSelector";
 import { WATER_OPTIONS } from "./constants";
@@ -10,7 +10,11 @@ import "../../styles/user.css";
 function UserWaterRefill() {
   const navigate = useNavigate();
   const { sessionId } = useParams();
-  const [selectedAmount, setSelectedAmount] = useState(500);
+  const [searchParams] = useSearchParams();
+  const [selectedAmount, setSelectedAmount] = useState(() => {
+    const amount = Number(searchParams.get("waterAmountMl"));
+    return WATER_OPTIONS.some((option) => option.waterAmountMl === amount) ? amount : 500;
+  });
   const {
     confirming,
     confirmRefill,
@@ -74,6 +78,9 @@ function UserWaterRefill() {
         {error && (
           <div className="scan-error-message">
             <p>{error}</p>
+            {["expired", "cancelled"].includes(session?.status) && (
+              <button type="button" onClick={() => navigate("/user/scan-qr")}>Scan a new refill QR</button>
+            )}
           </div>
         )}
 
@@ -81,7 +88,12 @@ function UserWaterRefill() {
           <WaterAmountSelector
             confirming={confirming}
             hasEnoughPoints={hasEnoughPoints}
-            onBuyPoints={() => navigate("/user/buy-points")}
+            canBuyPoints={Boolean(session.machineId)}
+            onBuyPoints={() => navigate(`/user/buy-points?${new URLSearchParams({
+              machineId: session.machineId,
+              refillSessionId: sessionId,
+              waterAmountMl: String(selectedAmount),
+            })}`)}
             onConfirm={() => confirmRefill(selectedOption)}
             onSelect={setSelectedAmount}
             selectedAmount={selectedAmount}
