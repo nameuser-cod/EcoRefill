@@ -165,7 +165,7 @@
   padding: 24px;
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
-  gap: 22px;
+  gap: 18px;
   border-radius: 22px;
   background:
     radial-gradient(circle at 96% 0%, rgba(217, 249, 157, 0.28), transparent 36%),
@@ -178,6 +178,11 @@
   display: flex;
   align-items: flex-start;
   gap: 16px;
+}
+
+.owner-machine-details {
+  min-width: 0;
+  flex: 1;
 }
 
 .owner-machine-icon {
@@ -194,8 +199,10 @@
   display: block;
   margin-bottom: 3px;
   color: rgba(255, 255, 255, 0.75);
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .owner-machine-title-row {
@@ -203,15 +210,17 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .owner-machine-title-row h2 {
   margin: 0;
   color: #fff;
-  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-size: clamp(1.2rem, 4vw, 1.65rem);
   font-weight: 900;
-  text-transform: capitalize;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
 .owner-machine-primary p {
@@ -222,6 +231,24 @@
   color: rgba(255, 255, 255, 0.82);
   font-size: 0.82rem;
   font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.owner-machine-primary p svg,
+.owner-machine-updated svg {
+  flex-shrink: 0;
+}
+
+.owner-machine-updated {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid rgba(8, 17, 11, 0.25);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .owner-health-summary {
@@ -232,14 +259,20 @@
 
 .owner-health-summary > div {
   min-width: 0;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 7px;
+  padding: 13px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: center;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 3px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 17px;
   background: rgba(255, 255, 255, 0.11);
+}
+
+.owner-health-item > svg {
+  grid-row: span 2;
 }
 
 .owner-health-summary span {
@@ -249,13 +282,11 @@
 }
 
 .owner-health-summary strong {
-  overflow: hidden;
   max-width: 100%;
   color: #fff;
-  font-size: 0.95rem;
-  text-overflow: ellipsis;
+  font-size: 1rem;
   text-transform: capitalize;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .owner-status {
@@ -312,13 +343,15 @@
 .owner-metric-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-  margin-bottom: 22px;
+  gap: 16px;
+  margin-bottom: 28px;
 }
 
 .owner-metric-card {
-  min-height: 128px;
-  padding: 17px;
+  min-width: 0;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
   border: 3px solid var(--owner-line);
   border-radius: 19px;
   background: var(--owner-card);
@@ -327,39 +360,76 @@
 
 .owner-metric-heading {
   min-width: 0;
+  min-height: 40px;
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 0;
+  margin-bottom: 14px;
 }
 
-.owner-metric-heading > div {
+.owner-metric-heading h3 {
   min-width: 0;
-  flex: 1;
-}
-
-.owner-metric-heading p {
-  overflow: hidden;
-  margin: 0 0 2px;
+  margin: 0;
   color: var(--owner-ink);
   font-size: 0.83rem;
   font-weight: 850;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
 }
 
-.owner-metric-heading div span {
+.owner-metric-help {
+  margin: 5px 0 14px;
   color: var(--owner-muted);
-  font-size: 0.68rem;
-  font-weight: 650;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  font-weight: 500;
 }
 
-.owner-metric-heading strong {
-  font-size: 1.2rem;
+.owner-metric-value {
+  font-size: clamp(1.8rem, 6vw, 2.25rem);
+  line-height: 1.05;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
 .owner-metric-card .owner-meter {
-  margin-top: 17px;
+  height: 10px;
+  margin-top: auto;
+}
+
+.owner-metric-detail {
+  margin: auto 0 0;
+  padding-top: 10px;
+  border-top: 1px solid #d6e4d4;
+  color: var(--owner-muted);
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.owner-metric-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: auto;
+  padding: 8px 10px;
+  border: 2px solid var(--owner-ink);
+  border-radius: 10px;
+  background: var(--owner-green-soft);
+  color: var(--owner-ink);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.owner-metric-link:hover {
+  background: var(--owner-lime);
+}
+
+.metric-card-warning .owner-metric-link {
+  background: var(--owner-warning);
 }
 
 .owner-metric-icon,
@@ -396,7 +466,7 @@
 }
 
 .metric-card-warning {
-  border-color: #ead89a;
+  border-color: var(--owner-ink);
   background: #fffdf5;
 }
 
@@ -1472,6 +1542,14 @@
 .owner-machine-icon { border: 3px solid var(--owner-ink); background: #fff; box-shadow: 4px 4px 0 var(--owner-ink); }
 .owner-health-summary > div { border: 2px solid var(--owner-ink); background: var(--owner-green-soft); }
 .owner-machine-title-row .owner-status:is(.tone-good, .tone-warning, .tone-danger, .tone-neutral) { background: #fff; color: var(--owner-ink); }
+.owner-machine-title-row .owner-status.tone-warning,
+.owner-health-summary > .health-warning { background: var(--owner-warning); }
+.owner-machine-title-row .owner-status.tone-danger,
+.owner-health-summary > .health-danger { background: var(--owner-danger); }
+.owner-machine-title-row .owner-status.tone-neutral,
+.owner-health-summary > .health-neutral { background: #eff3f0; }
+.owner-health-summary .text-danger { color: var(--owner-danger-ink); }
+.owner-health-summary .text-warning { color: var(--owner-warning-ink); }
 .owner-metric-grid, .owner-analytics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .owner-dashboard-layout, .owner-profile-layout { grid-template-columns: 1fr; }
 .owner-dashboard-side { display: block; }
@@ -1525,8 +1603,23 @@
   .owner-app-page { padding: 18px 16px 130px; }
   .owner-app-header { margin-bottom: 20px; }
   .owner-scan-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .owner-machine-overview { padding: 18px; gap: 14px; }
+  .owner-machine-primary { gap: 12px; }
+  .owner-machine-icon { width: 44px; height: 44px; flex-basis: 44px; border-radius: 13px; }
+  .owner-metric-grid { gap: 12px; }
+  .owner-metric-card { padding: 14px; border-radius: 16px; }
+  .owner-metric-heading { gap: 9px; }
+  .owner-metric-icon { width: 32px; height: 32px; flex-basis: 32px; border-radius: 10px; }
+  .owner-health-summary > div { padding: 11px; column-gap: 7px; }
 }
 @media (max-width: 390px) {
-  .owner-metric-grid, .owner-scan-grid { grid-template-columns: 1fr; }
+  .owner-scan-grid { grid-template-columns: 1fr; }
+  .owner-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .owner-health-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .owner-app-nav { width: calc(100% - 16px); bottom: max(8px, env(safe-area-inset-bottom)); padding: 6px; }
+}
+
+@media (max-width: 360px) {
+  .owner-metric-heading { min-height: 78px; flex-direction: column; align-items: flex-start; gap: 10px; }
+  .owner-health-summary { grid-template-columns: 1fr; }
 }

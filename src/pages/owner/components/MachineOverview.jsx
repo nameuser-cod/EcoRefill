@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   CheckCircle2,
   CircleHelp,
   Clock3,
@@ -33,10 +34,12 @@ function MachineOverview({ machine }) {
       : "good"
     : "neutral";
 
-  const StatusIcon =
-    normalizeText(machineStatus) === "online" ? Gauge : WifiOff;
+  const StatusIcon = normalizeText(machineStatus) === "online"
+    ? Gauge
+    : normalizeText(machineStatus) === "offline" ? WifiOff : CircleHelp;
   const QualityIcon =
-    qualityTone === "good" ? CheckCircle2 : CircleHelp;
+    qualityTone === "good" ? CheckCircle2
+      : ["danger", "warning"].includes(qualityTone) ? AlertTriangle : CircleHelp;
   const SecurityIcon = hasSecurityReading
     ? machine.isTampered
       ? ShieldAlert
@@ -44,45 +47,45 @@ function MachineOverview({ machine }) {
     : CircleHelp;
 
   return (
-    <section className="owner-machine-overview">
+    <section className="owner-machine-overview" aria-label="Connected machine status">
       <div className="owner-machine-primary">
         <span className={`owner-machine-icon tone-${statusTone}`}>
-          <StatusIcon size={28} />
+          <StatusIcon size={26} aria-hidden="true" />
         </span>
 
-        <div>
+        <div className="owner-machine-details">
           <span className="owner-machine-label">Connected machine</span>
           <div className="owner-machine-title-row">
             <h2>{machineName}</h2>
             <span className={`owner-status tone-${statusTone}`}>
-              <span />
+              <span aria-hidden="true" />
               {machineStatus}
             </span>
           </div>
 
           <p>
-            <MapPin size={16} />
-            {machine.location || "Location not set"}
-          </p>
-          <p>
-            <Clock3 size={16} />
-            Last seen {formatTimestamp(machine.lastSeenAt, "not reported")}
+            <MapPin size={16} aria-hidden="true" />
+            <span>{machine.location || "Location not set"}</span>
           </p>
         </div>
       </div>
 
       <div className="owner-health-summary">
-        <div>
-          <QualityIcon size={20} />
+        <div className={`owner-health-item health-${qualityTone}`}>
+          <QualityIcon size={22} aria-hidden="true" />
           <span>Water quality</span>
           <strong className={`text-${qualityTone}`}>{qualityStatus}</strong>
         </div>
-        <div>
-          <SecurityIcon size={20} />
+        <div className={`owner-health-item health-${securityTone}`}>
+          <SecurityIcon size={22} aria-hidden="true" />
           <span>Security</span>
           <strong className={`text-${securityTone}`}>{securityLabel}</strong>
         </div>
       </div>
+      <p className="owner-machine-updated">
+        <Clock3 size={14} aria-hidden="true" />
+        <span>Last reported · {formatTimestamp(machine.lastSeenAt, "No update received")}</span>
+      </p>
     </section>
   );
 }
