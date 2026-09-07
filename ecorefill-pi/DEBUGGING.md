@@ -25,6 +25,14 @@ This uses the controller's button configuration and prints press/release events
 without starting Firebase, the camera, the ESP32, or any machine workers.
 Ctrl+C releases the GPIO inputs and exits; restart the controller afterward.
 
+The diagnostic also polls raw `PIN LEVELS` independently of press callbacks.
+Hold each button for one second: its level should change from `1` (released)
+to `0` (pressed). Levels print on change and once per second so the script
+still shows activity when no edges are reported. If levels change but no
+`GREEN pressed` / `BLUE pressed` events appear, investigate GPIO edge callbacks.
+If levels stay at `1` while held, check the switch contacts, ground connection,
+and physical header pins; reinstalling `gpiozero` is not the first step.
+
 Default wiring uses BCM numbering (not physical header numbering):
 
 | Button | BCM GPIO | Physical header pin | Other switch terminal |

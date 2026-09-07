@@ -1,11 +1,31 @@
 """Check physical button inputs without starting the camera, Firebase, or motors."""
 
-import signal
 import sys
+import time
 
 from machine.config import BLUE_BUTTON_GPIO, GREEN_BUTTON_GPIO
 from machine.diagnostics import configure_logging
 from machine.runtime import MachineRuntime
+
+
+def monitor_inputs(buttons):
+    """Poll electrical levels independently of GPIO edge callbacks."""
+    previous = None
+    last_report = float("-inf")
+    while True:
+        levels = tuple(int(button.pin.state) for _, button in buttons)
+        now = time.monotonic()
+        if levels != previous or now - last_report >= 1:
+            print(
+                "PIN LEVELS: " + " | ".join(
+                    f"{color}={level} ({'released' if level else 'PRESSED'})"
+                    for (color, _), level in zip(buttons, levels)
+                ),
+                flush=True,
+            )
+            previous = levels
+            last_report = now
+        time.sleep(0.05)
 
 
 def main():
@@ -29,7 +49,7 @@ def main():
             if button is None:
                 print(f"{color}: unavailable; see initialization error above.", flush=True)
                 continue
-            available.append(button)
+            available.append((color, button))
             print(
                 f"{color}: {'PRESSED' if button.is_pressed else 'released'} "
                 f"({type(button.pin_factory).__name__})",
@@ -40,9 +60,12 @@ def main():
         if not available:
             return 1
 
-        print("Press and release each button. Ctrl+C exits.", flush=True)
-        while True:
-            signal.pause()
+        print(
+            "Hold each button for one second, then release. "
+            "PIN LEVELS should change from 1 to 0 while held. Ctrl+C exits.",
+            flush=True,
+        )
+        monitor_inputs(available)
     except KeyboardInterrupt:
         return 0
     finally:

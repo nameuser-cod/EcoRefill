@@ -132,8 +132,9 @@ class ButtonTests(unittest.TestCase):
 
         machine = MachineRuntime()
         green, blue = Mock(is_pressed=False), Mock(is_pressed=False)
+        green.pin.state = blue.pin.state = 1
 
-        def press_buttons():
+        def press_buttons(_delay):
             green.when_pressed()
             blue.when_pressed()
             raise KeyboardInterrupt
@@ -143,7 +144,7 @@ class ButtonTests(unittest.TestCase):
              patch.dict(sys.modules, {"gpiozero": SimpleNamespace(
                  Button=Mock(side_effect=[green, blue]),
              )}), \
-             patch.object(check_buttons.signal, "pause", side_effect=press_buttons), \
+             patch.object(check_buttons.time, "sleep", side_effect=press_buttons), \
              patch("builtins.print") as output:
             self.assertEqual(check_buttons.main(), 0)
         output.assert_any_call("GREEN pressed", flush=True)
@@ -153,6 +154,40 @@ class ButtonTests(unittest.TestCase):
         self.assertIsNone(machine.db)
         self.assertIsNone(machine.picam2)
         self.assertIsNone(machine.esp32)
+
+    def test_diagnostic_reads_changes_even_when_callbacks_do_not_fire(self):
+        import check_buttons
+
+        green, blue = Mock(), Mock()
+        green.pin.state = blue.pin.state = 1
+
+        def press_green(_delay):
+            green.pin.state = 0
+
+        def release_green_press_blue(_delay):
+            green.pin.state = 1
+            blue.pin.state = 0
+
+        changes = iter([press_green, release_green_press_blue])
+
+        def advance(delay):
+            action = next(changes, None)
+            if action is None:
+                raise KeyboardInterrupt
+            action(delay)
+
+        with patch.object(check_buttons.time, "sleep", side_effect=advance), \
+             patch("builtins.print") as output, self.assertRaises(KeyboardInterrupt):
+            check_buttons.monitor_inputs([("GREEN", green), ("BLUE", blue)])
+        output.assert_any_call(
+            "PIN LEVELS: GREEN=1 (released) | BLUE=1 (released)", flush=True,
+        )
+        output.assert_any_call(
+            "PIN LEVELS: GREEN=0 (PRESSED) | BLUE=1 (released)", flush=True,
+        )
+        output.assert_any_call(
+            "PIN LEVELS: GREEN=1 (released) | BLUE=0 (PRESSED)", flush=True,
+        )
 
 
 class SerialTests(unittest.TestCase):
