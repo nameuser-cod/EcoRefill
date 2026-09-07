@@ -9,6 +9,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
+import { readRememberedEmail, saveRememberedEmail } from "./rememberedLogin";
 import "../../styles/auth.css";
 
 async function getDashboardPath(user) {
@@ -24,10 +25,11 @@ async function getDashboardPath(user) {
 function Login() {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
+  const [rememberedEmail] = useState(readRememberedEmail);
+  const [email, setEmail] = useState(rememberedEmail);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(Boolean(rememberedEmail));
   const [checkingSession, setCheckingSession] = useState(true);
 
   const [loading, setLoading] = useState(false);
@@ -114,6 +116,7 @@ function Login() {
         return;
       }
 
+      saveRememberedEmail(rememberMe ? normalizedEmail : "");
       navigate(dashboardPath, { replace: true });
     } catch (err) {
       console.error("Login error:", err);
@@ -133,20 +136,26 @@ function Login() {
         </div>
 
         <form onSubmit={handleLogin} className="auth-form">
-          <label>Email</label>
+          <label htmlFor="login-email">Email</label>
           <input
+            id="login-email"
+            name="email"
             type="email"
+            autoComplete="username"
             placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
 
-<label>Password</label>
+<label htmlFor="login-password">Password</label>
 
 <div className="password-field">
   <input
+    id="login-password"
+    name="password"
     type={showPassword ? "text" : "password"}
+    autoComplete="current-password"
     placeholder="Enter your password"
     value={password}
     onChange={(e) => setPassword(e.target.value)}
@@ -174,7 +183,10 @@ function Login() {
               type="checkbox"
               name="rememberMe"
               checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
+              onChange={(e) => {
+                setRememberMe(e.target.checked);
+                if (!e.target.checked) saveRememberedEmail("");
+              }}
               disabled={loading || checkingSession}
             />
             <span>Remember me</span>
