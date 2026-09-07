@@ -19,8 +19,9 @@ python3 machine_flow.py
 
 If you normally use a service manager, set the same environment variable in
 that service instead of starting a second process. Paths inside the JSON are
-relative to the JSON file. Copy `visual_inspection.py` together with the
-updated `machine_flow.py` when transferring this change to the Pi.
+relative to the JSON file. Copy `visual_inspection.py`, `point_payments.py`,
+`machine_flow.py`, and the complete `machine/` directory when transferring
+the controller to the Pi. See [the controller file map](DEBUGGING.md).
 
 Each scan with one confidently recognized material saves a square, padded
 container crop and JSON metadata. Captures are **unlabeled**; material

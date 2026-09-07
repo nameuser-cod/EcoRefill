@@ -1,13 +1,14 @@
-import ast
 import copy
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
+from unittest.mock import patch
 import unittest
 
 import numpy as np
 
 from visual_inspection import VisualInspector, square_crop
+from machine.runtime import MachineRuntime
 
 
 class Classifier:
@@ -116,28 +117,20 @@ class InspectionTests(unittest.TestCase):
     def test_machine_verification_routes_dirty_container_to_reject(self):
         # Exercise the actual acceptance and sorting functions without starting
         # GPIO, Firebase, camera, serial, or the machine's background threads.
-        source = Path(__file__).with_name("machine_flow.py").read_text()
-        tree = ast.parse(source)
-        functions = [node for node in tree.body if isinstance(node, ast.FunctionDef)
-                     and node.name in {"verify_item", "sort_item"}]
         box = SimpleNamespace(cls=[0], conf=[0.99], xyxy=np.array([[200, 100, 300, 400]]))
         prediction = SimpleNamespace(boxes=[box], plot=lambda: self.frame)
         commands = []
-        namespace = {
-            "model": SimpleNamespace(names={0: "plastic_bottle"}, predict=lambda **kw: [prediction]),
-            "cv2": SimpleNamespace(imwrite=lambda *args: True),
-            "normalize_class_name": lambda value: value,
-            "DETECTION_CONFIDENCE_LIMIT": 0.2, "INFERENCE_IMAGE_SIZE": 416,
-            "MIN_OBJECT_AREA_RATIO": 0.05, "ACCEPT_CONFIDENCE_LIMIT": 0.65,
-            "BOTTLE_ITEMS": {"plastic_bottle"}, "CAN_ITEMS": {"aluminum_can"},
-            "POINTS": {"plastic_bottle": 1}, "send_to_esp32": commands.append,
-        }
-        exec(compile(ast.Module(body=functions, type_ignores=[]), "machine_flow.py", "exec"), namespace)
+        machine = MachineRuntime()
+        machine.model = SimpleNamespace(
+            names={0: "plastic_bottle"}, predict=lambda **kw: [prediction],
+        )
+        machine.send_to_esp32 = commands.append
         for mode, command in (("enforce", "REJECT"), ("off", "BOTTLE"), ("observe", "BOTTLE")):
             self.config["mode"] = mode
-            namespace["visual_inspector"] = VisualInspector(self.config, classifier=Classifier(1))
-            result = namespace["verify_item"](self.frame)
-            namespace["sort_item"](result)
+            machine.visual_inspector = VisualInspector(self.config, classifier=Classifier(1))
+            with patch("cv2.imwrite", return_value=True):
+                result = machine.verify_item(self.frame)
+            machine.sort_item(result)
             self.assertEqual(commands[-1], command)
             self.assertEqual(result["points"], 0 if mode == "enforce" else 1)
 

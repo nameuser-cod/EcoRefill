@@ -97,7 +97,7 @@ See [camera inspection setup](ecorefill-pi/INSPECTION.md) and [material model ev
 | 500 mL | 5 points | 5 points |
 | 1,000 mL | 10 points | 10 points |
 
-**There is an existing 250 mL pricing mismatch.** The app checks against 3 points, while the Pi worker charges 2 points. The current app submits refill requests to the Pi through Firestore, so the Pi calculates the actual deduction. Align `WATER_OPTIONS` in [the app constants](src/pages/user/constants.js), [the Pi service](ecorefill-pi/machine_flow.py), and [the Cloud Functions](functions/index.js) when selecting the intended price.
+**There is an existing 250 mL pricing mismatch.** The app checks against 3 points, while the Pi worker charges 2 points. The current app submits refill requests to the Pi through Firestore, so the Pi calculates the actual deduction. Align `WATER_OPTIONS` in [the app constants](src/pages/user/constants.js), [the Pi settings](ecorefill-pi/machine/config.py), and [the Cloud Functions](functions/index.js) when selecting the intended price.
 
 Five accepted recyclable items earn 5 points, enough for a **500 mL refill** under both price tables.
 
@@ -196,7 +196,10 @@ ecorefill-app/
 │   ├── firebase/               # Firebase web configuration
 │   └── styles/                 # Application CSS
 ├── ecorefill-pi/
-│   ├── machine_flow.py         # Camera, machine API, rewards, and refill worker
+│   ├── machine_flow.py         # Controller launcher; safe to import in tests
+│   ├── machine/                # Config, hardware, state, workflows, APIs, lifecycle
+│   ├── DEBUGGING.md            # File map, logs, and hardware-free test commands
+│   ├── point_payments.py       # Owner-verified GCash point purchases
 │   ├── visual_inspection.py    # Optional size and cleanliness checks
 │   ├── inspection.example.json
 │   ├── models/ecorefill_best.pt
@@ -256,7 +259,7 @@ The physical workflow requires a configured Raspberry Pi camera, the material ch
 1. Prepare a Python environment on the Pi with the packages in `requirements.txt` including **`firebase-admin`**. Picamera2 also requires a working Raspberry Pi camera software installation.
 2. Ensure the checkpoint is available at `ecorefill-pi/models/ecorefill_best.pt`.
 3. Configure `FIREBASE_SERVICE_ACCOUNT` with an absolute path to the Firebase service-account JSON outside the repository, or use Application Default Credentials.
-4. Connect the ESP32 and buttons. The default machine ID is `machine_001` in `machine_flow.py`; it must match the intended Firestore machine document.
+4. Connect the ESP32 and buttons. The default machine ID is `machine_001` in `machine/config.py`; it must match the intended Firestore machine document. Copy the complete `machine/` directory along with the launcher when updating the Pi. See the [machine debugging guide](ecorefill-pi/DEBUGGING.md) for the controller file map and test commands.
 5. Start the service from its own directory so relative model paths resolve correctly:
 
    ```bash
