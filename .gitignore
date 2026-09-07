@@ -34,6 +34,7 @@ cleanliness_dataset/
 ecorefill-pi/inspection.local.json
 
 # EcoRefill datasets
+ecorefill_dataset/**/labels.cache
 aluminum_can_dataset/
 plastic_bottle_dataset/
 ecorefill_dataset/ecorefill-pi/ServiceAccountKey.json
