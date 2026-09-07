@@ -1,0 +1,123 @@
+.startup-content {
+  display: contents;
+}
+
+.startup-screen,
+.startup-screen * {
+  box-sizing: border-box;
+}
+
+.startup-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  background: #f3ffe8;
+  color: #08110b;
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  animation: startup-exit 300ms ease 1200ms both;
+}
+
+.startup-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.startup-water {
+  position: relative;
+  width: 180px;
+  height: 118px;
+}
+
+.startup-drop {
+  position: absolute;
+  top: 0;
+  left: 62px;
+  width: 56px;
+  height: 70px;
+  transform-origin: bottom center;
+  animation: startup-drop-in 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.startup-ripple {
+  position: absolute;
+  left: 15px;
+  bottom: 20px;
+  width: 150px;
+  height: 32px;
+  border: 2px solid #1f6f3a;
+  border-radius: 50%;
+  animation: startup-ripple-out 850ms ease-out both;
+}
+
+.startup-ripple-first {
+  animation-delay: 350ms;
+}
+
+.startup-ripple-second {
+  animation-delay: 520ms;
+}
+
+.startup-logo {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: 3px solid #08110b;
+  border-radius: 18px;
+  background: #35d04f;
+  box-shadow: 5px 5px 0 #08110b;
+  transform: rotate(-3deg);
+}
+
+.startup-name {
+  margin: 22px 0 0;
+  font-size: clamp(36px, 10vw, 48px);
+  font-weight: 950;
+  letter-spacing: -2px;
+  line-height: 1.1;
+}
+
+.startup-name span {
+  color: #1f6f3a;
+}
+
+.startup-tagline {
+  margin: 12px 0 0;
+  color: #102719;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+@keyframes startup-drop-in {
+  0% { opacity: 0; transform: translateY(-28px) scale(0.75); }
+  55% { opacity: 1; transform: translateY(12px) scale(0.94, 1.06); }
+  75% { transform: translateY(12px) scale(1.06, 0.94); }
+  100% { opacity: 1; transform: translateY(8px) scale(1); }
+}
+
+@keyframes startup-ripple-out {
+  0% { opacity: 0; transform: scale(0.15); }
+  15% { opacity: 0.65; }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+@keyframes startup-exit {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .startup-screen,
+  .startup-screen * {
+    animation: none;
+  }
+}

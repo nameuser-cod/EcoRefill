@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import StartupAnimation from "./components/StartupAnimation";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import UserDashboard from "./pages/user/UserDashboard";
@@ -18,25 +19,27 @@ import UserWaterRefill from "./pages/user/UserWaterRefill";
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/login" />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/user/dashboard" element={<UserDashboard />} />
-      <Route path="/owner/dashboard" element={<OwnerDashboard />} />
-      <Route path="/owner/transactions" element={<OwnerTransactions />} />
-      <Route path="/owner/alerts" element={<OwnerAlerts />} />
-      <Route path="/owner/profile" element={<OwnerProfile />} />
-      <Route path="/machine" element={<MachineHome />} />
-      <Route path="/machine/redeem-qr" element={<RedeemQRCode />} />
-      <Route path="/user/scan-qr" element={<ScanQR />} />
-      <Route path="/user/history" element={<UserHistory />} />
-      <Route path="/user/buy-points" element={<BuyPoints />} />
-      <Route path="/user/profile" element={<UserProfile />} />
-      <Route path="/user/camera-scan" element={<CameraScan />} />
-      <Route path="/machine/water-refill" element={<MachineWaterRefill />} />
-      <Route path="/user/water-refill/:sessionId" element={<UserWaterRefill />} />
-    </Routes>
+    <StartupAnimation>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/user/dashboard" element={<UserDashboard />} />
+        <Route path="/owner/dashboard" element={<OwnerDashboard />} />
+        <Route path="/owner/transactions" element={<OwnerTransactions />} />
+        <Route path="/owner/alerts" element={<OwnerAlerts />} />
+        <Route path="/owner/profile" element={<OwnerProfile />} />
+        <Route path="/machine" element={<MachineHome />} />
+        <Route path="/machine/redeem-qr" element={<RedeemQRCode />} />
+        <Route path="/user/scan-qr" element={<ScanQR />} />
+        <Route path="/user/history" element={<UserHistory />} />
+        <Route path="/user/buy-points" element={<BuyPoints />} />
+        <Route path="/user/profile" element={<UserProfile />} />
+        <Route path="/user/camera-scan" element={<CameraScan />} />
+        <Route path="/machine/water-refill" element={<MachineWaterRefill />} />
+        <Route path="/user/water-refill/:sessionId" element={<UserWaterRefill />} />
+      </Routes>
+    </StartupAnimation>
   );
 }
 
