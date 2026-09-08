@@ -14,16 +14,22 @@ import {
 } from "./components/OwnerFeedback";
 import useMachineCollection from "./hooks/useMachineCollection";
 import useOwnerMachine from "./hooks/useOwnerMachine";
+import useActivityNames from "./hooks/useActivityNames";
 import GcashPaymentReviews from "./components/GcashPaymentReviews";
+import OwnerPoints from "./components/OwnerPoints";
 import {
   formatTimestamp,
   getActivityLabel,
   getStatusTone,
   getTransactionDescription,
+  getTransactionUser,
   isRejectedTransaction,
   normalizeText,
 } from "./utils/ownerDashboard";
 import { mergeOwnerActivity } from "./utils/ownerActivity";
+import { isRecyclingActivity } from "./utils/recyclingPhotos";
+import PhotoActivityRow from "./components/PhotoActivityRow";
+import RecyclingPhotoDialog from "./components/RecyclingPhotoDialog";
 
 const FILTERS = [
   { label: "All", value: "all" },
@@ -43,7 +49,8 @@ const getIcon = (transaction) => {
 
 function OwnerTransactions() {
   const [activeFilter, setActiveFilter] = useState("all");
-  const { machine, loading: machineLoading, error: machineError } =
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const { owner, machine, loading: machineLoading, error: machineError } =
     useOwnerMachine();
   const {
     records: transactions,
@@ -61,10 +68,11 @@ function OwnerTransactions() {
     error: refillsError,
   } = useMachineCollection("water_refill_sessions", machine?.id, Infinity);
 
-  const activity = useMemo(
+  const rawActivity = useMemo(
     () => mergeOwnerActivity(transactions, recyclingRecords, refillSessions),
     [transactions, recyclingRecords, refillSessions]
   );
+  const activity = useActivityNames(rawActivity, machine?.id);
   const activityError = transactionsError || recyclingError || refillsError;
 
   const filteredTransactions = useMemo(() => {
@@ -82,7 +90,10 @@ function OwnerTransactions() {
     >
       <OwnerError message={machineError || activityError} />
 
-      {!machineLoading && !machineError && <GcashPaymentReviews />}
+      {!machineLoading && !machineError && <>
+        <OwnerPoints owner={owner} />
+        <GcashPaymentReviews ownerPoints={owner ? (owner.points ?? 0) : null} />
+      </>}
 
       <div className="owner-transactions-activity">
         <div className="owner-list-toolbar">
@@ -141,25 +152,32 @@ function OwnerTransactions() {
                   : transaction.status || "completed";
 
                 return (
-                  <article className="owner-record-row" key={transaction.id}>
+                  <PhotoActivityRow className="owner-record-row" key={transaction.id}
+                    onOpen={isRecyclingActivity(transaction) ? () => setSelectedTransaction(transaction) : undefined}>
                     <span className="owner-record-icon">
                       <Icon size={21} />
                     </span>
                     <div>
                       <strong>{getActivityLabel(transaction)}</strong>
+                      <p className="owner-transaction-user">{getTransactionUser(transaction)}</p>
                       <p>{getTransactionDescription(transaction)}</p>
                       <time>{formatTimestamp(transaction.createdAt)}</time>
+                      {isRecyclingActivity(transaction) && <span className="owner-photo-hint">View item photos</span>}
                     </div>
                     <span className={`owner-status tone-${getStatusTone(status)}`}>
                       {status}
                     </span>
-                  </article>
+                  </PhotoActivityRow>
                 );
               })}
             </div>
           )}
         </section>
       </div>
+      {selectedTransaction && (
+        <RecyclingPhotoDialog transaction={selectedTransaction} records={recyclingRecords}
+          onClose={() => setSelectedTransaction(null)} />
+      )}
     </OwnerPageShell>
   );
 }

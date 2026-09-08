@@ -236,6 +236,7 @@ class RewardsAPI:
                     recycling_record_ref,
                     {
                         "claimedBy": user_id,
+                        "userName": user_data.get("fullName", ""),
                         "claimedAt": firestore.SERVER_TIMESTAMP,
                         "updatedAt": firestore.SERVER_TIMESTAMP,
                     }
@@ -250,6 +251,7 @@ class RewardsAPI:
                     "type": "recycling",
                     "userId": user_id,
                     "userEmail": user_email,
+                    "userName": user_data.get("fullName", ""),
                     "machineId": reward_data.get(
                         "machineId",
                         MACHINE_ID,

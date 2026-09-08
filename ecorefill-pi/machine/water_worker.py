@@ -8,6 +8,7 @@ from .config import (
     WATER_OPTIONS,
 )
 from .diagnostics import log
+from .owner_points import complete_refill
 
 
 class WaterRequestWorker:
@@ -318,6 +319,11 @@ class WaterRequestWorker:
                 - points_required
             )
 
+            machine = self.db.collection("machines").document(MACHINE_ID).get(
+                transaction=transaction
+            ).to_dict() or {}
+            owner_id = machine.get("ownerId") or ""
+
             # ---------------------------------
             # Deduct user points
             # ---------------------------------
@@ -341,6 +347,8 @@ class WaterRequestWorker:
             transaction.update(
                 session_ref,
                 {
+                    "ownerId": owner_id,
+                    "userName": user_data.get("fullName", ""),
                     "status":
                         "processing",
 
@@ -403,6 +411,8 @@ class WaterRequestWorker:
                 {
                     "type":
                         "water_refill",
+
+                    "userName": user_data.get("fullName", ""),
 
                     "userId":
                         user_id,
@@ -713,36 +723,12 @@ class WaterRequestWorker:
             return
 
         try:
-            completion_batch = self.db.batch()
+            @firestore.transactional
+            def settle(transaction):
+                complete_refill(self.db, transaction, firestore.SERVER_TIMESTAMP,
+                                session_ref, request_ref, transaction_ref, MACHINE_ID)
 
-            completion_batch.update(
-                session_ref,
-                {
-                    "status": "completed",
-                    "message": "Water refill completed.",
-                    "error": None,
-                    "updatedAt": firestore.SERVER_TIMESTAMP,
-                },
-            )
-
-            completion_batch.update(
-                request_ref,
-                {
-                    "status": "completed",
-                    "error": None,
-                    "updatedAt": firestore.SERVER_TIMESTAMP,
-                },
-            )
-
-            completion_batch.update(
-                transaction_ref,
-                {
-                    "status": "completed",
-                    "updatedAt": firestore.SERVER_TIMESTAMP,
-                },
-            )
-
-            completion_batch.commit()
+            settle(self.db.transaction())
         except Exception as completion_error:
             # The ESP32 already confirmed the physical refill. A Firestore write
             # failure must not leave the kiosk permanently stuck in water mode.

@@ -476,6 +476,7 @@ exports.redeemRecyclingReward = onCall(
             recyclingRecordRef,
             {
               claimedBy: userId,
+              userName: user.fullName || "",
               claimedAt: timestamp,
               updatedAt: timestamp,
             }
@@ -486,6 +487,7 @@ exports.redeemRecyclingReward = onCall(
           type: "recycling",
           userId,
           userEmail,
+          userName: user.fullName || "",
           machineId:
             reward.machineId || "machine_001",
           materialType:

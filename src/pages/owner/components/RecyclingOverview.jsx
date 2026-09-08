@@ -1,4 +1,5 @@
 import { CheckCircle2, Package, PackageX, Recycle } from "lucide-react";
+import MachineMetrics from "./MachineMetrics";
 
 const SUMMARY_ITEMS = [
   { key: "bottleCount", label: "Bottles", icon: Package },
@@ -7,7 +8,7 @@ const SUMMARY_ITEMS = [
   { key: "rejectedCount", label: "Rejected", icon: PackageX },
 ];
 
-function RecyclingOverview({ analytics }) {
+function RecyclingOverview({ analytics, machine }) {
   return (
     <section className="owner-panel owner-analytics-panel">
       <div className="owner-panel-heading">
@@ -26,6 +27,7 @@ function RecyclingOverview({ analytics }) {
             <strong>{analytics[key]}</strong>
           </div>
         ))}
+        <MachineMetrics machine={machine} />
       </div>
 
       <div className="owner-rate-row">

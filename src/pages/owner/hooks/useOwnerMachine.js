@@ -23,9 +23,11 @@ function useOwnerMachine() {
   useEffect(() => {
     let active = true;
     let unsubscribeMachine = () => {};
+    let unsubscribeOwner = () => {};
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       unsubscribeMachine();
+      unsubscribeOwner();
 
       if (!user) {
         navigate("/login", { replace: true });
@@ -50,6 +52,14 @@ function useOwnerMachine() {
         }
 
         setOwner(ownerData);
+        unsubscribeOwner = onSnapshot(doc(db, "users", user.uid), (snapshot) => {
+          if (active) setOwner(snapshot.exists() ? snapshot.data() : null);
+        }, () => {
+          if (active) {
+            setOwner(null);
+            setError("We could not load your current owner points balance.");
+          }
+        });
 
         const machineQuery = query(
           collection(db, "machines"),
@@ -93,6 +103,7 @@ function useOwnerMachine() {
       active = false;
       unsubscribeAuth();
       unsubscribeMachine();
+      unsubscribeOwner();
     };
   }, [navigate]);
 

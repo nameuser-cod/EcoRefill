@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from threading import Lock
 from types import SimpleNamespace
 import unittest
+import uuid
 from unittest.mock import patch
 
 from point_payments import PointPayments, PaymentError, register_payment_routes
@@ -25,7 +26,7 @@ class Database:
         self.records = {
             'users/buyer': {'role': 'user', 'points': 7, 'fullName': 'Buyer'},
             'users/other': {'role': 'user', 'points': 0},
-            'users/owner': {'role': 'device_owner', 'fullName': 'Owner'},
+            'users/owner': {'role': 'device_owner', 'fullName': 'Owner', 'points': 2000},
             'users/stranger': {'role': 'device_owner'},
             'machines/machine_001': {'ownerId': 'owner', 'machineName': 'Machine One'},
             'gcashAccounts/owner': {'enabled': True, 'accountName': 'Owner GCash', 'mobileNumber': '09123456789'},
@@ -37,18 +38,24 @@ class Database:
         class Ref:
             def __init__(self, key):
                 self.key, self.id = f'{name}/{key}', key
+                self.parent = SimpleNamespace(id=name)
 
             def get(self, transaction=None):
                 if transaction and transaction.writes:
                     raise AssertionError('Reads must precede writes')
-                return Snapshot(self.key, database.records.get(self.key))
+                snapshot = Snapshot(self.key, database.records.get(self.key))
+                snapshot.reference = self
+                return snapshot
 
             def set(self, data):
                 database.records[self.key] = copy.deepcopy(data)
 
+            def update(self, data):
+                database.records[self.key].update(copy.deepcopy(data))
+
         class Collection:
-            def document(self, key):
-                return Ref(key)
+            def document(self, key=None):
+                return Ref(key or uuid.uuid4().hex)
 
             def stream(self):
                 return [Snapshot(key, value) for key, value in database.records.items() if key.startswith(name + '/')]
@@ -133,6 +140,82 @@ class PaymentTests(unittest.TestCase):
         for uid in ('buyer', 'other', 'stranger'):
             self.assert_code('permission-denied', lambda: self.review(uid=uid))
         self.assertEqual(self.db.records['users/buyer']['points'], 7)
+
+    def test_approval_transfers_owner_points_once(self):
+        self.create(); self.submit(); self.review(); self.review()
+        self.assertEqual(self.db.records['users/owner']['points'], 1900)
+        self.assertEqual(self.db.records['users/buyer']['points'], 107)
+        record = self.db.records['transactions/gcash_order1']
+        self.assertEqual((record['ownerPreviousPoints'], record['ownerPointsAfter']), (2000, 1900))
+        self.assertEqual(record['userName'], 'Buyer')
+
+    def test_activity_names_resolve_legacy_refills_and_claimed_scans(self):
+        self.db.records['users/buyer']['fullName'] = 'Juan Dela Cruz'
+        self.db.records['transactions/reward'] = {'machineId': 'machine_001', 'userId': 'buyer', 'userEmail': 'juan@example.com'}
+        self.db.records['water_refill_sessions/refill'] = {'machineId': 'machine_001', 'userId': 'buyer', 'status': 'failed'}
+        self.db.records['recycling_records/scan'] = {'machineId': 'machine_001', 'claimedBy': 'buyer'}
+        ids = ['transaction:reward', 'refill:refill', 'scan:scan']
+        result = self.call('getOwnerActivityNames', 'owner', machineId='machine_001', recordIds=ids)
+        self.assertEqual(result, {'names': {key: 'Juan Dela Cruz' for key in ids}})
+
+    def test_activity_names_do_not_expose_other_machine_users(self):
+        self.db.records['transactions/private'] = {'machineId': 'machine_other', 'userId': 'buyer'}
+        for uid in ('buyer', 'stranger'):
+            self.assert_code('permission-denied', lambda: self.call(
+                'getOwnerActivityNames', uid, machineId='machine_001', recordIds=[]))
+        self.assert_code('permission-denied', lambda: self.call(
+            'getOwnerActivityNames', 'owner', machineId='machine_001', recordIds=['transaction:private']))
+
+    def test_activity_names_handle_missing_profiles_and_anonymous_records(self):
+        self.db.records['transactions/deleted'] = {'machineId': 'machine_001', 'userId': 'deleted', 'userName': 'Saved Name'}
+        self.db.records['recycling_records/anonymous'] = {'machineId': 'machine_001', 'accepted': False}
+        result = self.call('getOwnerActivityNames', 'owner', machineId='machine_001',
+                           recordIds=['transaction:deleted', 'scan:anonymous', 'transaction:missing'], userId='buyer')
+        self.assertEqual(result['names'], {'transaction:deleted': 'Saved Name', 'scan:anonymous': '', 'transaction:missing': ''})
+
+    def test_activity_names_validate_record_requests(self):
+        for ids in (None, 'buyer', ['users:buyer'], ['transaction:../buyer'], [42], ['scan:a'] * 51):
+            self.assert_code('invalid-argument', lambda: self.call(
+                'getOwnerActivityNames', 'owner', machineId='machine_001', recordIds=ids))
+
+    def test_insufficient_owner_points_prevents_creation(self):
+        for balance in (0, 99, -1, True, '100', 9007199254740992):
+            self.db.records['users/owner']['points'] = balance
+            self.assert_code('failed-precondition', self.create)
+        self.assertNotIn('pointPurchases/order1', self.db.records)
+
+    def test_insufficient_owner_points_preserves_pending_payment(self):
+        self.create(); self.submit()
+        self.db.records['users/owner']['points'] = 99
+        self.assert_code('failed-precondition', self.review)
+        self.assertEqual(self.db.records['users/buyer']['points'], 7)
+        self.assertEqual(self.db.records['users/owner']['points'], 99)
+        self.assertEqual(self.db.records['pointPurchases/order1']['status'], 'pending')
+        self.assertNotIn('transactions/gcash_order1', self.db.records)
+        self.review('rejected', note='Payment will be returned')
+        self.assertEqual(self.db.records['users/owner']['points'], 99)
+
+    def test_competing_approvals_cannot_overspend_owner(self):
+        self.db.records['users/owner']['points'] = 100
+        self.create(); self.submit()
+        self.create('order2', 'other'); self.submit('order2', 'other', '9999999999999')
+        def approve(order):
+            try:
+                self.call('reviewGcashPayment', 'owner', purchaseId=order, decision='approved')
+                return 'approved'
+            except PaymentError as error:
+                return error.code
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            outcomes = list(pool.map(approve, ['order1', 'order2']))
+        self.assertCountEqual(outcomes, ['approved', 'failed-precondition'])
+        self.assertEqual(self.db.records['users/owner']['points'], 0)
+        self.assertEqual(sum(self.db.records['users/' + uid]['points'] for uid in ('buyer', 'other')), 107)
+
+    def test_seller_options_show_current_owner_balance(self):
+        self.assertEqual(self.call('getGcashOptions')['sellers'][0]['availablePoints'], 2000)
+        self.db.records['users/owner'].pop('points')
+        self.assertEqual(self.call('getGcashOptions')['sellers'][0]['availablePoints'], 0)
+        self.assert_code('failed-precondition', self.create)
 
     def test_only_buyer_can_submit(self):
         self.create()

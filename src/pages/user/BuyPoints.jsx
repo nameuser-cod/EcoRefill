@@ -62,6 +62,7 @@ function RefillPointPurchase({ machineId, refillSessionId, waterAmountMl }) {
   const requestId = useRef(null);
   const points = Number(pointsInput);
   const validPoints = /^[0-9]+$/.test(pointsInput) && Number.isSafeInteger(points) && points > 0;
+  const enoughPoints = Number.isSafeInteger(seller?.availablePoints) && points <= seller.availablePoints;
 
   useEffect(() => {
     let active = true;
@@ -93,7 +94,7 @@ function RefillPointPurchase({ machineId, refillSessionId, waterAmountMl }) {
   }
 
   async function createPurchase() {
-    if (!validPoints || !seller || busy) return;
+    if (!validPoints || !enoughPoints || !seller || busy) return;
     setBusy(true);
     setError("");
     setMessage("");
@@ -134,6 +135,7 @@ function RefillPointPurchase({ machineId, refillSessionId, waterAmountMl }) {
         {message && <p className="gcash-success" role="status">{message}</p>}
         {loading ? <p role="status">Loading GCash payments...</p> : <>
           <section className="purchase-summary-card gcash-form">
+            {seller && <p>Owner points available: {seller.availablePoints?.toLocaleString("en-PH") ?? "—"}. Availability is checked again when payment is approved.</p>}
             <h2>Your refill machine</h2>
             {seller ? <p>{seller.machineName} · {seller.ownerName}{seller.location ? ` · ${seller.location}` : ""}</p>
               : <p>This machine’s owner is not accepting GCash payments right now. Contact the owner or refresh to check again.</p>}
@@ -147,9 +149,10 @@ function RefillPointPurchase({ machineId, refillSessionId, waterAmountMl }) {
             </label>
             <p id="points-help">1 point = ₱1. Enter a whole number of at least 1 point.</p>
             {pointsInput !== "" && !validPoints && <p className="gcash-error" role="alert">Enter a valid whole number of points, at least 1.</p>}
+            {validPoints && seller && !enoughPoints && <p className="gcash-error" role="alert">This owner does not have enough points. Enter a smaller amount or refresh after more refills.</p>}
             <h2>Purchase summary</h2>
             <p aria-live="polite">{validPoints ? `${points} points for ₱${points}` : "Enter how many points you want to continue."}</p>
-            <button className="buy-points-btn" onClick={createPurchase} disabled={!validPoints || !seller || busy}>{busy ? "Please wait..." : "Continue to GCash payment"}</button>
+            <button className="buy-points-btn" onClick={createPurchase} disabled={!validPoints || !enoughPoints || !seller || busy}>{busy ? "Please wait..." : "Continue to GCash payment"}</button>
           </section>
         </>}
         <section className="purchase-summary-card">

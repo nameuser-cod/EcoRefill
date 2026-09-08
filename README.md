@@ -122,6 +122,8 @@ Owners can view machine details, accepted bottle and can counts, rejected items,
 
 Users enter the number of EcoPoints they want at **1 point = ₱1**, with a minimum of 1 whole point. For example, 150 points costs ₱150.
 
+Owners see their live **Available points** balance on Dashboard and Transactions. Each successful refill processed by the Pi credits the owner with the actual points spent by the customer. Approving a GCash purchase transfers that many points from the owner's balance to the buyer. Both creating an order and approving payment require enough owner points; failed refills and rejected payments do not increase the owner balance. Opening the balance card also syncs eligible past completed refills once; **Sync past refills** can safely retry this check. Update both the Pi service (including `machine/owner_points.py`, `owner_refill_history.py`, and `point_payments.py`) and the frontend to enable this flow.
+
 After scanning a water refill QR, users can tap **Buy Points** on the water amount page. The app automatically selects that machine's owner and provides a return button to resume the refill with the selected water amount. The refill balance updates when the owner approves payment. If the QR expires during payment verification, users can scan a new one.
 
 Point purchases are available only through the scanned water refill page; there is no dashboard purchase shortcut or owner selector. Users enter their points amount, send GCash to the displayed account, and submit their receipt reference. The owner verifies the received payment in **Transactions** before approving it. Only approval credits points. Owners configure their GCash account in **Profile**. Payments run on the existing Raspberry Pi and do not require the Firebase Blaze plan. See [GCash setup and required Firestore protections](docs/GCASH_PAYMENTS.md) before accepting real payments.
@@ -289,7 +291,7 @@ Build and run the Android project through Android Studio. A phone's `127.0.0.1` 
 ## Current implementation limits
 
 - **250 mL pricing is inconsistent** between the app/Cloud Function and the active Pi worker, as documented in the price table.
-- **Point purchases are simulated** and do not collect or verify real payments.
+- **GCash verification is manual.** Owners check received payments themselves before approving the point transfer.
 - **ESP32 firmware and full hardware schematics are absent.** This repository defines the Pi-side command protocol but does not establish the attached controller's physical behavior or dispensing accuracy.
 - **Cleanliness and size checks are optional.** They require real training data or calibration before enforcement. Camera appearance checks do not measure weight or establish water quality.
 - **Monitoring depends on supplied data.** Water level, water-quality status, tamper status, and alerts need an appropriate source writing those records; the dashboard alone does not produce sensor readings.

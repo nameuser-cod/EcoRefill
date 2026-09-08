@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Bell,
   Droplets,
@@ -8,11 +9,16 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { OwnerEmpty } from "./OwnerFeedback";
+import PhotoActivityRow from "./PhotoActivityRow";
+import RecyclingPhotoDialog from "./RecyclingPhotoDialog";
+import { isRecyclingActivity } from "../utils/recyclingPhotos";
+import useActivityNames from "../hooks/useActivityNames";
 import {
   formatTimestamp,
   getActivityLabel,
   getStatusTone,
   getTransactionDescription,
+  getTransactionUser,
   isRejectedTransaction,
   normalizeText,
 } from "../utils/ownerDashboard";
@@ -27,21 +33,23 @@ const getTransactionIcon = (transaction) => {
   return ReceiptText;
 };
 
-function ActivityRow({ icon: Icon, title, description, status, date }) {
+function ActivityRow({ icon: Icon, title, description, user, status, date, onOpen }) {
   return (
-    <div className="owner-activity-row">
+    <PhotoActivityRow className="owner-activity-row" onOpen={onOpen}>
       <span className="owner-activity-icon">
         <Icon size={19} />
       </span>
       <div>
         <strong>{title}</strong>
+        {user && <p className="owner-transaction-user">{user}</p>}
         <p>{description}</p>
         {date && <time>{date}</time>}
+        {onOpen && <span className="owner-photo-hint">View item photos</span>}
       </div>
       <span className={`owner-status tone-${getStatusTone(status)}`}>
         {status || "Unknown"}
       </span>
-    </div>
+    </PhotoActivityRow>
   );
 }
 
@@ -84,8 +92,10 @@ export function RecentAlerts({ alerts }) {
   );
 }
 
-export function RecentTransactions({ transactions }) {
+export function RecentTransactions({ transactions, recyclingRecords, machineId }) {
   const navigate = useNavigate();
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const activity = useActivityNames(transactions, machineId);
 
   return (
     <section className="owner-panel">
@@ -110,12 +120,14 @@ export function RecentTransactions({ transactions }) {
         />
       ) : (
         <div className="owner-activity-list">
-          {transactions.map((transaction) => (
+          {activity.map((transaction) => (
             <ActivityRow
               key={transaction.id}
               icon={getTransactionIcon(transaction)}
               title={getActivityLabel(transaction)}
               description={getTransactionDescription(transaction)}
+              user={getTransactionUser(transaction)}
+              onOpen={isRecyclingActivity(transaction) ? () => setSelectedTransaction(transaction) : undefined}
               status={
                 isRejectedTransaction(transaction)
                   ? "rejected"
@@ -125,6 +137,10 @@ export function RecentTransactions({ transactions }) {
             />
           ))}
         </div>
+      )}
+      {selectedTransaction && (
+        <RecyclingPhotoDialog transaction={selectedTransaction} records={recyclingRecords}
+          onClose={() => setSelectedTransaction(null)} />
       )}
     </section>
   );

@@ -2,7 +2,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   CircleHelp,
-  Clock3,
   Gauge,
   MapPin,
   ShieldAlert,
@@ -10,7 +9,6 @@ import {
   WifiOff,
 } from "lucide-react";
 import {
-  formatTimestamp,
   getStatusTone,
   normalizeText,
 } from "../utils/ownerDashboard";
@@ -82,10 +80,6 @@ function MachineOverview({ machine }) {
           <strong className={`text-${securityTone}`}>{securityLabel}</strong>
         </div>
       </div>
-      <p className="owner-machine-updated">
-        <Clock3 size={14} aria-hidden="true" />
-        <span>Last reported · {formatTimestamp(machine.lastSeenAt, "No update received")}</span>
-      </p>
     </section>
   );
 }

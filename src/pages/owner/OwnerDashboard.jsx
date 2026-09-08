@@ -1,6 +1,7 @@
-import { AlertTriangle } from "lucide-react";
-import MachineMetrics from "./components/MachineMetrics";
+import { AlertTriangle, LogOut } from "lucide-react";
+import LogoutButton from "../../components/LogoutButton";
 import MachineOverview from "./components/MachineOverview";
+import OwnerPoints from "./components/OwnerPoints";
 import OwnerPageShell from "./components/OwnerPageShell";
 import {
   OwnerEmpty,
@@ -26,6 +27,15 @@ function OwnerDashboard() {
     error: machineError,
   } = useOwnerMachine();
   const dashboard = useOwnerDashboard(machine?.id);
+  const logoutAction = (
+    <LogoutButton
+      className="owner-header-button"
+      ariaLabel="Log out"
+      title="Log out"
+    >
+      <LogOut size={20} />
+    </LogoutButton>
+  );
 
   const unreadAlerts = dashboard.recentAlerts.filter(
     (alert) => normalizeText(alert.status) === "unread"
@@ -37,6 +47,7 @@ function OwnerDashboard() {
         eyebrow="Owner workspace"
         title="Dashboard"
         subtitle="Preparing your machine overview"
+        action={logoutAction}
       >
         <OwnerLoading />
       </OwnerPageShell>
@@ -49,8 +60,10 @@ function OwnerDashboard() {
         eyebrow="Owner workspace"
         title={`Welcome${owner?.fullName ? `, ${owner.fullName}` : ""}`}
         subtitle="Manage your EcoRefill machine from one place."
+        action={logoutAction}
       >
         <OwnerError message={machineError} />
+        <OwnerPoints owner={owner} />
         <section className="owner-panel owner-no-machine">
           <OwnerEmpty
             icon={AlertTriangle}
@@ -68,30 +81,28 @@ function OwnerDashboard() {
       title="Dashboard"
       subtitle={`Welcome back${owner?.fullName ? `, ${owner.fullName}` : ""}. Here’s how ${machine.machineName || machine.machineId || "your machine"} is doing.`}
       unreadAlerts={unreadAlerts}
+      action={logoutAction}
     >
       <OwnerError message={machineError || dashboard.error} />
       <MachineOverview machine={machine} />
+      <OwnerPoints owner={owner} />
 
       {dashboard.loading ? (
         <OwnerLoading label="Loading live machine activity..." />
       ) : (
         <>
-          <MachineMetrics
-            machine={machine}
-            analytics={dashboard.analytics}
-            unreadAlerts={unreadAlerts}
-          />
-
           <div className="owner-dashboard-layout">
             <div className="owner-dashboard-main">
-              <RecyclingOverview analytics={dashboard.analytics} />
+              <RecyclingOverview analytics={dashboard.analytics} machine={machine} />
               <RecentScans key={machine.id} items={dashboard.recentItems} />
             </div>
 
             <aside className="owner-dashboard-side">
               <RecentAlerts alerts={dashboard.recentAlerts} />
               <RecentTransactions
+                machineId={machine.id}
                 transactions={dashboard.recentTransactions}
+                recyclingRecords={dashboard.recentItems}
               />
               <RejectedBreakdown
                 rejectedTypes={dashboard.analytics.rejectedTypes}

@@ -114,37 +114,38 @@ export const getActivityLabel = (record) => {
   return getTransactionLabel(record.type);
 };
 
+export const getTransactionUser = (transaction) => {
+  const name = String(transaction.userName || "").trim();
+  if (name) return name;
+  if (transaction.nameLoading) return "Loading name…";
+  if (transaction.nameUnavailable) return "Name unavailable";
+  return "Name not recorded";
+};
+
 export const getTransactionDescription = (transaction) => {
+  const material = String(getDetectedMaterial(transaction)).replaceAll("_", " ");
+
   if (isRejectedTransaction(transaction)) {
-    return `${getDetectedMaterial(transaction)} · Not accepted`;
+    return `${material} · Not accepted`;
   }
 
   if (transaction.source === "recycling_records") {
-    return `${getDetectedMaterial(transaction)} · Accepted for recycling`;
-  }
-
-  if (transaction.source === "water_refill_sessions") {
-    return `${transaction.waterAmountMl || 0} ml · ${transaction.pointsUsed || 0} points`;
+    return `${material} · Accepted for recycling`;
   }
 
   const type = normalizeText(transaction.type);
 
   if (type === "recycling") {
-    return `+${transaction.pointsEarned || 0} points · ${
-      transaction.materialType || "Recyclable item"
-    }`;
+    return `${material} · ${transaction.pointsEarned || 0} points awarded`;
   }
 
   if (type === "water refill") {
-    return `-${transaction.pointsUsed || 0} points · ${
-      transaction.waterAmountMl || 0
-    } ml`;
+    const action = normalizeText(transaction.status) === "completed" ? "dispensed" : "requested";
+    return `${transaction.waterAmountMl || 0} ml ${action} · Point cost: ${transaction.pointsUsed || 0}`;
   }
 
   if (type === "point purchase") {
-    return `+${transaction.pointsBought || 0} points · ₱${
-      transaction.amountPaid || 0
-    }`;
+    return `${transaction.packageName || "Points purchase"} · ${transaction.pointsBought || 0} points · ₱${transaction.amountPaid || 0}`;
   }
 
   return "EcoRefill machine activity";

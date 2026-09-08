@@ -1,7 +1,27 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mergeOwnerActivity } from "./ownerActivity.js";
-import { getActivityLabel, getTransactionDescription, normalizeText } from "./ownerDashboard.js";
+import { getActivityLabel, getTransactionDescription, getTransactionUser, normalizeText } from "./ownerDashboard.js";
+
+test("owner activity shows full names without IDs or emails", () => {
+  assert.equal(getTransactionUser({ userName: " Ana Santos ", userEmail: "ana@example.com", userId: "user-1" }), "Ana Santos");
+  assert.equal(getTransactionUser({ userEmail: "ana@example.com" }), "Name not recorded");
+  assert.equal(getTransactionUser({ userName: "Ana Santos" }), "Ana Santos");
+  assert.equal(getTransactionUser({ userId: "user-1" }), "Name not recorded");
+  assert.equal(getTransactionUser({ claimedBy: "user-2" }), "Name not recorded");
+  assert.equal(getTransactionUser({}), "Name not recorded");
+  assert.equal(getTransactionUser({ nameLoading: true }), "Loading name…");
+  assert.equal(getTransactionUser({ nameUnavailable: true }), "Name unavailable");
+});
+
+test("owner descriptions show machine activity without claiming unsuccessful refills dispensed water", () => {
+  for (const status of ["failed", "pending", "cancelled", "waiting_for_machine"]) {
+    assert.equal(getTransactionDescription({ type: "water_refill", waterAmountMl: 500, pointsUsed: 5, status }), "500 ml requested · Point cost: 5");
+  }
+  assert.equal(getTransactionDescription({ type: "recycling", materialType: "multiple_items", pointsEarned: 3 }), "multiple items · 3 points awarded");
+  assert.equal(getTransactionDescription({ type: "recycling", materialType: "plastic_bottle", accepted: false }), "plastic bottle · Not accepted");
+  assert.equal(getTransactionDescription({ type: "point_purchase", packageName: "Starter", pointsBought: 20, amountPaid: 10 }), "Starter · 20 points · ₱10");
+});
 
 test("inserted bottles and rejected cans appear without claimed rewards", () => {
   const activity = mergeOwnerActivity([], [
@@ -11,7 +31,7 @@ test("inserted bottles and rejected cans appear without claimed rewards", () => 
   assert.deepEqual(activity.map((item) => item.status), ["rejected", "accepted"]);
   assert.equal(getActivityLabel(activity[0]), "Rejected item");
   assert.equal(getActivityLabel(activity[1]), "Recycling scan");
-  assert.equal(getTransactionDescription(activity[1]), "plastic_bottle · Accepted for recycling");
+  assert.equal(getTransactionDescription(activity[1]), "plastic bottle · Accepted for recycling");
 });
 
 test("claimed batch rewards replace accepted scans but keep rejected items", () => {
@@ -47,7 +67,7 @@ test("refill sessions appear without transactions and unused QR sessions stay ou
   assert.equal(activity.length, 1);
   assert.equal(activity[0].type, "water_refill");
   assert.equal(getActivityLabel(activity[0]), "Water refill");
-  assert.equal(getTransactionDescription(activity[0]), "500 ml · 10 points");
+  assert.equal(getTransactionDescription(activity[0]), "500 ml dispensed · Point cost: 10");
 });
 
 test("a refill transaction takes precedence over its session", () => {
