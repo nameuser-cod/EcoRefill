@@ -118,6 +118,12 @@ Owners register using an existing, available machine ID. Registration links the 
 
 Owners can view machine details, accepted bottle and can counts, rejected items, acceptance rate, recent scan images, transactions, and alerts. The interface also displays water level, water-quality status, and tamper status when those fields are provided in Firestore. These displays depend on actual data being supplied; their presence in the interface does not establish that the corresponding sensors are implemented here.
 
+The owner **Profile** page's **View machine map** button in **Connected machine** opens a popup where the owner can select **Set location** or **Update location**, tap the map or drag the pin, enter a location name/address, and select **Save location**. **Use my location** requests the phone/browser's position; use it while beside the machine, check the reported accuracy, and adjust the pin before saving. **Cancel** discards the draft. Closing the popup also discards unsaved edits; it can be closed using the close button or Escape when no save is in progress. Saved changes appear through the existing Firestore subscription, including in other open owner profile pages. This is an owner-maintained installation location, not automatic GPS tracking of the machine.
+
+Locations are stored on `machines/{machineId}` as the existing `location` string, a `coordinates` map containing numeric `latitude` and `longitude`, and a server-generated `locationUpdatedAt`. Deploy the updated `firestore.rules` with `firebase deploy --only firestore:rules` alongside the frontend; owners can update only their own machine's location fields, with coordinate validation enforced by the rules. Verify with `npm run test:rules` and `node --test src/pages/owner/utils/machineLocation.test.mjs`.
+
+The map uses [Leaflet](https://leafletjs.com/reference.html) and online OpenStreetMap tiles without an API key. Preserve the visible attribution and follow the [tile usage policy](https://operations.osmfoundation.org/policies/tiles/); choose a suitable tile provider if deployment traffic grows. Browser geolocation requires location permission and a secure context (HTTPS or localhost); manual pin placement works without that permission.
+
 ### GCash point purchases
 
 Users enter the number of EcoPoints they want at **1 point = ₱1**, with a minimum of 1 whole point. For example, 150 points costs ₱150.

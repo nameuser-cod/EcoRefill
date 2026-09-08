@@ -15,6 +15,7 @@ import OwnerPageShell from "./components/OwnerPageShell";
 import { OwnerError, OwnerLoading } from "./components/OwnerFeedback";
 import useOwnerMachine from "./hooks/useOwnerMachine";
 import GcashSettings from "./components/GcashSettings";
+import MachineLocation from "./components/MachineLocation";
 
 function ProfileForm({ owner, machine, onSaved }) {
   const [fullName, setFullName] = useState(owner?.fullName || "");
@@ -159,6 +160,7 @@ function OwnerProfile() {
                 <dd>{machine?.machineId || machine?.id || "Unavailable"}</dd>
               </div>
             </dl>
+            {machine && <MachineLocation key={machine.id} machine={machine} />}
           </aside>
 
           <GcashSettings />

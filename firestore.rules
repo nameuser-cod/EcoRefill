@@ -44,6 +44,24 @@ service cloud.firestore {
     match /machines/{machineId} {
       allow read: if isSignedIn();
 
+      // Owners can place their machine's pin without changing telemetry or ownership.
+      allow update: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['location', 'coordinates', 'locationUpdatedAt'])
+        && request.resource.data.location is string
+        && request.resource.data.location.matches('.*[^\\s].*')
+        && request.resource.data.location.size() <= 200
+        && request.resource.data.coordinates is map
+        && request.resource.data.coordinates.keys().hasOnly(['latitude', 'longitude'])
+        && request.resource.data.coordinates.latitude is number
+        && request.resource.data.coordinates.latitude >= -90
+        && request.resource.data.coordinates.latitude <= 90
+        && request.resource.data.coordinates.longitude is number
+        && request.resource.data.coordinates.longitude >= -180
+        && request.resource.data.coordinates.longitude <= 180
+        && request.resource.data.locationUpdatedAt == request.time;
+
       // A claimed machine's owner can keep their display name in sync.
       allow update: if isSignedIn()
         && resource.data.ownerId == request.auth.uid

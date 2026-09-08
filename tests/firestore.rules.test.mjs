@@ -2,7 +2,7 @@ import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
-import { collection, doc, getDoc, getDocs, query, setDoc, updateDoc, deleteDoc, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, setDoc, updateDoc, deleteDoc, where, serverTimestamp, deleteField } from 'firebase/firestore';
 
 let environment;
 before(async () => {
@@ -29,6 +29,56 @@ before(async () => {
 after(async () => { await environment?.cleanup(); });
 
 const machineQuery = (db, machineId = 'machine_001') => query(collection(db, 'transactions'), where('machineId', '==', machineId));
+
+const locationUpdate = () => ({
+  location: 'Barangay hall entrance',
+  coordinates: { latitude: 14.5995, longitude: 120.9842 },
+  locationUpdatedAt: serverTimestamp(),
+});
+
+test('owner can set and move a machine pin; signed-in readers see the saved coordinates', async () => {
+  const db = environment.authenticatedContext('owner').firestore();
+  const ref = doc(db, 'machines/machine_001');
+  await assertSucceeds(updateDoc(ref, locationUpdate()));
+  await assertSucceeds(updateDoc(ref, { ...locationUpdate(), coordinates: { latitude: 0, longitude: 0 } }));
+  const reader = environment.authenticatedContext('buyer').firestore();
+  const saved = await assertSucceeds(getDoc(doc(reader, 'machines/machine_001')));
+  assert.deepEqual(saved.data().coordinates, { latitude: 0, longitude: 0 });
+  assert.equal(saved.data().location, 'Barangay hall entrance');
+  assert.ok(saved.data().locationUpdatedAt.toMillis() > 0);
+});
+
+test('other accounts and signed-out clients cannot move an owned machine', async () => {
+  for (const context of [environment.authenticatedContext('other-owner'), environment.authenticatedContext('buyer'), environment.unauthenticatedContext()]) {
+    await assertFails(updateDoc(doc(context.firestore(), 'machines/machine_001'), locationUpdate()));
+  }
+});
+
+test('location updates reject malformed coordinates, names, and timestamps', async () => {
+  const ref = doc(environment.authenticatedContext('owner').firestore(), 'machines/machine_001');
+  for (const coordinates of [
+    { latitude: 91, longitude: 120 }, { latitude: -91, longitude: 120 },
+    { latitude: 14, longitude: 181 }, { latitude: 14, longitude: -181 },
+    { latitude: '14', longitude: 120 }, { latitude: null, longitude: 120 },
+    { latitude: NaN, longitude: 120 }, { latitude: Infinity, longitude: 120 },
+    { latitude: 14 }, { latitude: 14, longitude: 120, extra: true }, null,
+  ]) {
+    await assertFails(updateDoc(ref, { ...locationUpdate(), coordinates }));
+  }
+  for (const location of ['', '   ', '\t', 'a'.repeat(201), 42, null]) {
+    await assertFails(updateDoc(ref, { ...locationUpdate(), location }));
+  }
+  await assertFails(updateDoc(ref, { ...locationUpdate(), locationUpdatedAt: new Date(0) }));
+  await assertFails(updateDoc(ref, { ...locationUpdate(), coordinates: deleteField() }));
+});
+
+test('location permission does not grant ownership or telemetry changes and preserves profile editing', async () => {
+  const ref = doc(environment.authenticatedContext('owner').firestore(), 'machines/machine_001');
+  for (const field of ['ownerId', 'machineStatus', 'waterLevel', 'points']) {
+    await assertFails(updateDoc(ref, { ...locationUpdate(), [field]: 'forged' }));
+  }
+  await assertSucceeds(updateDoc(ref, { ownerName: 'Updated owner', updatedAt: serverTimestamp() }));
+});
 
 test('machine owner can query the same transactions as the dashboard, including the buyer’s purchase', async () => {
   const db = environment.authenticatedContext('owner').firestore();
