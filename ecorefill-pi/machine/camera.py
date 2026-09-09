@@ -14,6 +14,7 @@ from .config import (
     STABLE_FRAMES_REQUIRED,
 )
 from .diagnostics import log
+from .scan_region import scan_region_bounds
 
 
 class CameraSupport:
@@ -95,7 +96,9 @@ class CameraSupport:
     def prepare_motion_frame(self, frame):
         import cv2
 
-        gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+        left, top, right, bottom = scan_region_bounds(frame)
+        # Picamera2's RGB888 format supplies BGR bytes, as OpenCV expects.
+        gray = cv2.cvtColor(frame[top:bottom, left:right], cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (21, 21), 0)
         return gray
 

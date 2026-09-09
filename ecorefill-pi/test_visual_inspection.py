@@ -9,6 +9,7 @@ import numpy as np
 
 from visual_inspection import VisualInspector, square_crop
 from machine.runtime import MachineRuntime
+from machine.scan_region import scan_region_bounds
 
 
 class Classifier:
@@ -117,8 +118,11 @@ class InspectionTests(unittest.TestCase):
     def test_machine_verification_routes_dirty_container_to_reject(self):
         # Exercise the actual acceptance and sorting functions without starting
         # GPIO, Firebase, camera, serial, or the machine's background threads.
-        box = SimpleNamespace(cls=[0], conf=[0.99], xyxy=np.array([[200, 100, 300, 400]]))
-        prediction = SimpleNamespace(boxes=[box], plot=lambda: self.frame)
+        left, top, right, bottom = scan_region_bounds(self.frame)
+        box = SimpleNamespace(cls=[0], conf=[0.99], xyxy=np.array([[30, 50, 130, 350]]))
+        prediction = SimpleNamespace(
+            boxes=[box], plot=lambda: self.frame[top:bottom, left:right].copy(),
+        )
         commands = []
         machine = MachineRuntime()
         machine.model = SimpleNamespace(

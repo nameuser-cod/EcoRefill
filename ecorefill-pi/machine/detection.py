@@ -11,6 +11,7 @@ from .config import (
     POINTS,
 )
 from .diagnostics import log
+from .scan_region import scan_region_bounds
 
 
 class MaterialDetection:
@@ -43,12 +44,25 @@ class MaterialDetection:
         """
         import cv2
 
+        left, top, right, bottom = scan_region_bounds(frame)
+        scan_frame = frame[top:bottom, left:right].copy()
         results = self.model.predict(
-            source=frame,
+            source=scan_frame,
             conf=DETECTION_CONFIDENCE_LIMIT,
             imgsz=INFERENCE_IMAGE_SIZE,
             verbose=False,
         )
+
+        # Keep the full camera view for alignment, with predictions drawn only
+        # inside the scan box. Never draw onto the clean input used for inspection.
+        annotated_frame = frame.copy()
+        if results:
+            annotated_frame[top:bottom, left:right] = results[0].plot()
+        cv2.rectangle(annotated_frame, (left, top), (right - 1, bottom - 1),
+                      (0, 255, 255), 2)
+        cv2.putText(annotated_frame, "SCAN AREA", (left, max(14, top - 5)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 255), 1)
+        cv2.imwrite("detection_result.jpg", annotated_frame)
 
         if not results:
             return {
@@ -59,10 +73,8 @@ class MaterialDetection:
                 "confidence": 0,
             }
 
-        annotated_frame = results[0].plot()
-        cv2.imwrite("detection_result.jpg", annotated_frame)
-
         frame_height, frame_width = frame.shape[:2]
+        # Preserve the existing minimum object size in full-camera pixels.
         frame_area = float(frame_width * frame_height)
 
         detections = []
@@ -77,6 +89,9 @@ class MaterialDetection:
                 item = self.normalize_class_name(self.model.names[class_id])
 
                 x1, y1, x2, y2 = [float(value) for value in box.xyxy[0].tolist()]
+                # Inspection calibration and saved crops use full-frame coordinates.
+                x1, x2 = x1 + left, x2 + left
+                y1, y2 = y1 + top, y2 + top
                 box_width = max(0.0, x2 - x1)
                 box_height = max(0.0, y2 - y1)
                 box_area_ratio = (

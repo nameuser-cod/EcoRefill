@@ -6,6 +6,9 @@ MODEL_PATH = "models/ecorefill_best.pt"
 # Match this checkpoint's training resolution. See MODEL_EVALUATION.md for
 # validation results; re-evaluate this setting when replacing the model.
 INFERENCE_IMAGE_SIZE = 416
+# Center tray, estimated from the machine-camera screenshots.
+# Fractions of the full frame: (left, top, right, bottom). Set None for full view.
+DETECTION_REGION = (0.33, 0.04, 0.65, 0.96)
 MOTION_MIN_AREA = 3000
 MOTION_TRIGGER_FRAMES = 2
 STABLE_FRAMES_REQUIRED = 2

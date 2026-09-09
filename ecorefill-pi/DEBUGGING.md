@@ -11,6 +11,33 @@ alongside `machine_flow.py`, `point_payments.py`, and `visual_inspection.py`.
 Keep the existing model, credentials, and local inspection configuration.
 The launcher is no longer a standalone copy of the controller.
 
+## Adjust the camera scan box
+
+The camera now watches and classifies only the center tray. In
+`machine/config.py`, `DETECTION_REGION = (0.33, 0.04, 0.65, 0.96)` sets
+the left, top, right, and bottom edges as fractions of the full image.
+At 640 by 480 this crops x=211:416 and y=19:461. These initial bounds were
+estimated from the machine screenshots; check them on the physical machine.
+
+After a scan, open `detection_result.jpg`. Its yellow `SCAN AREA` border
+shows the active box; predicted objects are drawn inside it. Keep the whole
+container inside the border. Adjust the four fractions and restart the
+controller if the box cuts off a container or includes the wall. Setting
+`DETECTION_REGION = None` restores full-frame motion and inference.
+
+Both motion detection and model inference use the same crop. Objects and
+movement entirely outside it cannot trigger a scan or become model inputs.
+The clean `captured_item.jpg` and scan-history photos retain the full view.
+Inspection coordinates are translated back to the full camera image, so
+existing size calibration remains in full-frame pixels. The minimum object
+area also remains relative to the full frame.
+
+The box does not force every object to be accepted and cannot guarantee the
+correct material label. Initial screenshot checks recognized the green can
+at 85%, but still mislabeled the silver can as a bottle at 83%. Test original
+camera frames of both materials before relying on the new crop in operation.
+The previous 3-second rearm pause is unchanged.
+
 ## Green or blue physical button does not respond
 
 Stop the running machine controller first so two processes do not claim the

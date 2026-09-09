@@ -59,6 +59,39 @@ containers/capture sessions for evaluation, and validate both recognition
 and routing before replacing the deployed checkpoint. No further runtime
 settings or model weights were changed for this diagnostic.
 
+### Center scan region follow-up
+
+At the user's request, motion and inference now share the center-tray crop
+`DETECTION_REGION = (0.33, 0.04, 0.65, 0.96)`, or x=211:416, y=19:461 at
+640 by 480. This excludes the left wall and objects to the right from model
+input. Detection overlays show the region on the full camera view, and
+inspection receives coordinates translated back to that full view.
+
+The existing model and acceptance thresholds were retained. Diagnostic
+checks through `verify_item` on the supplied screenshots produced:
+
+| Screenshot | Actual center item | Prediction using scan crop | Decision |
+| --- | --- | --- | --- |
+| September 9, 11:47:45 | Silver aluminum can | `plastic_bottle`, 0.8301 | Wrongly accepted as bottle |
+| September 9, 11:54:55 | Green aluminum can | `aluminum_can`, 0.8533 | Correctly accepted as can |
+
+For the second screenshot, camera-view boundaries were estimated at
+x=505:1265, y=333:903 in its 1996-by-1248 displayed version, scaled to the
+source screenshot dimensions, then resized to 640 by 480. Both inputs
+contain existing annotations. Outputs are in the ignored
+`runs/scan_region_check/` directory and may show old screenshot annotations
+outside the new yellow box; those pixels were not supplied to the model.
+
+These two checks demonstrate mixed results, not an accuracy estimate. The
+region prevents outside-background detections but does not fix the silver
+can's wrong class. Cropping changes the model input, so the historical
+full-frame evaluation below does not measure this configuration.
+
+All 93 machine tests passed, including scan isolation for motion and
+inference, full-frame inspection coordinates, clean-input preservation,
+empty-scan rejection, and existing routing tests. Physical camera alignment,
+motion sensitivity, and material accuracy still need validation on the Pi.
+
 ## Original evaluation
 
 The existing checkpoint was trained at image size 416, but the machine used

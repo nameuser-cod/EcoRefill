@@ -3,7 +3,7 @@
 import sys
 from types import SimpleNamespace
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from machine.detection import MaterialDetection
 
@@ -13,7 +13,7 @@ class MaterialDetectionTests(unittest.TestCase):
         machine = MaterialDetection()
         box = SimpleNamespace(
             cls=[0], conf=[confidence],
-            xyxy=[Mock(tolist=Mock(return_value=[100, 50, 400, 400]))],
+            xyxy=[Mock(tolist=Mock(return_value=[30, 30, 180, 380]))],
         )
         prediction = SimpleNamespace(boxes=[box], plot=Mock())
         machine.model = SimpleNamespace(
@@ -23,8 +23,12 @@ class MaterialDetectionTests(unittest.TestCase):
             apply=Mock(side_effect=lambda result, *_: result),
         )
         machine.send_to_esp32 = Mock(return_value=True)
-        with patch.dict(sys.modules, {"cv2": SimpleNamespace(imwrite=Mock())}):
-            result = machine.verify_item(SimpleNamespace(shape=(480, 640, 3)))
+        frame = MagicMock()
+        frame.shape = (480, 640, 3)
+        with patch.dict(sys.modules, {"cv2": SimpleNamespace(
+            imwrite=Mock(), rectangle=Mock(), putText=Mock(), FONT_HERSHEY_SIMPLEX=0,
+        )}):
+            result = machine.verify_item(frame)
         machine.sort_item(result)
         return machine, result
 
