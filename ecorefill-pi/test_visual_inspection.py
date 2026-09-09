@@ -140,7 +140,7 @@ class InspectionTests(unittest.TestCase):
             self.assertEqual(result["points"], 0 if mode == "enforce" else 1)
 
         # Even a clean visual pass cannot bypass the weight limit, in any mode.
-        machine.weight_scale = SimpleNamespace(read_weight=lambda: {"grams": 101.0})
+        machine.weight_scale = SimpleNamespace(read_weight=lambda: {"grams": 151.0})
         for mode in ("off", "observe", "enforce"):
             self.config["mode"] = mode
             machine.visual_inspector = VisualInspector(self.config, classifier=Classifier(0))
