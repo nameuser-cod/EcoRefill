@@ -79,6 +79,8 @@ Size checking requires camera calibration and measured size profiles. Cleanlines
 
 See [camera inspection setup](ecorefill-pi/INSPECTION.md) and [material model evaluation](MODEL_EVALUATION.md) for configuration, evidence, and measurement limits.
 
+For the 1 kg load cell and HX711 wired to a Raspberry Pi 5, use the [standalone weight test and calibration guide](ecorefill-pi/WEIGHT_SENSOR.md). This diagnostic does not yet feed measurements into the inspection flow.
+
 ## Water refill flow
 
 1. **Open refill mode.** Press the blue physical button or select **Refill Water** on the machine screen. Recycling detection pauses during this flow.
