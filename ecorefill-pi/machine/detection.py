@@ -26,6 +26,33 @@ class MaterialDetection:
             .replace(" ", "_")
         )
 
+    def material_confidence_limit(self, item):
+        return (
+            max(ACCEPT_CONFIDENCE_LIMIT, BOTTLE_ACCEPT_CONFIDENCE_LIMIT)
+            if item in BOTTLE_ITEMS
+            else ACCEPT_CONFIDENCE_LIMIT
+        )
+
+    def save_detection_preview(self, frame, detection=None):
+        """Show the selected prediction, withholding uncertain material labels."""
+        import cv2
+
+        preview = frame.copy()
+        if detection is not None:
+            item = detection["item"]
+            confidence = detection["confidence"]
+            if confidence < self.material_confidence_limit(item):
+                label = "Uncertain material"
+                color = (160, 160, 160)
+            else:
+                label = f"{item} {confidence:.2f}"
+                color = (255, 100, 0)
+            left, top, right, bottom = [int(value) for value in detection["box"]]
+            cv2.rectangle(preview, (left, top), (right, bottom), color, 2)
+            cv2.putText(preview, label, (left, max(14, top - 5)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1)
+        cv2.imwrite("detection_result.jpg", preview)
+
     def verify_item(self, frame):
         """
         Accept ONLY a plastic bottle or aluminum can.
@@ -42,8 +69,6 @@ class MaterialDetection:
         If the model only contains generic "bottle" and "can" classes, retraining
         the model is required to distinguish material reliably.
         """
-        import cv2
-
         left, top, right, bottom = scan_region_bounds(frame)
         scan_frame = frame[top:bottom, left:right].copy()
         results = self.model.predict(
@@ -53,18 +78,8 @@ class MaterialDetection:
             verbose=False,
         )
 
-        # Keep the full camera view for alignment, with predictions drawn only
-        # inside the scan box. Never draw onto the clean input used for inspection.
-        annotated_frame = frame.copy()
-        if results:
-            annotated_frame[top:bottom, left:right] = results[0].plot()
-        cv2.rectangle(annotated_frame, (left, top), (right - 1, bottom - 1),
-                      (0, 255, 255), 2)
-        cv2.putText(annotated_frame, "SCAN AREA", (left, max(14, top - 5)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 255), 1)
-        cv2.imwrite("detection_result.jpg", annotated_frame)
-
         if not results:
+            self.save_detection_preview(frame)
             return {
                 "accepted": False,
                 "category": "reject",
@@ -119,6 +134,7 @@ class MaterialDetection:
                 })
 
         if not detections:
+            self.save_detection_preview(frame)
             return {
                 "accepted": False,
                 "category": "reject",
@@ -135,6 +151,7 @@ class MaterialDetection:
 
         best_item = strongest["item"]
         best_confidence = strongest["confidence"]
+        self.save_detection_preview(frame, strongest)
 
         # Reject any class that is not explicitly material-specific.
         if best_item not in BOTTLE_ITEMS and best_item not in CAN_ITEMS:
@@ -151,11 +168,7 @@ class MaterialDetection:
             }
 
         # Approved class, but prediction is still too uncertain.
-        acceptance_limit = (
-            max(ACCEPT_CONFIDENCE_LIMIT, BOTTLE_ACCEPT_CONFIDENCE_LIMIT)
-            if best_item in BOTTLE_ITEMS
-            else ACCEPT_CONFIDENCE_LIMIT
-        )
+        acceptance_limit = self.material_confidence_limit(best_item)
         if best_confidence < acceptance_limit:
             log(
                 "REJECTED: approved class confidence too low:",
@@ -165,7 +178,7 @@ class MaterialDetection:
             return {
                 "accepted": False,
                 "category": "reject",
-                "item": best_item,
+                "item": "unknown",
                 "points": 0,
                 "confidence": best_confidence,
                 "rejection_reason": (

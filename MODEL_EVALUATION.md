@@ -2,6 +2,25 @@
 
 ## September 9 machine-camera report
 
+### 15:41 preview and uncertain-material handling
+
+The latest screenshot shows a can labeled `plastic_bottle 0.69`. This is
+below the existing 75% bottle acceptance threshold, so it is rejected.
+The preview now draws the selected detection using the acceptance threshold:
+this prediction displays **Uncertain material**, and its returned material is
+`unknown` so new history records do not identify it as plastic. Raw model
+predictions remain in diagnostic logs. The yellow scan-area border and title
+are removed; the center crop still applies to inference and motion.
+
+Regression tests replay the reported 69% prediction and check rejection,
+zero points, unknown material, and the preview label. They also check that
+the scan border is absent and the clean input and crop coordinates are
+preserved. These are software behavior tests, not an image accuracy result.
+The checkpoint is unchanged: recognizing this can correctly and addressing
+confident wrong labels still require original machine-camera training and
+independent evaluation images. An annotated screenshot is insufficient to
+validate that model improvement.
+
 Two actual aluminum cans appeared in scan history as `plastic_bottle`, at
 53% (rejected) and 66% (accepted). The bottle acceptance threshold is now
 75%; the can threshold remains 65%. This rejects the reported borderline

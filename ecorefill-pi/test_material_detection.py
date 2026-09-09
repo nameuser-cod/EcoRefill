@@ -25,20 +25,28 @@ class MaterialDetectionTests(unittest.TestCase):
         machine.send_to_esp32 = Mock(return_value=True)
         frame = MagicMock()
         frame.shape = (480, 640, 3)
-        with patch.dict(sys.modules, {"cv2": SimpleNamespace(
+        drawing = SimpleNamespace(
             imwrite=Mock(), rectangle=Mock(), putText=Mock(), FONT_HERSHEY_SIMPLEX=0,
-        )}):
+        )
+        with patch.dict(sys.modules, {"cv2": drawing}):
             result = machine.verify_item(frame)
+        self.assertEqual(drawing.rectangle.call_count, 1)
+        preview_label = drawing.putText.call_args.args[1]
+        if result["item"] == "unknown":
+            self.assertEqual(preview_label, "Uncertain material")
+        else:
+            self.assertEqual(preview_label, f"{label} {confidence:.2f}")
         machine.sort_item(result)
         return machine, result
 
     def test_reported_can_misclassifications_do_not_open_bottle_gate(self):
         # Replay the reported predictions, not inference on the screenshot.
-        for confidence in (0.53, 0.66):
+        for confidence in (0.53, 0.66, 0.69):
             with self.subTest(confidence=confidence):
                 machine, result = self.verify_and_sort("plastic_bottle", confidence)
                 self.assertFalse(result["accepted"])
                 self.assertEqual(result["points"], 0)
+                self.assertEqual(result["item"], "unknown")
                 self.assertIn("uncertain", result["rejection_reason"])
                 machine.send_to_esp32.assert_called_once_with("REJECT")
                 machine.visual_inspector.apply.assert_not_called()

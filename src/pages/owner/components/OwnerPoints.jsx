@@ -17,7 +17,6 @@ async function syncPastRefills(isActive) {
 }
 
 function RefillHistorySync() {
-  const [attempt, setAttempt] = useState(0);
   const [result, setResult] = useState({ busy: true, message: "", error: "" });
 
   useEffect(() => {
@@ -29,18 +28,14 @@ function RefillHistorySync() {
     }).catch((error) => {
       if (active) setResult({ busy: false, message: "", error: error.code === "not-found"
         ? "Update and restart the Raspberry Pi service to sync past refill points."
-        : "Could not finish syncing past refill points. Check the Raspberry Pi connection and retry. Points already added are kept." });
+        : "Could not finish syncing past refill points. Check the Raspberry Pi connection and reload the page to retry. Points already added are kept." });
     });
     return () => { active = false; };
-  }, [attempt]);
+  }, []);
 
   return (
     <div className="owner-points-sync">
       <p role={result.error ? "alert" : "status"}>{result.busy ? "Checking past completed refills…" : result.error || result.message}</p>
-      <button type="button" disabled={result.busy} onClick={() => {
-        setResult({ busy: true, message: "", error: "" });
-        setAttempt((current) => current + 1);
-      }}>{result.busy ? "Syncing…" : result.error ? "Retry sync" : "Sync past refills"}</button>
     </div>
   );
 }

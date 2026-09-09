@@ -19,10 +19,12 @@ the left, top, right, and bottom edges as fractions of the full image.
 At 640 by 480 this crops x=211:416 and y=19:461. These initial bounds were
 estimated from the machine screenshots; check them on the physical machine.
 
-After a scan, open `detection_result.jpg`. Its yellow `SCAN AREA` border
-shows the active box; predicted objects are drawn inside it. Keep the whole
-container inside the border. Adjust the four fractions and restart the
-controller if the box cuts off a container or includes the wall. Setting
+After a scan, open `detection_result.jpg`. It shows the selected object
+without a yellow scan-region border. Predictions below the material's
+acceptance threshold display **Uncertain material** and are recorded as
+`unknown`, with no points awarded. Keep the whole container inside the
+configured center crop. Adjust the four fractions and restart the
+controller if the crop cuts off a container or includes the wall. Setting
 `DETECTION_REGION = None` restores full-frame motion and inference.
 
 Both motion detection and model inference use the same crop. Objects and

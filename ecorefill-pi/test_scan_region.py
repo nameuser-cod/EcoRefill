@@ -66,9 +66,11 @@ class ScanRegionTests(unittest.TestCase):
         preview = write.call_args.args[1]
         self.assertEqual(preview.shape, self.frame.shape)
         self.assertTrue(np.array_equal(preview[300, 50], original[300, 50]))
-        self.assertEqual(preview[top, left].tolist(), [0, 255, 255])
+        self.assertEqual(preview[top, left].tolist(), [50, 50, 50])
+        self.assertEqual(preview[49, 231].tolist(), [255, 100, 0])
+        self.assertFalse(np.any(np.all(preview == [0, 255, 255], axis=2)))
 
-    def test_empty_scan_rejects_and_still_saves_scan_box(self):
+    def test_empty_scan_rejects_and_saves_clean_view_without_scan_box(self):
         machine = MaterialDetection()
         machine.model = SimpleNamespace(predict=Mock(return_value=[]))
         machine.send_to_esp32 = Mock()
@@ -78,6 +80,7 @@ class ScanRegionTests(unittest.TestCase):
         machine.sort_item(result)
         machine.send_to_esp32.assert_called_once_with("REJECT")
         self.assertEqual(write.call_args.args[0], "detection_result.jpg")
+        self.assertTrue(np.array_equal(write.call_args.args[1], self.frame))
 
 
 if __name__ == "__main__":
