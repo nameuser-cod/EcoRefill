@@ -1,5 +1,24 @@
 # Bottle and can evaluation — September 5, 2026
 
+## September 9 machine-camera report
+
+Two actual aluminum cans appeared in scan history as `plastic_bottle`, at
+53% (rejected) and 66% (accepted). The bottle acceptance threshold is now
+75%; the can threshold remains 65%. This rejects the reported borderline
+bottle predictions rather than sending them to the bottle gate. It does not
+correct their predicted labels or prevent confident misclassifications, and
+may reject more valid bottles. The model checkpoint is unchanged.
+
+Decision/routing tests replay those confidence values and check the 95%
+bottle shown in the same report. They do not run image inference. The saved
+416 evaluation reports contain only aggregate results and errors, so they
+cannot establish the acceptance rate at the new bottle threshold. The
+historical results below use the former 65% threshold for both materials.
+Evaluate original machine-camera images of cans and bottles before claiming
+an accuracy improvement or retraining the model.
+
+## Original evaluation
+
 The existing checkpoint was trained at image size 416, but the machine used
 640 for inference. Matching inference to 416 improved correct acceptance on
 the available validation images. The checkpoint was not retrained or replaced.

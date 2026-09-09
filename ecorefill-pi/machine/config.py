@@ -22,6 +22,9 @@ REARM_STABLE_FRAMES_REQUIRED = 12
 # but the machine will ACCEPT only a much stronger prediction.
 DETECTION_CONFIDENCE_LIMIT = 0.20
 ACCEPT_CONFIDENCE_LIMIT = 0.65
+# Cans in machine-camera scans have been misclassified as bottles at 66%.
+# Reject borderline bottle predictions; this does not correct model labels.
+BOTTLE_ACCEPT_CONFIDENCE_LIMIT = 0.75
 
 # Reject tiny detections that are likely background objects/noise.
 # 0.05 means the bounding box must cover at least 5% of the image.

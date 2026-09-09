@@ -2,6 +2,7 @@
 
 from .config import (
     ACCEPT_CONFIDENCE_LIMIT,
+    BOTTLE_ACCEPT_CONFIDENCE_LIMIT,
     BOTTLE_ITEMS,
     CAN_ITEMS,
     DETECTION_CONFIDENCE_LIMIT,
@@ -30,7 +31,7 @@ class MaterialDetection:
 
         Safety rules:
         1. Generic labels such as "bottle" and "can" are rejected.
-        2. The approved class must meet ACCEPT_CONFIDENCE_LIMIT.
+        2. The approved class must meet its material acceptance threshold.
         3. Tiny bounding boxes are ignored to reduce background false positives.
         4. If a non-approved object has the strongest valid prediction, reject it.
 
@@ -135,10 +136,16 @@ class MaterialDetection:
             }
 
         # Approved class, but prediction is still too uncertain.
-        if best_confidence < ACCEPT_CONFIDENCE_LIMIT:
+        acceptance_limit = (
+            max(ACCEPT_CONFIDENCE_LIMIT, BOTTLE_ACCEPT_CONFIDENCE_LIMIT)
+            if best_item in BOTTLE_ITEMS
+            else ACCEPT_CONFIDENCE_LIMIT
+        )
+        if best_confidence < acceptance_limit:
             log(
                 "REJECTED: approved class confidence too low:",
                 f"{best_item} {best_confidence:.3f}",
+                f"required={acceptance_limit:.3f}",
             )
             return {
                 "accepted": False,
@@ -146,6 +153,9 @@ class MaterialDetection:
                 "item": best_item,
                 "points": 0,
                 "confidence": best_confidence,
+                "rejection_reason": (
+                    "Material prediction is uncertain. Reposition the item and try again."
+                ),
             }
 
         if best_item in BOTTLE_ITEMS:
