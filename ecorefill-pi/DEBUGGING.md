@@ -38,7 +38,7 @@ The box does not force every object to be accepted and cannot guarantee the
 correct material label. Initial screenshot checks recognized the green can
 at 85%, but still mislabeled the silver can as a bottle at 83%. Test original
 camera frames of both materials before relying on the new crop in operation.
-The previous 3-second rearm pause is unchanged.
+The camera waits 2 seconds before checking that the scene is stable to rearm.
 
 ## Green or blue physical button does not respond
 

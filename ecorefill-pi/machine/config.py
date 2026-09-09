@@ -18,7 +18,7 @@ AUTO_REARM_DELAY = 0.20
 
 # Do not arm motion detection until the sorter/chute has become still.
 # This prevents servo movement after a scan from being mistaken for a new item.
-REARM_SETTLE_MIN_SECONDS = 3.0
+REARM_SETTLE_MIN_SECONDS = 2.0
 REARM_STABLE_FRAMES_REQUIRED = 12
 
 # YOLO can return low-confidence candidates for logging/comparison,
