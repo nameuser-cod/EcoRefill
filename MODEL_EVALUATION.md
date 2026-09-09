@@ -17,6 +17,48 @@ historical results below use the former 65% threshold for both materials.
 Evaluate original machine-camera images of cans and bottles before claiming
 an accuracy improvement or retraining the model.
 
+### Follow-up: confident can misclassification
+
+The September 9, 11:47:45 screenshot shows a can annotated as
+`plastic_bottle 0.92`. The 75% bottle threshold cannot prevent this error.
+The screenshot alone does not explain a rejection: this material prediction
+would pass the current threshold, although optional visual inspection can
+still reject it.
+
+Local diagnostic inference reproduced the wrong class with the existing
+checkpoint. The screenshot's camera view (pixels x=84:1364, y=68:1028) was
+resized to 640 by 480 before prediction at candidate confidence 0.20:
+
+- At inference size 416, the central can was labeled `plastic_bottle` at
+  0.8976. A separate false `aluminum_can` detection covered the left wall
+  at 0.3582.
+- At size 640, the central can was still labeled `plastic_bottle`, at 0.4386;
+  the strongest prediction was a background `plastic_bottle` at 0.5479.
+  Changing size therefore did not correct recognition on this example.
+
+This is an annotated screenshot, not the original camera frame. Its overlay
+and resizing can affect inference; these results are diagnostic evidence,
+not a clean evaluation or a reason to tune settings to this single image.
+
+The checkpoint names are `{0: plastic_bottle, 1: aluminum_can}`, matching
+the dataset configuration. Counting current training labels found 1,000
+images containing bottle annotations and 68 containing can annotations
+(1,271 bottle boxes and 71 can boxes). The imbalance is a possible
+contributor, not a proven explanation; the local data count does not verify
+the exact contents of the checkpoint's historical training run.
+
+The configured Picamera2 `RGB888` output supplies BGR pixel order, matching
+Ultralytics' NumPy input convention; the inference path needs no channel
+swap. See the [Picamera2 manual](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf)
+and [Ultralytics input documentation](https://docs.ultralytics.com/modes/predict/).
+
+Next, collect original, unannotated `captured_item.jpg` files for several
+physical cans and bottles in the machine across positions and lighting.
+Use correctly labeled examples for fine-tuning, reserve separate physical
+containers/capture sessions for evaluation, and validate both recognition
+and routing before replacing the deployed checkpoint. No further runtime
+settings or model weights were changed for this diagnostic.
+
 ## Original evaluation
 
 The existing checkpoint was trained at image size 416, but the machine used
