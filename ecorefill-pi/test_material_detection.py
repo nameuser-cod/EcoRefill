@@ -6,11 +6,16 @@ import unittest
 from unittest.mock import MagicMock, Mock, patch
 
 from machine.detection import MaterialDetection
+from weight_sensor import WeightReadingError
 
 
 class MaterialDetectionTests(unittest.TestCase):
-    def verify_and_sort(self, label, confidence):
+    def verify_and_sort(self, label, confidence, grams=20.0, weight_error=None):
         machine = MaterialDetection()
+        machine.weight_scale = SimpleNamespace(read_weight=Mock(
+            return_value={"grams": grams, "spread_g": 0.2, "samples": 10},
+            side_effect=weight_error,
+        ))
         box = SimpleNamespace(
             cls=[0], conf=[confidence],
             xyxy=[Mock(tolist=Mock(return_value=[30, 30, 180, 380]))],
@@ -75,6 +80,58 @@ class MaterialDetectionTests(unittest.TestCase):
                     machine.send_to_esp32.assert_called_once_with(
                         "CAN" if accepted else "REJECT",
                     )
+
+    def test_weight_limits_and_aliases_before_sorting_and_points(self):
+        for label, limit, command in (("plastic_bottle", 40, "BOTTLE"),
+                                      ("pet_bottle", 40, "BOTTLE"),
+                                      ("aluminum_can", 60, "CAN"),
+                                      ("aluminium_can", 60, "CAN")):
+            for grams in (limit - 0.1, limit, limit + 0.001, 500):
+                with self.subTest(label=label, grams=grams):
+                    machine, result = self.verify_and_sort(label, 0.95, grams)
+                    allowed = grams <= limit
+                    self.assertEqual(result["accepted"], allowed)
+                    self.assertEqual(result["points"], int(allowed))
+                    machine.send_to_esp32.assert_called_once_with(command if allowed else "REJECT")
+                    self.assertEqual(result["inspection"]["weight"]["grams"], grams)
+                    self.assertEqual(result["inspection"]["weight"]["limit_g"], limit)
+                    if not allowed:
+                        self.assertEqual(result["category"], "reject")
+                        self.assertIn(f"{limit} g", result["rejection_reason"])
+
+    def test_failed_and_invalid_readings_cannot_award_points(self):
+        for label in ("plastic_bottle", "aluminum_can"):
+            for error in (TimeoutError("unplugged"), RuntimeError("clock timing"),
+                          WeightReadingError("unstable", "moving", {"spread_g": 8})):
+                with self.subTest(label=label, error=error), \
+                     self.assertLogs("ecorefill.machine", level="ERROR"):
+                    machine, result = self.verify_and_sort(label, 0.95, weight_error=error)
+                    self.assertFalse(result["accepted"])
+                    self.assertEqual(result["points"], 0)
+                    machine.send_to_esp32.assert_called_once_with("REJECT")
+            for grams in (float("nan"), float("inf"), -1, 0):
+                with self.subTest(label=label, grams=grams), \
+                     self.assertLogs("ecorefill.machine", level="ERROR"):
+                    machine, result = self.verify_and_sort(label, 0.95, grams)
+                    self.assertFalse(result["accepted"])
+                    machine.send_to_esp32.assert_called_once_with("REJECT")
+
+    def test_missing_sensor_cannot_fall_back_to_material_acceptance(self):
+        machine = MaterialDetection()
+        with self.assertLogs("ecorefill.machine", level="ERROR"):
+            result = machine.apply_weight_check({"accepted": True, "category": "bottle", "points": 1})
+        self.assertFalse(result["accepted"])
+        self.assertEqual(result["points"], 0)
+        self.assertEqual(result["inspection"]["weight"]["status"], "unavailable")
+
+    def test_weight_pass_cannot_override_visual_rejection(self):
+        machine = MaterialDetection()
+        machine.weight_scale = Mock()
+        result = machine.apply_weight_check({"accepted": False, "category": "reject",
+                                            "points": 0, "rejection_reason": "Visibly dirty"})
+        self.assertFalse(result["accepted"])
+        self.assertEqual(result["rejection_reason"], "Visibly dirty")
+        machine.weight_scale.read_weight.assert_not_called()
 
 
 if __name__ == "__main__":

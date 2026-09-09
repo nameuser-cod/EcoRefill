@@ -26,7 +26,7 @@ from machine_flow import MachineRuntime
 machine = MachineRuntime()
 assert set(threading.enumerate()) == before
 assert not {'picamera2', 'gpiozero', 'ultralytics', 'serial', 'cv2',
-            'firebase_admin', 'flask'} & sys.modules.keys()
+            'firebase_admin', 'flask', 'lgpio'} & sys.modules.keys()
 assert machine.db is None and machine.app is None
 machine.close()
 """],
@@ -296,6 +296,29 @@ class APITests(unittest.TestCase):
 
 
 class LifecycleTests(unittest.TestCase):
+    def test_weight_initialization_and_shutdown_use_saved_calibration(self):
+        machine = MachineRuntime()
+        with patch("weight_sensor.CalibratedScale") as factory:
+            machine.initialize_weight_sensor()
+            self.assertIs(machine.weight_scale, factory.return_value)
+            factory.return_value.open.assert_called_once_with()
+            machine.close()
+            machine.close()
+            factory.return_value.close.assert_called_once_with()
+
+    def test_weight_initialization_failure_keeps_sensor_unavailable(self):
+        machine = MachineRuntime()
+        with patch("weight_sensor.CalibratedScale") as factory, \
+             self.assertLogs("ecorefill.machine", level="ERROR"):
+            factory.return_value.open.side_effect = OSError("GPIO busy")
+            machine.initialize_weight_sensor()
+        self.assertIsNone(machine.weight_scale)
+        with self.assertLogs("ecorefill.machine", level="ERROR"):
+            result = machine.apply_weight_check({"accepted": True, "category": "can", "points": 1})
+        self.assertFalse(result["accepted"])
+        self.assertEqual(result["points"], 0)
+        machine.close()
+
     def test_partial_startup_failure_closes_initialized_resources(self):
         machine = MachineRuntime()
         camera = Mock()
@@ -320,12 +343,14 @@ class LifecycleTests(unittest.TestCase):
              patch.object(machine, "initialize_firebase", return_value=None), \
              patch.object(machine, "initialize_camera", return_value=Mock()), \
              patch.object(machine, "connect_to_esp32", return_value=None), \
+             patch.object(machine, "initialize_weight_sensor") as weight, \
              patch.object(machine, "initialize_buttons") as buttons, \
              patch.object(machine, "start_redemption_tunnel") as tunnel, \
              patch("machine.runtime.create_apps") as apps, \
              patch("machine.runtime.threading.Thread") as thread:
             def check_ready():
                 buttons.assert_called_once_with()
+                weight.assert_called_once_with()
                 apps.assert_called_once_with(machine)
                 self.assertIsNotNone(machine.picam2)
             thread.return_value.start.side_effect = check_ready
@@ -346,6 +371,47 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(record.filename, Path(__file__).name)
         self.assertIs(record.exc_info[0], ValueError)
         self.assertIn("camera failure", record.getMessage())
+
+
+class RecyclingWeightTests(unittest.TestCase):
+    def test_overweight_item_is_recorded_and_rejected_without_changing_batch_totals(self):
+        for category, item, grams in (("bottle", "plastic_bottle", 41),
+                                      ("can", "aluminum_can", 61)):
+            with self.subTest(category=category):
+                machine = MachineRuntime()
+                machine.update_state(itemCount=2, pointsEarned=2, bottleCount=1,
+                                     canCount=1, batchSessionId="existing-batch")
+                machine.weight_scale = Mock()
+                machine.weight_scale.read_weight.return_value = {"grams": grams}
+                result = machine.apply_weight_check({
+                    "accepted": True, "category": category, "item": item,
+                    "points": 1, "confidence": 0.99,
+                })
+                machine.wait_for_item_motion = Mock(return_value=object())
+                machine.verify_item = Mock(return_value=result)
+                machine.frame_to_base64_data_url = Mock(return_value="test-image")
+                machine.send_to_esp32 = Mock()
+                machine.save_local_session = Mock()
+
+                def save(*args):
+                    machine.shutdown_event.set()
+                    return True
+
+                machine.save_recycling_to_firestore = Mock(side_effect=save)
+                with patch.dict(sys.modules, {"firebase_admin": SimpleNamespace(firestore=Mock())}), \
+                     patch("cv2.imwrite", return_value=True):
+                    machine.machine_worker()
+                state = machine.get_state()
+                self.assertEqual(state["phase"], "rejected")
+                self.assertEqual((state["itemCount"], state["pointsEarned"]), (2, 2))
+                self.assertEqual((state["bottleCount"], state["canCount"]), (1, 1))
+                self.assertEqual(state["batchSessionId"], "existing-batch")
+                self.assertIn("weight limit", state["message"])
+                machine.send_to_esp32.assert_called_once_with("REJECT")
+                saved = machine.save_recycling_to_firestore.call_args.args[1]
+                self.assertEqual(saved["inspection"]["weight"]["grams"], grams)
+                self.assertEqual(saved["points"], 0)
+                machine.close()
 
 
 if __name__ == "__main__":

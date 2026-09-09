@@ -1,9 +1,11 @@
-# Camera inspection without a load cell
+# Camera inspection
 
 The existing material detector stays in place. `visual_inspection.py` adds
 optional approximate size measurement and a **separate** trained appearance
 classifier before sorting and awarding points. No existing checkpoint has
-been retrained. Weight is recorded as `not_installed` and never simulated.
+been retrained. This module leaves weight `not_checked`; the controller then
+applies the separate required [HX711 weight check](WEIGHT_SENSOR.md) to items
+that passed material and visual checks. Weight is never simulated.
 
 ## Start by collecting real examples
 
@@ -113,18 +115,21 @@ pass.** You can enable cleanliness before size calibration is ready, or vice
 versa. Missing models/calibration, uncertain results, partial views, multiple
 meaningful detections, unsupported sizes, or overlapping size profiles reject
 the item with zero points. Enforce mode with no checks enabled also rejects.
-Off mode and observe mode retain the existing material acceptance behavior.
+Off mode and observe mode do not enforce visual checks. The separate required
+[HX711 weight check](WEIGHT_SENSOR.md) still rejects bottles above 40 g and cans
+above 60 g, or items whose weight cannot be verified.
 
 Reports and rejection reasons are saved in local session logs and recycling
-records. No new cloud service or load-cell dependency is required. The code
+records. Visual inspection needs no new cloud service; the separate weight
+reader requires `lgpio` on the Pi. The code
 only rejects multiple objects that the detector actually finds; it cannot
 guarantee detection of stacked or hidden items.
 
 A pass means acceptable **visible appearance**, not verified cleanliness or
 emptiness. An opaque can, a label, or the back of a bottle can hide contents.
-The future weight check will help detect excess mass but will also need
-physical calibration and tested limits. Never use camera confidence as a
-substitute weight reading.
+The HX711 weight check detects excess measured mass using the configured
+calibration and limits. Passing that check does not prove that a container is
+empty or clean. Never use camera confidence as a substitute weight reading.
 
 References: [Ultralytics classification](https://docs.ultralytics.com/tasks/classify/)
 and [OpenCV calibration](https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html).

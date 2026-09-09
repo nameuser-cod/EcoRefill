@@ -48,7 +48,7 @@ class InspectionTests(unittest.TestCase):
     def test_visible_pass_does_not_claim_weight(self):
         result = self.apply(Classifier())
         self.assertTrue(result["accepted"])
-        self.assertEqual(result["inspection"]["weight"]["status"], "not_installed")
+        self.assertEqual(result["inspection"]["weight"]["status"], "not_checked")
         self.assertEqual(result["inspection"]["size"]["status"], "not_checked")
 
     def test_unavailable_model_or_no_checks_rejects(self):
@@ -125,6 +125,7 @@ class InspectionTests(unittest.TestCase):
         )
         commands = []
         machine = MachineRuntime()
+        machine.weight_scale = SimpleNamespace(read_weight=lambda: {"grams": 20.0})
         machine.model = SimpleNamespace(
             names={0: "plastic_bottle"}, predict=lambda **kw: [prediction],
         )
@@ -137,6 +138,18 @@ class InspectionTests(unittest.TestCase):
             machine.sort_item(result)
             self.assertEqual(commands[-1], command)
             self.assertEqual(result["points"], 0 if mode == "enforce" else 1)
+
+        # Even a clean visual pass cannot bypass the weight limit, in any mode.
+        machine.weight_scale = SimpleNamespace(read_weight=lambda: {"grams": 41.0})
+        for mode in ("off", "observe", "enforce"):
+            self.config["mode"] = mode
+            machine.visual_inspector = VisualInspector(self.config, classifier=Classifier(0))
+            with patch("cv2.imwrite", return_value=True):
+                result = machine.verify_item(self.frame)
+            machine.sort_item(result)
+            self.assertEqual(commands[-1], "REJECT")
+            self.assertEqual(result["points"], 0)
+            self.assertEqual(result["inspection"]["weight"]["status"], "reject")
 
 
 if __name__ == "__main__":

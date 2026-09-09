@@ -71,6 +71,15 @@ GREEN_BUTTON_BOUNCE_SECONDS = 0.15
 BLUE_BUTTON_GPIO = int(os.getenv("BLUE_BUTTON_GPIO", "27"))
 BLUE_BUTTON_BOUNCE_SECONDS = 0.15
 
+# Required HX711 weight check: DT=BCM5/pin29, SCK=BCM6/pin31.
+# Latest measured calibration from the installed 1 kg load cell.
+# Do not auto-tare at startup or per item: an item may already be on the scale.
+HX711_OFFSET = float(os.getenv("HX711_OFFSET", "-639408"))
+HX711_COUNTS_PER_GRAM = float(os.getenv("HX711_COUNTS_PER_GRAM", "414.59"))
+HX711_MAX_SPREAD_G = float(os.getenv("HX711_MAX_SPREAD_G", "3.0"))
+BOTTLE_MAX_WEIGHT_G = 40.0
+CAN_MAX_WEIGHT_G = 60.0
+
 # Scan photos are stored directly in Firestore as compressed Base64 data URLs.
 # Keep them small because a Firestore document has a size limit.
 RECYCLING_IMAGE_WIDTH = int(os.getenv("RECYCLING_IMAGE_WIDTH", "640"))

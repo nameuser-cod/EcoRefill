@@ -121,7 +121,7 @@ class VisualInspector:
         report = {"mode": self.mode, "passed": False,
                   "size": {"status": "not_checked"},
                   "cleanliness": {"status": "not_checked"},
-                  "weight": {"status": "not_installed"}}
+                  "weight": {"status": "not_checked"}}
         if self.mode == "off" and not self.config.get("capture_directory"):
             return report
         enabled = [name for name in ("size", "cleanliness")

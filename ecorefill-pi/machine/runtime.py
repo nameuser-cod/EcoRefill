@@ -13,6 +13,7 @@ from .camera import CameraSupport
 from .config import (
     API_HOST, API_PORT, BLUE_BUTTON_BOUNCE_SECONDS, BLUE_BUTTON_GPIO,
     GREEN_BUTTON_BOUNCE_SECONDS, GREEN_BUTTON_GPIO, MACHINE_ID, MODEL_PATH,
+    HX711_OFFSET, HX711_COUNTS_PER_GRAM, HX711_MAX_SPREAD_G,
 )
 from .detection import MaterialDetection
 from .diagnostics import log
@@ -46,6 +47,7 @@ class MachineRuntime(
         self.db = None
         self.model = None
         self.visual_inspector = None
+        self.weight_scale = None
         self.picam2 = None
         self.esp32 = None
         self.green_button = None
@@ -143,6 +145,20 @@ class MachineRuntime(
                     self.blue_button = None
 
 
+    def initialize_weight_sensor(self):
+        from weight_sensor import CalibratedScale
+
+        try:
+            scale = CalibratedScale(HX711_OFFSET, HX711_COUNTS_PER_GRAM, HX711_MAX_SPREAD_G)
+            scale.open()
+            self.weight_scale = scale
+            log("Weight check ready: bottles <=40 g, cans <=60 g.",
+                f"offset={HX711_OFFSET}, counts/gram={HX711_COUNTS_PER_GRAM}")
+        except Exception as error:
+            # Keep the kiosk/water service available, but reject recyclables
+            # until the sensor is available. Never fall back to material only.
+            log("Weight sensor unavailable; recycling items will be rejected:", error)
+
     def start(self):
         """Initialize resources, register APIs, then start background workers."""
         if self._closed:
@@ -165,6 +181,7 @@ class MachineRuntime(
             log("Visual inspection mode:", self.visual_inspector.mode)
             self.picam2 = self.initialize_camera()
             self.esp32 = self.connect_to_esp32()
+            self.initialize_weight_sensor()
             self.initialize_buttons()
             create_apps(self)
             self.worker_thread = threading.Thread(
@@ -201,6 +218,11 @@ class MachineRuntime(
             return
         self._closed = True
         self.shutdown_event.set()
+        if self.weight_scale is not None:
+            try:
+                self.weight_scale.close()
+            except Exception:
+                log("Could not close weight sensor during shutdown.")
         process = self.redemption_tunnel_process
         if process is not None and process.poll() is None:
             process.terminate()

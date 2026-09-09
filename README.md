@@ -75,11 +75,11 @@ An optional inspection module supports approximate exterior size checks and a se
 - **`observe`:** Record inspection results without rejecting items based on those results.
 - **`enforce`:** Every enabled inspection check must pass before an item is accepted.
 
-Size checking requires camera calibration and measured size profiles. Cleanliness checking requires a separately trained and validated model. Neither check is enabled by the example configuration. There is no installed load-cell measurement in this implementation; weight is recorded as `not_installed`.
+Size checking requires camera calibration and measured size profiles. Cleanliness checking requires a separately trained and validated model. Neither visual check is enabled by the example configuration. A required HX711 weight check rejects plastic bottles above **40 g** and aluminum cans above **60 g**, before sorting or awarding points. Exactly 40 g and 60 g pass their respective weight limits. Missing, invalid, or unstable weight readings also reject the item. This weight rule applies in every visual-inspection mode.
 
 See [camera inspection setup](ecorefill-pi/INSPECTION.md) and [material model evaluation](MODEL_EVALUATION.md) for configuration, evidence, and measurement limits.
 
-For the 1 kg load cell and HX711 wired to a Raspberry Pi 5, use the [standalone weight test and calibration guide](ecorefill-pi/WEIGHT_SENSOR.md). This diagnostic does not yet feed measurements into the inspection flow.
+For the 1 kg load cell and HX711 wired to a Raspberry Pi 5, use the [weight setup and calibration guide](ecorefill-pi/WEIGHT_SENSOR.md). The controller uses DT on GPIO 5, SCK on GPIO 6, and the supplied calibration of offset **-639408** and **414.59 counts/gram**. Measurements and rejection reasons are recorded with each inspected item.
 
 ## Water refill flow
 
@@ -271,7 +271,7 @@ The physical workflow requires a configured Raspberry Pi camera, the material ch
 1. Prepare a Python environment on the Pi with the packages in `requirements.txt` including **`firebase-admin`**. Picamera2 also requires a working Raspberry Pi camera software installation.
 2. Ensure the checkpoint is available at `ecorefill-pi/models/ecorefill_best.pt`.
 3. Configure `FIREBASE_SERVICE_ACCOUNT` with an absolute path to the Firebase service-account JSON outside the repository, or use Application Default Credentials.
-4. Connect the ESP32 and buttons. The default machine ID is `machine_001` in `machine/config.py`; it must match the intended Firestore machine document. Copy the complete `machine/` directory along with the launcher when updating the Pi. See the [machine debugging guide](ecorefill-pi/DEBUGGING.md) for the controller file map and test commands.
+4. Connect the ESP32, buttons, and calibrated HX711 scale. Follow the [weight setup guide](ecorefill-pi/WEIGHT_SENSOR.md) to make `lgpio` available in the machine's Python environment. Stop `check_weight.py` before starting the controller. The default machine ID is `machine_001` in `machine/config.py`; it must match the intended Firestore machine document. Copy the complete `machine/` directory, `weight_sensor.py`, and `visual_inspection.py` along with the launcher when updating the Pi. See the [machine debugging guide](ecorefill-pi/DEBUGGING.md) for the controller file map and test commands.
 5. Start the service from its own directory so relative model paths resolve correctly:
 
    ```bash

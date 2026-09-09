@@ -1,4 +1,8 @@
-"""Material acceptance rules and optional visual inspection."""
+"""Material acceptance, optional visual inspection, and required weight limits."""
+
+import math
+
+from weight_sensor import WeightReadingError
 
 from .config import (
     ACCEPT_CONFIDENCE_LIMIT,
@@ -9,6 +13,8 @@ from .config import (
     INFERENCE_IMAGE_SIZE,
     MIN_OBJECT_AREA_RATIO,
     POINTS,
+    BOTTLE_MAX_WEIGHT_G,
+    CAN_MAX_WEIGHT_G,
 )
 from .diagnostics import log
 from .scan_region import scan_region_bounds
@@ -191,27 +197,68 @@ class MaterialDetection:
                 "Material matched: plastic bottle",
                 f"confidence={best_confidence:.3f}",
             )
-            return self.visual_inspector.apply({
+            result = self.visual_inspector.apply({
                 "accepted": True,
                 "category": "bottle",
                 "item": "plastic_bottle",
                 "points": POINTS.get(best_item, 1),
                 "confidence": best_confidence,
             }, frame, detections)
+            return self.apply_weight_check(result)
 
         log(
             "Material matched: aluminum can",
             f"confidence={best_confidence:.3f}",
         )
-        return self.visual_inspector.apply({
+        result = self.visual_inspector.apply({
             "accepted": True,
             "category": "can",
             "item": "aluminum_can",
             "points": POINTS.get(best_item, 1),
             "confidence": best_confidence,
         }, frame, detections)
+        return self.apply_weight_check(result)
+
+    def apply_weight_check(self, result):
+        """Mandatory in every visual-inspection mode, before sorting/rewards."""
+        report = dict(result.get("inspection") or {})
+        result = dict(result, inspection=report)
+        if not result["accepted"]:
+            report["weight"] = {"status": "not_checked"}
+            return result
+        limit = BOTTLE_MAX_WEIGHT_G if result["category"] == "bottle" else CAN_MAX_WEIGHT_G
+        label = "Bottle" if result["category"] == "bottle" else "Aluminum can"
+        try:
+            scale = getattr(self, "weight_scale", None)
+            if scale is None:
+                raise WeightReadingError("unavailable", "Weight sensor is unavailable")
+            reading = scale.read_weight()
+            grams = reading["grams"]
+            if not math.isfinite(grams) or grams <= 0:
+                raise WeightReadingError("invalid", "Invalid item weight")
+            # Compare full precision. Exactly the limit is allowed; never round
+            # a slightly overweight reading down before making the decision.
+            overweight = grams > limit
+            report["weight"] = dict(reading, status="reject" if overweight else "pass",
+                                    limit_g=limit)
+            log("Weight inspection:", f"{label}: {grams:.3f} g, limit={limit:g} g")
+            if not overweight:
+                return result
+            reason = f"{label} exceeds the {limit:g} g weight limit. Please remove the item."
+        except Exception as error:
+            log("Weight check failed:", error)
+            status = error.status if isinstance(error, WeightReadingError) else "unavailable"
+            reading = error.reading if isinstance(error, WeightReadingError) else {}
+            report["weight"] = dict(reading, status=status, limit_g=limit, detail=str(error))
+            reason = ("Weight is unstable. Please reposition the item and try again."
+                      if status == "unstable" else
+                      "Unable to verify the item's weight. Please remove the item and try again.")
+        result.update(accepted=False, category="reject", points=0, rejection_reason=reason)
+        return result
 
     def sort_item(self, result):
+        if not result["accepted"]:
+            return self.send_to_esp32("REJECT")
         if result["category"] == "bottle":
             return self.send_to_esp32("BOTTLE")
 
