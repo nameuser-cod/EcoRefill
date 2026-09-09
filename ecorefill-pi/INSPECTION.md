@@ -116,8 +116,8 @@ versa. Missing models/calibration, uncertain results, partial views, multiple
 meaningful detections, unsupported sizes, or overlapping size profiles reject
 the item with zero points. Enforce mode with no checks enabled also rejects.
 Off mode and observe mode do not enforce visual checks. The separate required
-[HX711 weight check](WEIGHT_SENSOR.md) still rejects bottles above 150 g and cans
-above 180 g, or items whose weight cannot be verified.
+[HX711 weight check](WEIGHT_SENSOR.md) rejects both bottles and cans
+above 300 g, or items whose weight cannot be verified.
 
 Reports and rejection reasons are saved in local session logs and recycling
 records. Visual inspection needs no new cloud service; the separate weight

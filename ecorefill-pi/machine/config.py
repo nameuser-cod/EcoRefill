@@ -78,8 +78,8 @@ HX711_OFFSET = float(os.getenv("HX711_OFFSET", "-639408"))
 HX711_COUNTS_PER_GRAM = float(os.getenv("HX711_COUNTS_PER_GRAM", "414.59"))
 HX711_MAX_SPREAD_G = float(os.getenv("HX711_MAX_SPREAD_G", "3.0"))
 WEIGHT_SETTLE_SECONDS = 2.0
-BOTTLE_MAX_WEIGHT_G = 150.0
-CAN_MAX_WEIGHT_G = 180.0
+BOTTLE_MAX_WEIGHT_G = 300.0
+CAN_MAX_WEIGHT_G = 300.0
 
 # Scan photos are stored directly in Firestore as compressed Base64 data URLs.
 # Keep them small because a Firestore document has a size limit.
@@ -112,7 +112,7 @@ POINTS = {
 # Water prices are calculated on the SERVER.
 # The React app must never decide the final price.
 WATER_OPTIONS = {
-    250: 2,
+    250: 3,
     500: 5,
     1000: 10,
 }

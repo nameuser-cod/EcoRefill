@@ -375,8 +375,8 @@ class LifecycleTests(unittest.TestCase):
 
 class RecyclingWeightTests(unittest.TestCase):
     def test_overweight_item_is_recorded_and_rejected_without_changing_batch_totals(self):
-        for category, item, grams in (("bottle", "plastic_bottle", 151),
-                                      ("can", "aluminum_can", 181)):
+        for category, item, grams in (("bottle", "plastic_bottle", 301),
+                                      ("can", "aluminum_can", 301)):
             with self.subTest(category=category):
                 machine = MachineRuntime()
                 machine.update_state(itemCount=2, pointsEarned=2, bottleCount=1,

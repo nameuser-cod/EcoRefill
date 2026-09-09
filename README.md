@@ -75,7 +75,7 @@ An optional inspection module supports approximate exterior size checks and a se
 - **`observe`:** Record inspection results without rejecting items based on those results.
 - **`enforce`:** Every enabled inspection check must pass before an item is accepted.
 
-Size checking requires camera calibration and measured size profiles. Cleanliness checking requires a separately trained and validated model. Neither visual check is enabled by the example configuration. A required HX711 weight check rejects plastic bottles above **150 g** and aluminum cans above **180 g**, before sorting or awarding points. Exactly 150 g and 180 g pass their respective weight limits. Missing, invalid, or unstable weight readings also reject the item. This weight rule applies in every visual-inspection mode.
+Size checking requires camera calibration and measured size profiles. Cleanliness checking requires a separately trained and validated model. Neither visual check is enabled by the example configuration. A required HX711 weight check rejects plastic bottles and aluminum cans above **300 g**, before sorting or awarding points. Exactly 300 g passes the weight limit for either material. Missing, invalid, or unstable weight readings also reject the item. This weight rule applies in every visual-inspection mode.
 
 See [camera inspection setup](ecorefill-pi/INSPECTION.md) and [material model evaluation](MODEL_EVALUATION.md) for configuration, evidence, and measurement limits.
 
