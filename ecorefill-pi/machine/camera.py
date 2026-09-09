@@ -3,7 +3,10 @@
 import base64
 import time
 from .config import (
+    CAMERA_HEIGHT,
+    CAMERA_WIDTH,
     MOTION_FRAME_DELAY,
+    MOTION_FRAME_SIZE,
     MOTION_MIN_AREA,
     MOTION_TRIGGER_FRAMES,
     REARM_SETTLE_MIN_SECONDS,
@@ -24,15 +27,30 @@ class CameraSupport:
         from picamera2 import Picamera2
 
         camera = Picamera2()
-        camera_config = camera.create_preview_configuration(
-            main={
-                "size": (640, 480),
-                "format": "RGB888",
-            }
-        )
-        camera.configure(camera_config)
-        camera.start()
-        time.sleep(3)
+        try:
+            # Output size alone can select a cropped sensor mode. Prefer the
+            # widest sensor view, then the smallest mode that retains detail.
+            modes = [mode for mode in camera.sensor_modes
+                     if mode["size"][0] >= CAMERA_WIDTH
+                     and mode["size"][1] >= CAMERA_HEIGHT]
+            if not modes:
+                raise ValueError("Camera has no sensor mode large enough for the requested capture size.")
+            mode = min(modes, key=lambda mode: (
+                -mode["crop_limits"][2] * mode["crop_limits"][3],
+                mode["size"][0] * mode["size"][1],
+            ))
+            camera_config = camera.create_preview_configuration(
+                main={"size": (CAMERA_WIDTH, CAMERA_HEIGHT), "format": "RGB888"},
+                raw={"size": mode["size"], "format": mode["format"]},
+            )
+            camera.configure(camera_config)
+            camera.start()
+            time.sleep(3)
+            log(f"Camera capture: {CAMERA_WIDTH}x{CAMERA_HEIGHT}; "
+                f"sensor mode: {mode['size']}; sensor view: {mode['crop_limits']}")
+        except Exception:
+            camera.close()
+            raise
         return camera
 
     def restart_camera(self):
@@ -96,6 +114,10 @@ class CameraSupport:
     def prepare_motion_frame(self, frame):
         import cv2
 
+        # Normalize before cropping so pixel-area thresholds and blur retain
+        # their original meaning when capture resolution increases.
+        if (frame.shape[1], frame.shape[0]) != MOTION_FRAME_SIZE:
+            frame = cv2.resize(frame, MOTION_FRAME_SIZE, interpolation=cv2.INTER_AREA)
         left, top, right, bottom = scan_region_bounds(frame)
         # Picamera2's RGB888 format supplies BGR bytes, as OpenCV expects.
         gray = cv2.cvtColor(frame[top:bottom, left:right], cv2.COLOR_BGR2GRAY)

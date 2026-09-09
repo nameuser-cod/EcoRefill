@@ -3,6 +3,11 @@
 import os
 
 MODEL_PATH = "models/ecorefill_best.pt"
+# Keep the OV5647's 4:3 aspect ratio; avoid a widescreen crop of the bottle.
+CAMERA_WIDTH = int(os.getenv("CAMERA_WIDTH", "1280"))
+CAMERA_HEIGHT = int(os.getenv("CAMERA_HEIGHT", "960"))
+# Motion thresholds were tuned at this resolution.
+MOTION_FRAME_SIZE = (640, 480)
 # Match this checkpoint's training resolution. See MODEL_EVALUATION.md for
 # validation results; re-evaluate this setting when replacing the model.
 INFERENCE_IMAGE_SIZE = 416
@@ -68,10 +73,10 @@ BLUE_BUTTON_BOUNCE_SECONDS = 0.15
 
 # Scan photos are stored directly in Firestore as compressed Base64 data URLs.
 # Keep them small because a Firestore document has a size limit.
-RECYCLING_IMAGE_WIDTH = int(os.getenv("RECYCLING_IMAGE_WIDTH", "320"))
-RECYCLING_IMAGE_HEIGHT = int(os.getenv("RECYCLING_IMAGE_HEIGHT", "240"))
+RECYCLING_IMAGE_WIDTH = int(os.getenv("RECYCLING_IMAGE_WIDTH", "640"))
+RECYCLING_IMAGE_HEIGHT = int(os.getenv("RECYCLING_IMAGE_HEIGHT", "480"))
 RECYCLING_IMAGE_JPEG_QUALITY = int(
-    os.getenv("RECYCLING_IMAGE_JPEG_QUALITY", "55")
+    os.getenv("RECYCLING_IMAGE_JPEG_QUALITY", "80")
 )
 
 # IMPORTANT: only these exact material-specific YOLO classes are accepted.

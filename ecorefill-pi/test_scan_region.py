@@ -39,6 +39,23 @@ class ScanRegionTests(unittest.TestCase):
         inside_motion, _, _ = camera.frame_has_motion(baseline, self.frame)
         self.assertTrue(inside_motion)
 
+    def test_higher_resolution_preserves_motion_sensitivity_and_region(self):
+        camera = CameraSupport()
+        baseline = camera.prepare_motion_frame(self.frame)
+        # The same physical scene at twice the width and height must retain
+        # both the scan boundary and the original pixel-area threshold.
+        for area in ((10, 10, 180, 300), (250, 100, 350, 300), (280, 180, 290, 190)):
+            with self.subTest(area=area):
+                frame = self.frame.copy()
+                left, top, right, bottom = area
+                frame[top:bottom, left:right] = 255
+                large = np.repeat(np.repeat(frame, 2, axis=0), 2, axis=1)
+                motion, gray, changed_area = camera.frame_has_motion(baseline, frame)
+                large_motion, large_gray, large_area = camera.frame_has_motion(baseline, large)
+                self.assertEqual(large_motion, motion)
+                self.assertEqual(large_area, changed_area)
+                np.testing.assert_array_equal(large_gray, gray)
+
     def test_inference_receives_only_scan_pixels_and_inspection_gets_full_coordinates(self):
         left, top, right, bottom = self.bounds
         self.frame[:, :] = 200  # Background must not reach the model.

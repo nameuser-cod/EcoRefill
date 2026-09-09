@@ -11,12 +11,41 @@ alongside `machine_flow.py`, `point_payments.py`, and `visual_inspection.py`.
 Keep the existing model, credentials, and local inspection configuration.
 The launcher is no longer a standalone copy of the controller.
 
+## Camera picture quality and field of view
+
+Capture defaults to 1280 × 960. The controller selects the widest sensor view
+among modes that support that size, preferring a smaller sensor output when
+several modes cover the same area. Motion processing stays at 640 × 480 so its
+existing thresholds retain their meaning. Scan-history photos default to
+640 × 480 at JPEG quality 80, while `captured_item.jpg` keeps capture resolution.
+These settings improve retained detail but cannot fix an out-of-focus lens.
+
+After copying the updated controller and restarting it on the Pi, compare
+`captured_item.jpg` with the saved history photo using a stationary bottle.
+Check the startup log for the selected sensor mode and view. If the whole bottle
+is missing from the original photo, move the camera farther back or fit a
+compatible wider lens. Software cannot extend the lens's physical field of view.
+Use steady, diffuse lighting, clean the lens, and gently adjust focus at the
+bottle's actual position only if the module has an adjustable lens. Do not force
+a glued lens. A wider lens can distort edges and reduces pixels per bottle.
+
+`CAMERA_WIDTH` and `CAMERA_HEIGHT` override capture size; keep a 4:3 ratio for
+the OV5647. `RECYCLING_IMAGE_WIDTH`, `RECYCLING_IMAGE_HEIGHT`, and
+`RECYCLING_IMAGE_JPEG_QUALITY` override stored photos. Existing environment
+overrides take precedence over the new defaults. Larger photos increase database
+payloads; keep the stored-photo size modest. Measure scan latency on the Pi.
+If size inspection is enabled, recalibrate after changing resolution, sensor
+view, lens, or camera placement; see [inspection setup](INSPECTION.md).
+
+Sensor-mode selection uses Picamera2's `sensor_modes`, `crop_limits`, and raw
+stream configuration; see the [Picamera2 manual](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf).
+
 ## Adjust the camera scan box
 
 The camera now watches and classifies only the center tray. In
 `machine/config.py`, `DETECTION_REGION = (0.33, 0.04, 0.65, 0.96)` sets
 the left, top, right, and bottom edges as fractions of the full image.
-At 640 by 480 this crops x=211:416 and y=19:461. These initial bounds were
+At 1280 by 960 this crops x=422:832 and y=38:922. These initial bounds were
 estimated from the machine screenshots; check them on the physical machine.
 
 After a scan, open `detection_result.jpg`. It shows the selected object

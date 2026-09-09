@@ -75,9 +75,14 @@ on your Pi before relying on its throughput.
 
 ## Calibrate approximate size for your upright tray
 
-Size is measured in the original 640 × 480 camera frame, not the detector's
+Size is measured in the original camera frame (1280 × 960 by default), not the detector's
 resized inference image. A YOLO box is approximate, and one flat scale factor
 cannot correct every perspective/depth error in a three-dimensional bottle.
+
+Existing 640 × 480 calibrations must be redone for the new capture size. Update
+`frame_size_px`, `inspection_region_px`, and both millimetres-per-pixel values
+before enabling size enforcement. Changing the camera position, lens, or sensor
+view also requires recalibration even if the output resolution stays the same.
 
 1. Fix the camera and mark an upright inspection position so users cannot
    move containers closer to the lens. Keep the whole object visible.
