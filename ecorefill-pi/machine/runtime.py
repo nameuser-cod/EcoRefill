@@ -14,6 +14,7 @@ from .config import (
     API_HOST, API_PORT, BLUE_BUTTON_BOUNCE_SECONDS, BLUE_BUTTON_GPIO,
     GREEN_BUTTON_BOUNCE_SECONDS, GREEN_BUTTON_GPIO, MACHINE_ID, MODEL_PATH,
     HX711_OFFSET, HX711_COUNTS_PER_GRAM, HX711_MAX_SPREAD_G,
+    BOTTLE_MAX_WEIGHT_G, CAN_MAX_WEIGHT_G,
 )
 from .detection import MaterialDetection
 from .diagnostics import log
@@ -152,7 +153,8 @@ class MachineRuntime(
             scale = CalibratedScale(HX711_OFFSET, HX711_COUNTS_PER_GRAM, HX711_MAX_SPREAD_G)
             scale.open()
             self.weight_scale = scale
-            log("Weight check ready: bottles <=40 g, cans <=60 g.",
+            log(f"Weight check ready: bottles <={BOTTLE_MAX_WEIGHT_G:g} g, "
+                f"cans <={CAN_MAX_WEIGHT_G:g} g.",
                 f"offset={HX711_OFFSET}, counts/gram={HX711_COUNTS_PER_GRAM}")
         except Exception as error:
             # Keep the kiosk/water service available, but reject recyclables

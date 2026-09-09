@@ -52,8 +52,8 @@ checks skip the delay and measurement.
 
 | Detected material | Passes the weight limit | Rejected |
 | --- | --- | --- |
-| Plastic bottle (`plastic_bottle`, `pet_bottle`) | Up to and including 40 g | Above 40 g |
-| Aluminum can (`aluminum_can`, `aluminium_can`) | Up to and including 60 g | Above 60 g |
+| Plastic bottle (`plastic_bottle`, `pet_bottle`) | Up to and including 100 g | Above 100 g |
+| Aluminum can (`aluminum_can`, `aluminium_can`) | Up to and including 120 g | Above 120 g |
 
 Other material, confidence, and visual rules still apply. The weight check is
 required even when visual inspection is `off` or `observe`. Rejected items send
@@ -92,7 +92,7 @@ If initialization fails, fix the connection/dependency and restart the service.
 
 The item must be supported entirely by the weighing plate, clear of the orange
 chute, while the camera verifies it and the sensor samples it. Calibration cannot
-compensate for changing chute contact. Recheck readings near **40 g and 60 g** on
+compensate for changing chute contact. Recheck readings near **100 g and 120 g** on
 the running Pi, with the camera/model active. The 3 g spread limit is a movement
 check, not a claim of accuracy; raw precision is retained for threshold decisions.
 

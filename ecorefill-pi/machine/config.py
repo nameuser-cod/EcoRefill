@@ -78,8 +78,8 @@ HX711_OFFSET = float(os.getenv("HX711_OFFSET", "-639408"))
 HX711_COUNTS_PER_GRAM = float(os.getenv("HX711_COUNTS_PER_GRAM", "414.59"))
 HX711_MAX_SPREAD_G = float(os.getenv("HX711_MAX_SPREAD_G", "3.0"))
 WEIGHT_SETTLE_SECONDS = 2.0
-BOTTLE_MAX_WEIGHT_G = 40.0
-CAN_MAX_WEIGHT_G = 60.0
+BOTTLE_MAX_WEIGHT_G = 100.0
+CAN_MAX_WEIGHT_G = 120.0
 
 # Scan photos are stored directly in Firestore as compressed Base64 data URLs.
 # Keep them small because a Firestore document has a size limit.
