@@ -3,7 +3,7 @@
 import sys
 from types import SimpleNamespace
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, call, patch
 
 from machine.detection import MaterialDetection
 from weight_sensor import WeightReadingError
@@ -33,8 +33,16 @@ class MaterialDetectionTests(unittest.TestCase):
         drawing = SimpleNamespace(
             imwrite=Mock(), rectangle=Mock(), putText=Mock(), FONT_HERSHEY_SIMPLEX=0,
         )
-        with patch.dict(sys.modules, {"cv2": drawing}):
+        with patch.dict(sys.modules, {"cv2": drawing}), \
+             patch("machine.detection.sleep") as settle:
+            sequence = Mock()
+            sequence.attach_mock(settle, "settle")
+            sequence.attach_mock(machine.weight_scale.read_weight, "read_weight")
             result = machine.verify_item(frame)
+        if machine.weight_scale.read_weight.called:
+            self.assertEqual(sequence.mock_calls, [call.settle(2.0), call.read_weight()])
+        else:
+            settle.assert_not_called()
         self.assertEqual(drawing.rectangle.call_count, 1)
         preview_label = drawing.putText.call_args.args[1]
         if result["item"] == "unknown":
@@ -127,8 +135,10 @@ class MaterialDetectionTests(unittest.TestCase):
     def test_weight_pass_cannot_override_visual_rejection(self):
         machine = MaterialDetection()
         machine.weight_scale = Mock()
-        result = machine.apply_weight_check({"accepted": False, "category": "reject",
-                                            "points": 0, "rejection_reason": "Visibly dirty"})
+        with patch("machine.detection.sleep") as settle:
+            result = machine.apply_weight_check({"accepted": False, "category": "reject",
+                                                "points": 0, "rejection_reason": "Visibly dirty"})
+        settle.assert_not_called()
         self.assertFalse(result["accepted"])
         self.assertEqual(result["rejection_reason"], "Visibly dirty")
         machine.weight_scale.read_weight.assert_not_called()

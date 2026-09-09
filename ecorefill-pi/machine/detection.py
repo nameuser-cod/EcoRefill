@@ -1,6 +1,7 @@
 """Material acceptance, optional visual inspection, and required weight limits."""
 
 import math
+from time import sleep
 
 from weight_sensor import WeightReadingError
 
@@ -15,6 +16,7 @@ from .config import (
     POINTS,
     BOTTLE_MAX_WEIGHT_G,
     CAN_MAX_WEIGHT_G,
+    WEIGHT_SETTLE_SECONDS,
 )
 from .diagnostics import log
 from .scan_region import scan_region_bounds
@@ -232,6 +234,10 @@ class MaterialDetection:
             scale = getattr(self, "weight_scale", None)
             if scale is None:
                 raise WeightReadingError("unavailable", "Weight sensor is unavailable")
+            # Let the accepted material settle before collecting fresh samples.
+            # Final acceptance still depends on passing the weight limit below.
+            log(f"Waiting {WEIGHT_SETTLE_SECONDS:g} seconds before weighing...")
+            sleep(WEIGHT_SETTLE_SECONDS)
             reading = scale.read_weight()
             grams = reading["grams"]
             if not math.isfinite(grams) or grams <= 0:

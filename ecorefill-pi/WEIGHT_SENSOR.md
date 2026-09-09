@@ -44,8 +44,11 @@ different acquisition method before integration into the running machine.
 
 ## Automatic rejection in the recycling controller
 
-The controller requires a fresh HX711 measurement after the material and any
-enabled visual checks pass, before sending a sorting command or awarding points:
+After the material and any enabled visual checks pass, the controller waits
+**2 seconds** for the item to settle, then takes a fresh HX711 measurement before
+sending a sorting command or awarding points. `WEIGHT_SETTLE_SECONDS` in
+`machine/config.py` sets this delay. Items already rejected by material or visual
+checks skip the delay and measurement.
 
 | Detected material | Passes the weight limit | Rejected |
 | --- | --- | --- |
@@ -78,8 +81,9 @@ above does not replace the existing Firebase environment variables. If `lgpio`
 is not available inside a virtual environment, install it in that environment
 with `python3 -m pip install lgpio` (or use a venv with system site packages).
 
-Each decision discards the buffered conversion and takes 10 new samples with a
-4-second acquisition deadline. A sample range above **3 g** is marked unstable
+After the settling delay, each decision discards the buffered conversion and
+takes 10 new samples with a separate 4-second acquisition deadline. A sample
+range above **3 g** is marked unstable
 (`HX711_MAX_SPREAD_G` configures this diagnostic tolerance). Missing hardware,
 timeouts, detected clock-timing errors, saturation, nonpositive weight, and
 unstable readings reject the item instead of accepting without a measurement.
