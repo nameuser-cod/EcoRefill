@@ -10,7 +10,8 @@ from weight_sensor import WeightReadingError
 
 
 class MaterialDetectionTests(unittest.TestCase):
-    def verify_and_sort(self, label, confidence, grams=20.0, weight_error=None):
+    def verify_and_sort(self, label, confidence, grams=20.0, weight_error=None,
+                        inference_seconds=0):
         machine = MaterialDetection()
         machine.weight_scale = SimpleNamespace(read_weight=Mock(
             return_value={"grams": grams, "spread_g": 0.2, "samples": 10},
@@ -21,8 +22,14 @@ class MaterialDetectionTests(unittest.TestCase):
             xyxy=[Mock(tolist=Mock(return_value=[30, 30, 180, 380]))],
         )
         prediction = SimpleNamespace(boxes=[box], plot=Mock())
+        clock = [100.0]
+
+        def predict(**kwargs):
+            clock[0] += inference_seconds
+            return [prediction]
+
         machine.model = SimpleNamespace(
-            names={0: label}, predict=Mock(return_value=[prediction]),
+            names={0: label}, predict=Mock(side_effect=predict),
         )
         machine.visual_inspector = SimpleNamespace(
             apply=Mock(side_effect=lambda result, *_: result),
@@ -34,13 +41,16 @@ class MaterialDetectionTests(unittest.TestCase):
             imwrite=Mock(), rectangle=Mock(), putText=Mock(), FONT_HERSHEY_SIMPLEX=0,
         )
         with patch.dict(sys.modules, {"cv2": drawing}), \
+             patch("machine.detection.monotonic", side_effect=lambda: clock[0]), \
              patch("machine.detection.sleep") as settle:
             sequence = Mock()
             sequence.attach_mock(settle, "settle")
             sequence.attach_mock(machine.weight_scale.read_weight, "read_weight")
             result = machine.verify_item(frame)
         if machine.weight_scale.read_weight.called:
-            self.assertEqual(sequence.mock_calls, [call.settle(2.0), call.read_weight()])
+            remaining = max(0, 2.0 - inference_seconds)
+            expected = ([call.settle(remaining)] if remaining else []) + [call.read_weight()]
+            self.assertEqual(sequence.mock_calls, expected)
         else:
             settle.assert_not_called()
         self.assertEqual(drawing.rectangle.call_count, 1)
@@ -51,6 +61,24 @@ class MaterialDetectionTests(unittest.TestCase):
             self.assertEqual(preview_label, f"{label} {confidence:.2f}")
         machine.sort_item(result)
         return machine, result
+
+    def test_detection_overlaps_settling_without_shortening_weight_checks(self):
+        for duration in (0.5, 1.5, 2.0, 3.0):
+            with self.subTest(inference_seconds=duration):
+                machine, result = self.verify_and_sort("plastic_bottle", 0.95,
+                                                       inference_seconds=duration)
+                self.assertTrue(result["accepted"])
+                machine.weight_scale.read_weight.assert_called_once_with()
+
+    def test_explicit_still_frame_time_includes_capture_work(self):
+        machine = MaterialDetection()
+        machine.weight_scale = SimpleNamespace(read_weight=Mock(return_value={"grams": 20}))
+        with patch("machine.detection.monotonic", return_value=101.5), \
+             patch("machine.detection.sleep") as settle:
+            result = machine.apply_weight_check(
+                {"accepted": True, "category": "bottle", "points": 1}, settling_started=100.0)
+        settle.assert_called_once_with(0.5)
+        self.assertTrue(result["accepted"])
 
     def test_reported_can_misclassifications_do_not_open_bottle_gate(self):
         # Replay the reported predictions, not inference on the screenshot.

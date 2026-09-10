@@ -195,6 +195,7 @@ Logs include time, severity, thread, source file, and line number:
 ```
 
 The recycling thread is named `recycling`; the refill thread is `water-refill`.
+Scan records upload separately on `recycling-uploads`.
 Messages logged inside an exception handler include the original traceback.
 Start with the exception at the end of that traceback, then follow its file
 and line number. Existing session/request IDs remain in the messages.
@@ -229,6 +230,41 @@ The existing diagnostic files remain relative to the working directory:
 
 Model and default credential paths also retain their existing working-directory
 behavior, so launch from `ecorefill-pi`.
+
+## Scan timing and pending uploads
+
+`Scan timing:` log entries report inference, remaining pre-weigh settling time,
+weight sampling, image saving/encoding, time until the result is ready, and
+Firebase upload duration. Result-ready time starts when the camera confirms the
+item is still; it excludes the separate next-item rearm pause. Compare those
+entries on the Pi to measure the improvement; desktop tests do not measure
+hardware speed.
+
+Inference overlaps the pre-weigh settling interval. The next-item pause remains
+2 seconds, followed by the existing stable-frame check. Weight sample count,
+stability limits, and material acceptance thresholds are unchanged.
+
+Accepted and rejected scans are committed to a local SQLite queue before the
+result is displayed. Firebase uploads run in order in the background and retry
+with backoff up to 30 seconds between attempts. An acknowledged upload removes
+its queue entry. A Firestore transaction checks the item's ID before creating
+the record and incrementing machine counters, so replay after a lost response
+does not count it twice. Records retain their original scan timestamp.
+
+The default queue is `ecorefill-pi/data/recycling_uploads.sqlite3`, resolved from
+the controller's location rather than the working directory. The controller
+creates the directory automatically and needs write permission there. Set
+`ECOREFILL_UPLOAD_QUEUE_PATH` to an absolute path to use another persistent
+location. Preserve the `data/` directory when updating the Pi; it contains any
+unsent photos and records. Pending records resume after restarting the service.
+If local queue storage fails, the scan reports an error instead of claiming its
+record was queued. Queued records consume disk space until they upload.
+
+Owner scan history may appear slightly after the machine's result. For item
+results, `firebaseSaved` becomes true after upload acknowledgment; background
+acknowledgments never change a final reward QR's state or expiry clock. Pressing
+GREEN still creates the final reward in Firebase before it can be redeemed;
+background item uploads do not create or credit rewards.
 
 ## Run checks without hardware
 

@@ -36,6 +36,7 @@ class MachineState:
             confidence=0,
             imageUrl=None,
             firebaseSaved=False,
+            recyclingRecordId=None,
             error=None,
         )
 

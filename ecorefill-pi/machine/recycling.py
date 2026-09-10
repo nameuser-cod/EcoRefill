@@ -16,6 +16,55 @@ from .diagnostics import log
 class RecyclingWorker:
     """Methods composed into MachineRuntime; shared resources live on that instance."""
 
+    def queue_recycling_upload(self, item_id, result, image_data_url=None, batch_session_id=None):
+        """Commit the complete record locally before publishing the scan result."""
+        self.recycling_upload_queue.put({
+            "item_id": item_id,
+            "result": result,
+            "image_data_url": image_data_url,
+            "batch_session_id": batch_session_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+
+    def publish_recycling_result(self, item_id, **changes):
+        # The upload may finish before this state is published. Coordinate the
+        # queue check and upload acknowledgment so firebaseSaved stays accurate.
+        with self.state_lock:
+            self.update_state(
+                **changes, recyclingRecordId=item_id,
+                firebaseSaved=not self.recycling_upload_queue.contains(item_id),
+            )
+
+    def recycling_upload_worker(self):
+        """Retry in order with backoff; restart recovery uses the same queue."""
+        retry_delay = 1
+        while not self.shutdown_event.is_set():
+            try:
+                payload = self.recycling_upload_queue.peek()
+                if payload is None:
+                    self.shutdown_event.wait(0.5)
+                    continue
+                if self.db is None:
+                    self.db = self.initialize_firebase()
+                started = time.monotonic()
+                saved = self.save_recycling_to_firestore(**payload)
+                log(f"Scan timing: Firebase upload={time.monotonic() - started:.3f}s",
+                    f"item={payload['item_id']} saved={saved}")
+                if saved:
+                    item_id = payload["item_id"]
+                    self.recycling_upload_queue.remove(item_id)
+                    with self.state_lock:
+                        current = self.get_state()
+                        if (current.get("recyclingRecordId") == item_id
+                                and current.get("phase") in {"idle", "item_accepted", "rejected"}):
+                            self.update_state(firebaseSaved=True)
+                    retry_delay = 1
+                    continue
+            except Exception as error:
+                log("Recycling upload remains queued:", error)
+            self.shutdown_event.wait(retry_delay)
+            retry_delay = min(30, retry_delay * 2)
+
     def save_local_session(self, session_id, result, qr_code=None):
         session_text = f"""
 Session ID: {session_id}
@@ -43,6 +92,7 @@ Created At: {time.time()}
         result,
         image_data_url=None,
         batch_session_id=None,
+        created_at=None,
     ):
         """
         Save ONE detected item.
@@ -92,7 +142,7 @@ Created At: {time.time()}
             "imageDataUrl": image_data_url,
             "imageUrl": None,
             "claimedBy": None,
-            "createdAt": firestore.SERVER_TIMESTAMP,
+            "createdAt": datetime.fromisoformat(created_at) if created_at else firestore.SERVER_TIMESTAMP,
             "updatedAt": firestore.SERVER_TIMESTAMP,
         }
 
@@ -114,12 +164,17 @@ Created At: {time.time()}
         else:
             machine_updates["rejectedCount"] = firestore.Increment(1)
 
-        batch = self.db.batch()
-        batch.set(record_ref, record_data, merge=True)
-        batch.set(machine_ref, machine_updates, merge=True)
-
         try:
-            batch.commit()
+            @firestore.transactional
+            def save_once(transaction):
+                # A response can be lost after a successful commit. Retrying
+                # that item must not increment machine counters a second time.
+                if record_ref.get(transaction=transaction).exists:
+                    return
+                transaction.set(record_ref, record_data)
+                transaction.set(machine_ref, machine_updates, merge=True)
+
+            save_once(self.db.transaction())
             log(f"Recycling item saved to Firestore: {item_id}")
             return True
         except Exception as error:
@@ -411,22 +466,27 @@ Created At: {time.time()}
                 ):
                     continue
 
+                scan_started = time.monotonic()
                 self.update_state(
                     phase="capturing",
                     message="Item is still. Capturing image...",
                     error=None,
                 )
 
+                image_started = time.monotonic()
                 cv2.imwrite("captured_item.jpg", frame)
+                log(f"Scan timing: capture image save={time.monotonic() - image_started:.3f}s")
 
                 self.update_state(
                     phase="verifying",
                     message="Checking the recyclable material...",
                 )
-                result = self.verify_item(frame)
+                result = self.verify_item(frame, settling_started=scan_started)
 
                 item_id = str(uuid.uuid4())
+                image_started = time.monotonic()
                 image_data_url = self.frame_to_base64_data_url(frame)
+                log(f"Scan timing: image encoding={time.monotonic() - image_started:.3f}s")
 
                 self.update_state(
                     phase="sorting",
@@ -461,14 +521,15 @@ Created At: {time.time()}
                         None,
                     )
 
-                    firebase_saved = self.save_recycling_to_firestore(
+                    self.queue_recycling_upload(
                         item_id,
                         result,
                         image_data_url,
                         batch_session_id,
                     )
 
-                    self.update_state(
+                    self.publish_recycling_result(
+                        item_id,
                         phase="item_accepted",
                         message=(
                             f"Accepted! {new_item_count} item(s), "
@@ -487,7 +548,6 @@ Created At: {time.time()}
                         sessionId=None,
                         qrCode=None,
                         imageUrl=None,
-                        firebaseSaved=firebase_saved,
                         error=None,
                     )
 
@@ -496,14 +556,15 @@ Created At: {time.time()}
 
                     # Rejected items do not belong to the reward batch, but still
                     # remain available to owner analytics.
-                    firebase_saved = self.save_recycling_to_firestore(
+                    self.queue_recycling_upload(
                         item_id,
                         result,
                         image_data_url,
                         self.get_state().get("batchSessionId"),
                     )
 
-                    self.update_state(
+                    self.publish_recycling_result(
+                        item_id,
                         phase="rejected",
                         message=(
                             result.get("rejection_reason")
@@ -518,9 +579,10 @@ Created At: {time.time()}
                         sessionId=None,
                         qrCode=None,
                         imageUrl=None,
-                        firebaseSaved=firebase_saved,
                         error=None,
                     )
+                log(f"Scan timing: result ready={time.monotonic() - scan_started:.3f}s",
+                    f"item={item_id} accepted={result['accepted']}")
 
             except Exception as error:
                 log("Machine worker error:", error)

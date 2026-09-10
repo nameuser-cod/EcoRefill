@@ -346,6 +346,7 @@ class LifecycleTests(unittest.TestCase):
              patch.object(machine, "initialize_weight_sensor") as weight, \
              patch.object(machine, "initialize_buttons") as buttons, \
              patch.object(machine, "start_redemption_tunnel") as tunnel, \
+             patch("machine.upload_queue.RecyclingUploadQueue"), \
              patch("machine.runtime.create_apps") as apps, \
              patch("machine.runtime.threading.Thread") as thread:
             def check_ready():
@@ -356,8 +357,8 @@ class LifecycleTests(unittest.TestCase):
             thread.return_value.start.side_effect = check_ready
             machine.start()
             machine.start()
-            self.assertEqual(thread.call_count, 2)
-            self.assertEqual(thread.return_value.start.call_count, 2)
+            self.assertEqual(thread.call_count, 3)
+            self.assertEqual(thread.return_value.start.call_count, 3)
             tunnel.assert_called_once_with()
             machine.close()
 
@@ -397,7 +398,9 @@ class RecyclingWeightTests(unittest.TestCase):
                     machine.shutdown_event.set()
                     return True
 
-                machine.save_recycling_to_firestore = Mock(side_effect=save)
+                machine.queue_recycling_upload = Mock(side_effect=save)
+                machine.recycling_upload_queue = Mock()
+                machine.recycling_upload_queue.contains.return_value = True
                 with patch.dict(sys.modules, {"firebase_admin": SimpleNamespace(firestore=Mock())}), \
                      patch("cv2.imwrite", return_value=True):
                     machine.machine_worker()
@@ -408,7 +411,7 @@ class RecyclingWeightTests(unittest.TestCase):
                 self.assertEqual(state["batchSessionId"], "existing-batch")
                 self.assertIn("weight limit", state["message"])
                 machine.send_to_esp32.assert_called_once_with("REJECT")
-                saved = machine.save_recycling_to_firestore.call_args.args[1]
+                saved = machine.queue_recycling_upload.call_args.args[1]
                 self.assertEqual(saved["inspection"]["weight"]["grams"], grams)
                 self.assertEqual(saved["points"], 0)
                 machine.close()

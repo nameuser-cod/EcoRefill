@@ -44,11 +44,16 @@ different acquisition method before integration into the running machine.
 
 ## Automatic rejection in the recycling controller
 
-After the material and any enabled visual checks pass, the controller waits
-**2 seconds** for the item to settle, then takes a fresh HX711 measurement before
-sending a sorting command or awarding points. `WEIGHT_SETTLE_SECONDS` in
-`machine/config.py` sets this delay. Items already rejected by material or visual
-checks skip the delay and measurement.
+The controller starts a **2-second** settling interval when the camera confirms
+the item is still. Material detection and visual checks run during that interval.
+If they pass, the controller waits only for any remaining settling time, then
+takes a fresh HX711 measurement before sending a sorting command or awarding
+points. `WEIGHT_SETTLE_SECONDS` in `machine/config.py` sets this interval. Items
+already rejected by material or visual checks skip the measurement.
+
+The separate **2-second pause before detecting the next item** and its
+stable-frame check remain in place. Weight sampling still runs after AI
+detection finishes, so the GPIO sampling loop does not compete with inference.
 
 | Detected material | Passes the weight limit | Rejected |
 | --- | --- | --- |

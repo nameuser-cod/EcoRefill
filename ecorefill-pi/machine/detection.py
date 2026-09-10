@@ -1,7 +1,7 @@
 """Material acceptance, optional visual inspection, and required weight limits."""
 
 import math
-from time import sleep
+from time import monotonic, sleep
 
 from weight_sensor import WeightReadingError
 
@@ -61,7 +61,7 @@ class MaterialDetection:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1)
         cv2.imwrite("detection_result.jpg", preview)
 
-    def verify_item(self, frame):
+    def verify_item(self, frame, settling_started=None):
         """
         Accept ONLY a plastic bottle or aluminum can.
 
@@ -77,14 +77,18 @@ class MaterialDetection:
         If the model only contains generic "bottle" and "can" classes, retraining
         the model is required to distinguish material reliably.
         """
+        if settling_started is None:
+            settling_started = monotonic()
         left, top, right, bottom = scan_region_bounds(frame)
         scan_frame = frame[top:bottom, left:right].copy()
+        inference_started = monotonic()
         results = self.model.predict(
             source=scan_frame,
             conf=DETECTION_CONFIDENCE_LIMIT,
             imgsz=INFERENCE_IMAGE_SIZE,
             verbose=False,
         )
+        log(f"Scan timing: inference={monotonic() - inference_started:.3f}s")
 
         if not results:
             self.save_detection_preview(frame)
@@ -206,7 +210,7 @@ class MaterialDetection:
                 "points": POINTS.get(best_item, 1),
                 "confidence": best_confidence,
             }, frame, detections)
-            return self.apply_weight_check(result)
+            return self.apply_weight_check(result, settling_started)
 
         log(
             "Material matched: aluminum can",
@@ -219,9 +223,9 @@ class MaterialDetection:
             "points": POINTS.get(best_item, 1),
             "confidence": best_confidence,
         }, frame, detections)
-        return self.apply_weight_check(result)
+        return self.apply_weight_check(result, settling_started)
 
-    def apply_weight_check(self, result):
+    def apply_weight_check(self, result, settling_started=None):
         """Mandatory in every visual-inspection mode, before sorting/rewards."""
         report = dict(result.get("inspection") or {})
         result = dict(result, inspection=report)
@@ -234,11 +238,17 @@ class MaterialDetection:
             scale = getattr(self, "weight_scale", None)
             if scale is None:
                 raise WeightReadingError("unavailable", "Weight sensor is unavailable")
-            # Let the accepted material settle before collecting fresh samples.
-            # Final acceptance still depends on passing the weight limit below.
-            log(f"Waiting {WEIGHT_SETTLE_SECONDS:g} seconds before weighing...")
-            sleep(WEIGHT_SETTLE_SECONDS)
+            # Detection runs during the settling interval. Still collect fresh
+            # samples only after two seconds from the camera's still frame.
+            remaining = WEIGHT_SETTLE_SECONDS if settling_started is None else max(
+                0.0, WEIGHT_SETTLE_SECONDS - (monotonic() - settling_started)
+            )
+            log(f"Scan timing: remaining weight settle={remaining:.3f}s")
+            if remaining:
+                sleep(remaining)
+            weight_started = monotonic()
             reading = scale.read_weight()
+            log(f"Scan timing: weight sampling={monotonic() - weight_started:.3f}s")
             grams = reading["grams"]
             if not math.isfinite(grams) or grams <= 0:
                 raise WeightReadingError("invalid", "Invalid item weight")

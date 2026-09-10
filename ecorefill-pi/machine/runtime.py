@@ -5,6 +5,7 @@ Creating an instance is inert. Call start() once, and close() on shutdown.
 """
 
 import os
+from pathlib import Path
 import subprocess
 import threading
 import time
@@ -59,6 +60,8 @@ class MachineRuntime(
         self.public_redeem_app = None
         self.worker_thread = None
         self.water_request_thread = None
+        self.recycling_upload_thread = None
+        self.recycling_upload_queue = None
         self._started = False
         self._closed = False
         self.machine_state = {
@@ -84,6 +87,7 @@ class MachineRuntime(
             "confidence": 0,
             "imageUrl": None,
             "firebaseSaved": False,
+            "recyclingRecordId": None,
             "error": None,
             "updatedAt": time.time(),
         }
@@ -186,12 +190,21 @@ class MachineRuntime(
             self.initialize_weight_sensor()
             self.initialize_buttons()
             create_apps(self)
+            from .upload_queue import RecyclingUploadQueue
+            self.recycling_upload_queue = RecyclingUploadQueue(os.getenv(
+                "ECOREFILL_UPLOAD_QUEUE_PATH",
+                str(Path(__file__).resolve().parent.parent / "data" / "recycling_uploads.sqlite3"),
+            ))
+            self.recycling_upload_thread = threading.Thread(
+                target=self.recycling_upload_worker, name="recycling-uploads", daemon=True,
+            )
             self.worker_thread = threading.Thread(
                 target=self.machine_worker, name="recycling", daemon=True,
             )
             self.water_request_thread = threading.Thread(
                 target=self.water_request_worker, name="water-refill", daemon=True,
             )
+            self.recycling_upload_thread.start()
             self.worker_thread.start()
             self.water_request_thread.start()
             self.start_redemption_tunnel()
@@ -220,6 +233,10 @@ class MachineRuntime(
             return
         self._closed = True
         self.shutdown_event.set()
+        if self.recycling_upload_thread is not None:
+            # Unsent records stay on disk; do not wait on a slow network call.
+            if self.recycling_upload_thread.is_alive():
+                self.recycling_upload_thread.join(timeout=1)
         if self.weight_scale is not None:
             try:
                 self.weight_scale.close()
