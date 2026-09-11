@@ -7,10 +7,7 @@ import { useEffect } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import {
   CheckCircle2,
-  QrCode,
   Recycle,
-  ScanLine,
-  Sparkles,
   Timer,
 } from "lucide-react";
 import "../../styles/machine.css";
@@ -132,29 +129,8 @@ function RedeemQRCode() {
 
         <main className="reward-kiosk">
           <section className="reward-celebration">
-            <div className="reward-success-badge">
-              <Sparkles size={28} />
-
-              Great job!
-            </div>
-
-            <h2>
-              You helped the planet 🌍
-            </h2>
-
-            <p>
-              You recycled{" "}
-              <strong>
-                {Number(machineResult.itemCount || 0)}
-              </strong>{" "}
-              item(s)
-              {Number(machineResult.bottleCount || 0) > 0
-                ? ` · ${machineResult.bottleCount} bottle(s)`
-                : ""}
-              {Number(machineResult.canCount || 0) > 0
-                ? ` · ${machineResult.canCount} can(s)`
-                : ""}.
-            </p>
+            <h2>Collect your points</h2>
+            <p>{Number(machineResult.itemCount || 0)} items recycled. Thank you!</p>
 
             <div className="reward-points">
               <span>YOU EARNED</span>
@@ -169,37 +145,6 @@ function RedeemQRCode() {
 
               <p>EcoPoints</p>
             </div>
-          </section>
-
-          <section className="reward-scan-panel">
-            <div className="reward-scan-heading">
-              <div>
-                <span className="machine-kiosk-eyebrow">
-                  Final step
-                </span>
-
-                <h3>
-                  Scan to collect all
-                  your points
-                </h3>
-              </div>
-
-              <ScanLine size={38} />
-            </div>
-
-            <div className="reward-qr-frame">
-              <QRCodeCanvas
-                value={String(
-                  machineResult.qrCode
-                ).trim()}
-                size={640}
-                bgColor="#ffffff"
-                fgColor="#10281d"
-                level="H"
-                includeMargin
-              />
-            </div>
-
             <div className="reward-steps">
               <span>1</span>
               <p>
@@ -219,6 +164,33 @@ function RedeemQRCode() {
                 Scan this code
               </p>
             </div>
+          </section>
+
+          <section className="reward-scan-panel">
+            <div className="reward-scan-heading">
+              <div>
+                <span className="machine-kiosk-eyebrow">
+                  Final step
+                </span>
+
+                <h3>
+                  Scan this QR code
+                </h3>
+              </div>
+            </div>
+
+            <div className="reward-qr-frame">
+              <QRCodeCanvas
+                value={String(
+                  machineResult.qrCode
+                ).trim()}
+                size={640}
+                bgColor="#ffffff"
+                fgColor="#10281d"
+                level="H"
+                includeMargin
+              />
+            </div>
 
             <div className="reward-expiry">
               <Timer size={20} />
@@ -226,17 +198,14 @@ function RedeemQRCode() {
               QR expires in 1 minute
             </div>
 
-            <p>Press the GREEN button again to add more items to this session. Your items and points will be kept.</p>
-
             {machineResult.error && <p role="alert">{machineResult.error}</p>}
           </section>
         </main>
 
         <footer className="reward-footer">
-          <div>
-            <QrCode size={20} />
-
-            One-time reward · Returning home automatically after redemption
+          <div className="machine-button-guide green-button-guide">
+            <span className="machine-physical-button" aria-hidden="true" />
+            <span>More items? Press <strong>GREEN</strong> to keep recycling.</span>
           </div>
         </footer>
       </div>

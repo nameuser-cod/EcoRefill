@@ -1,1541 +1,371 @@
-/* =========================================================
-   ECOREFILL MACHINE UI
-   Uses the same bold green visual system as the user and
-   owner frontends, sized for landscape kiosk touchscreens.
-   ========================================================= */
-
+/* Machine-only styles. Keep instructions readable on 800×480 and 1024×600
+   panels; reduce decoration and spacing before reducing text size. */
 .machine-page {
-  --ink: #08110b;
-  --dark-green: #102719;
-  --deep-green: #1f6f3a;
+  --ink: #102719;
+  --dark-green: #284b35;
+  --deep-green: #176334;
   --main-green: #35d04f;
-  --lime-green: #9cff59;
-  --mint-green: #dfffd6;
-  --cream-green: #f3ffe8;
-  --sage-green: #b8d7a8;
-  --white: #ffffff;
-  --danger: #ff4d4d;
-  --warning: #ffd43b;
-  --blue: #bdeeff;
-  --machine-qr-size: min(60vmin, 560px);
-  --shadow: 8px 8px 0 var(--ink);
-  --shadow-sm: 5px 5px 0 var(--ink);
-  --shadow-lg: 12px 12px 0 var(--ink);
-  --border: 3px solid var(--ink);
-  --radius: 18px;
-
+  --lime-green: #dfffd6;
+  --mint-green: #eefbe9;
+  --white: #fff;
+  --blue: #e0f4ff;
+  --danger: #a51e28;
+  --border: 2px solid #b8d7bd;
+  --machine-qr-size: 240px;
   color: var(--ink);
-  font-family: Inter, Arial, Helvetica, sans-serif;
-  box-sizing: border-box;
+  font: 600 20px/1.35 Inter, Arial, Helvetica, sans-serif;
 }
 
 .machine-page *,
 .machine-page *::before,
-.machine-page *::after {
-  box-sizing: border-box;
+.machine-page *::after { box-sizing: border-box; }
+.machine-page h1,
+.machine-page h2,
+.machine-page h3,
+.machine-page p { margin: 0; }
+.machine-page svg { flex-shrink: 0; }
+.machine-page button { touch-action: manipulation; }
+.machine-page button:focus-visible {
+  outline: 4px solid #145bcb;
+  outline-offset: 3px;
 }
+.machine-page button:disabled { cursor: wait; opacity: .6; }
 
 .machine-kiosk-page {
   min-height: 100dvh;
-  padding: 24px;
-  overflow: auto;
-  background:
-    linear-gradient(90deg, rgba(8, 17, 11, 0.055) 1px, transparent 1px),
-    linear-gradient(rgba(8, 17, 11, 0.055) 1px, transparent 1px),
-    radial-gradient(circle at 8% 8%, var(--lime-green), transparent 22%),
-    radial-gradient(circle at 92% 12%, var(--main-green), transparent 22%),
-    var(--cream-green);
-  background-size: 34px 34px, 34px 34px, auto, auto, auto;
+  padding: 16px;
+  background: #f1f7ed;
 }
-
 .machine-kiosk-shell {
-  width: min(100%, 1100px);
-  min-height: calc(100dvh - 48px);
+  width: min(100%, 1200px);
+  min-height: calc(100dvh - 32px);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
 }
-
-/* ---------- Header ---------- */
-
 .machine-kiosk-header {
-  min-height: 76px;
+  min-height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 16px;
+  flex-shrink: 0;
 }
-
-.machine-kiosk-brand {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
+.machine-kiosk-brand { display: flex; align-items: center; gap: 12px; }
 .machine-brand-icon {
-  width: 58px;
-  height: 58px;
-  flex: 0 0 58px;
+  width: 48px;
+  height: 48px;
   display: grid;
   place-items: center;
-  border: var(--border);
-  border-radius: 17px;
+  border-radius: 14px;
   background: var(--main-green);
-  color: var(--ink);
-  box-shadow: var(--shadow-sm);
-  transform: rotate(-3deg);
 }
-
-.water-brand-icon {
-  background: var(--blue);
-  transform: rotate(3deg);
-}
-
-.machine-kiosk-brand h1 {
-  margin: 0;
-  color: var(--ink);
-  font-size: clamp(28px, 3.5vw, 42px);
-  font-weight: 950;
-  letter-spacing: -1.4px;
-  line-height: 0.95;
-}
-
-.machine-kiosk-brand p {
-  margin: 7px 0 0;
-  color: var(--dark-green);
-  font-size: clamp(13px, 1.5vw, 16px);
-  font-weight: 750;
-}
-
+.water-brand-icon { background: var(--blue); }
+.machine-kiosk-brand h1 { font-size: 28px; line-height: 1.1; font-weight: 850; }
+.machine-kiosk-brand p { font-size: 18px; color: var(--dark-green); }
 .machine-kiosk-status,
 .machine-kiosk-back {
-  min-height: 48px;
-  padding: 0 17px;
-  border: var(--border);
-  border-radius: 14px;
+  min-height: 56px;
+  padding: 10px 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: var(--ink);
+  border: var(--border);
+  border-radius: 12px;
   font: inherit;
-  font-size: 14px;
-  font-weight: 950;
-  box-shadow: var(--shadow-sm);
+  font-size: 20px;
+  font-weight: 750;
 }
-
-.machine-kiosk-status.is-online {
-  background: var(--lime-green);
-}
-
-.machine-kiosk-status.is-offline {
-  background: #ffe5e5;
-  box-shadow: 5px 5px 0 var(--danger);
-}
-
-.machine-kiosk-back {
-  background: var(--ink);
-  color: var(--lime-green);
-  cursor: pointer;
-  transition: transform 0.14s ease, box-shadow 0.14s ease;
-}
-
-.machine-kiosk-back:hover,
-.machine-kiosk-back:focus-visible {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 var(--ink);
-}
-
-.machine-kiosk-back:active {
-  transform: translate(5px, 5px);
-  box-shadow: none;
-}
-
-/* ---------- Shared cards and controls ---------- */
-
+.machine-kiosk-status.is-online { background: var(--lime-green); }
+.machine-kiosk-status.is-offline { background: #ffeded; color: var(--danger); }
+.machine-kiosk-back { background: white; color: var(--ink); cursor: pointer; }
 .machine-kiosk-card,
 .water-kiosk-card {
   flex: 1;
-  min-height: 0;
-  padding: clamp(20px, 3vw, 36px);
+  min-width: 0;
+  padding: 24px;
   border: var(--border);
-  border-radius: 24px;
+  border-radius: 20px;
   background: var(--white);
-  box-shadow: var(--shadow-lg);
 }
-
 .machine-kiosk-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: 24px;
   text-align: center;
 }
-
+.machine-home-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+}
 .machine-kiosk-hero-icon,
 .water-status-icon {
-  width: 96px;
-  height: 96px;
-  flex: 0 0 96px;
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
   display: grid;
   place-items: center;
-  border: var(--border);
-  border-radius: 24px;
-  background: var(--main-green);
-  color: var(--ink);
-  box-shadow: var(--shadow);
-  transform: rotate(-2deg);
-}
-
-.tone-active .machine-kiosk-hero-icon {
-  background: var(--warning);
-}
-
-.tone-error .machine-kiosk-hero-icon {
-  background: #ffe5e5;
-  box-shadow: 8px 8px 0 var(--danger);
-}
-
-.tone-success .machine-kiosk-hero-icon {
+  border-radius: 18px;
   background: var(--lime-green);
 }
-
-.machine-kiosk-copy {
-  max-width: 780px;
-}
-
+.machine-kiosk-hero-icon svg,
+.water-status-icon svg { width: 46px; height: 46px; }
+.tone-active .machine-kiosk-hero-icon { background: #fff0b8; }
+.tone-error .machine-kiosk-hero-icon { background: #ffeded; color: var(--danger); }
+.machine-kiosk-copy { max-width: 780px; }
 .machine-kiosk-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  margin-bottom: 10px;
-  padding: 6px 11px;
-  border: 2px solid var(--ink);
-  border-radius: 999px;
-  background: var(--lime-green);
-  color: var(--ink);
-  font-size: clamp(11px, 1.4vw, 13px);
-  font-weight: 950;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  text-transform: uppercase;
+  display: block;
+  margin-bottom: 6px;
+  color: var(--deep-green);
+  font-size: 18px;
+  font-weight: 750;
 }
-
-.tone-active .machine-kiosk-eyebrow {
-  background: var(--warning);
-}
-
-.tone-error .machine-kiosk-eyebrow {
-  background: #ffe5e5;
-}
-
 .machine-kiosk-copy h2,
-.water-status-panel h2 {
-  margin: 0;
-  color: var(--ink);
-  font-size: clamp(32px, 5vw, 54px);
-  font-weight: 950;
-  letter-spacing: -1.8px;
-  line-height: 0.98;
-}
-
+.water-status-panel h2 { font-size: 36px; font-weight: 850; line-height: 1.12; letter-spacing: -.8px; }
 .machine-kiosk-copy p,
-.water-status-panel p {
-  margin: 13px 0 0;
-  color: var(--dark-green);
-  font-size: clamp(16px, 2vw, 21px);
-  font-weight: 700;
-  line-height: 1.45;
-}
-
+.water-status-panel p { margin-top: 10px; color: var(--dark-green); font-size: 22px; }
 .machine-kiosk-primary,
 .machine-kiosk-finish {
-  border: var(--border);
-  background: var(--main-green);
-  color: var(--ink);
-  font: inherit;
-  font-weight: 950;
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition:
-    transform 0.14s ease,
-    box-shadow 0.14s ease,
-    background 0.14s ease;
-}
-
-.machine-kiosk-primary {
-  width: min(100%, 380px);
-  min-height: 64px;
-  padding: 14px 20px;
-  border-radius: 16px;
+  min-height: 60px;
+  padding: 12px 24px;
+  border: 2px solid var(--deep-green);
+  border-radius: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-size: 19px;
+  background: var(--deep-green);
+  color: white;
+  font: inherit;
+  font-size: 22px;
+  font-weight: 800;
+  cursor: pointer;
 }
+.machine-kiosk-primary { min-width: 240px; max-width: 100%; }
+.machine-page button:hover:not(:disabled) { filter: brightness(.95); }
+.machine-page button:active:not(:disabled) { transform: translateY(2px); }
 
-.machine-kiosk-primary:hover:not(:disabled),
-.machine-kiosk-finish:hover:not(:disabled) {
-  background: var(--lime-green);
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 var(--ink);
-}
-
-.machine-kiosk-primary:active:not(:disabled),
-.machine-kiosk-finish:active:not(:disabled) {
-  transform: translate(5px, 5px);
-  box-shadow: none;
-}
-
-.machine-page button:focus-visible {
-  outline: 4px solid var(--warning);
-  outline-offset: 3px;
-}
-
-.machine-page button:disabled {
-  cursor: not-allowed;
-  opacity: 0.58;
-}
-
-/* ---------- Machine home ---------- */
-
+/* The home screen explains the two ways to start without repeating instructions. */
+.machine-home-choices { justify-content: center; }
 .machine-choice-grid {
-  width: 100%;
-  max-width: 860px;
-  margin-top: 4px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
+  width: 100%;
 }
-
 .machine-choice-card {
-  min-height: 164px;
-  padding: 20px;
-  border: var(--border);
-  border-radius: 20px;
-  display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
-  align-items: center;
-  gap: 16px;
+  min-width: 0;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  border: 2px solid #78b689;
+  border-radius: 16px;
   color: var(--ink);
   font: inherit;
   text-align: left;
-  box-shadow: var(--shadow);
 }
-
-button.machine-choice-card {
-  cursor: pointer;
-  transition:
-    transform 0.14s ease,
-    box-shadow 0.14s ease,
-    background 0.14s ease;
-}
-
-button.machine-choice-card:hover:not(:disabled) {
-  background: var(--lime-green);
-  transform: translate(3px, 3px);
-  box-shadow: 3px 3px 0 var(--ink);
-}
-
-button.machine-choice-card:active:not(:disabled) {
-  transform: translate(7px, 7px);
-  box-shadow: none;
-}
-
-.recycle-choice {
-  background: var(--main-green);
-}
-
-.water-choice {
-  background: var(--mint-green);
-}
-
-.machine-choice-icon {
-  width: 72px;
-  height: 72px;
-  display: grid;
-  place-items: center;
-  border: var(--border);
-  border-radius: 18px;
-  background: var(--white);
-  color: var(--ink);
-  box-shadow: 4px 4px 0 var(--ink);
-}
-
-.water-choice .machine-choice-icon {
-  background: var(--blue);
-}
-
-.machine-choice-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 9px;
-  border: 2px solid var(--ink);
-  border-radius: 999px;
-  background: var(--white);
-  color: var(--ink);
-  font-size: 10px;
-  font-weight: 950;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.machine-choice-text {
-  min-width: 0;
-}
-
-.machine-choice-text h3 {
-  margin: 10px 0 5px;
-  color: var(--ink);
-  font-size: clamp(22px, 2.6vw, 30px);
-  font-weight: 950;
-  letter-spacing: -0.7px;
-  line-height: 1;
-}
-
-.machine-choice-text p {
-  margin: 0;
-  color: var(--dark-green);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.35;
-}
-
-.machine-progress {
-  width: min(100%, 620px);
+.recycle-choice { background: var(--mint-green); }
+.water-choice { background: var(--blue); border-color: #79b6d6; cursor: pointer; }
+.machine-choice-icon { color: var(--deep-green); }
+.water-choice .machine-choice-icon { color: #155c83; }
+.machine-choice-icon svg { width: 44px; height: 44px; display: block; }
+.machine-choice-text { display: flex; flex: 1; flex-direction: column; gap: 10px; }
+.machine-choice-text h3 { font-size: 34px; line-height: 1.1; font-weight: 850; }
+.machine-choice-text p { font-size: 22px; font-weight: 600; }
+.machine-choice-action { display: block; margin-top: auto; padding-top: 10px; font-size: 20px; }
+.water-choice .machine-choice-action { color: #114a6a; }
+.machine-session-total {
   display: flex;
-  align-items: flex-start;
+  flex-wrap: wrap;
   justify-content: center;
-  margin-top: 4px;
+  gap: 16px 36px;
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--mint-green);
+  font-size: 22px;
 }
-
-.machine-progress-step {
-  width: 78px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 7px;
-}
-
-.machine-progress-step span {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border: 3px solid var(--ink);
+.machine-session-total strong { font-size: 32px; }
+.machine-button-guide { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.green-button-guide { font-size: 22px; }
+.machine-physical-button {
+  display: inline-block;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border: 3px solid #145527;
   border-radius: 50%;
-  background: var(--white);
-  color: var(--ink);
-  font-size: 17px;
-  font-weight: 950;
-}
-
-.machine-progress-step.active span {
   background: var(--main-green);
-  box-shadow: 3px 3px 0 var(--ink);
+  box-shadow: 0 3px 0 #145527;
 }
-
-.machine-progress-step p {
-  margin: 0;
-  color: var(--dark-green);
-  font-size: 12px;
-  font-weight: 950;
-  text-transform: uppercase;
-}
-
-.machine-progress-line {
-  height: 5px;
-  flex: 1;
-  max-width: 120px;
-  margin-top: 19px;
-  border: 1px solid var(--ink);
-  border-radius: 999px;
-  background: var(--sage-green);
-}
-
-.machine-detection-pill {
-  max-width: 94%;
-  padding: 10px 15px;
-  border: 2px solid var(--ink);
-  border-radius: 12px;
-  background: var(--mint-green);
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 850;
-  box-shadow: 3px 3px 0 var(--ink);
-}
-
-/* ---------- Reward screen ---------- */
-
-.reward-kiosk {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: 0.72fr 1.28fr;
-  gap: 22px;
-}
-
-.reward-celebration,
-.reward-scan-panel {
-  min-width: 0;
-  padding: clamp(20px, 3vw, 34px);
-  border: var(--border);
-  border-radius: 24px;
-  box-shadow: var(--shadow-lg);
-}
-
-.reward-celebration {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  background:
-    radial-gradient(circle at 88% 12%, rgba(255, 255, 255, 0.72), transparent 24%),
-    var(--main-green);
-  text-align: center;
-}
-
-.reward-success-badge {
-  align-self: center;
-  padding: 9px 14px;
-  border: 2px solid var(--ink);
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--ink);
-  color: var(--lime-green);
-  font-size: 13px;
-  font-weight: 950;
-  text-transform: uppercase;
-}
-
-.reward-celebration h2 {
-  margin: 22px 0 10px;
-  color: var(--ink);
-  font-size: clamp(32px, 4.4vw, 50px);
-  font-weight: 950;
-  letter-spacing: -1.6px;
-  line-height: 0.98;
-}
-
-.reward-celebration > p {
-  max-width: 420px;
-  margin: 0 auto;
-  color: var(--dark-green);
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 1.45;
-}
-
-.reward-points {
-  width: min(100%, 310px);
-  margin: 25px auto 0;
-  padding: 18px;
-  border: var(--border);
-  border-radius: 20px;
-  background: var(--white);
-  box-shadow: var(--shadow);
-}
-
-.reward-points span {
-  display: block;
-  color: var(--dark-green);
-  font-size: 11px;
-  font-weight: 950;
-  letter-spacing: 0.12em;
-}
-
-.reward-points strong {
-  display: block;
-  margin: 4px 0 0;
-  color: var(--ink);
-  font-size: clamp(56px, 8vw, 88px);
-  font-weight: 950;
-  line-height: 0.9;
-}
-
-.reward-points p {
-  margin: 5px 0 0;
-  color: var(--deep-green);
-  font-size: 19px;
-  font-weight: 950;
-}
-
-.reward-scan-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: var(--white);
-}
-
-.reward-scan-heading {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.reward-scan-heading > svg {
-  flex: 0 0 auto;
-  color: var(--deep-green);
-}
-
-.reward-scan-heading h3 {
-  margin: 0;
-  color: var(--ink);
-  font-size: clamp(23px, 2.8vw, 33px);
-  font-weight: 950;
-  letter-spacing: -0.8px;
-  line-height: 1.05;
-}
-
-.reward-qr-frame,
-.water-qr-frame {
-  padding: 9px;
-  border: var(--border);
-  border-radius: 18px;
-  display: grid;
-  place-items: center;
-  background: var(--white);
-  box-shadow: var(--shadow);
-}
-
-.reward-qr-frame canvas,
-.water-qr-frame svg {
-  width: var(--machine-qr-size) !important;
-  height: var(--machine-qr-size) !important;
-}
-
-.reward-qr-frame {
-  margin-top: 13px;
-}
-
-.reward-qr-frame canvas,
-.water-qr-frame svg {
-  display: block;
-  max-width: 100%;
-}
-
-.reward-steps {
-  width: 100%;
-  max-width: 430px;
-  margin-top: 18px;
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr);
-  align-items: center;
-  gap: 8px 11px;
-}
-
+.machine-progress { display: flex; align-items: flex-start; justify-content: center; width: min(100%, 560px); }
+.machine-progress-step { width: 92px; display: grid; justify-items: center; gap: 6px; }
+.machine-progress-step span,
 .reward-steps span,
 .water-guide-step span {
-  width: 29px;
-  height: 29px;
-  border: 2px solid var(--ink);
-  border-radius: 9px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
-  background: var(--main-green);
-  color: var(--ink);
-  font-size: 12px;
-  font-weight: 950;
-  box-shadow: 2px 2px 0 var(--ink);
-}
-
-.reward-steps p {
-  margin: 0;
-  color: var(--dark-green);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.reward-expiry {
-  margin-top: 16px;
-  padding: 8px 12px;
-  border: 2px solid var(--ink);
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  background: #fff6bd;
-  color: var(--ink);
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.reward-footer,
-.machine-kiosk-footer {
-  min-height: 48px;
-  padding: 0 4px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--ink);
-  font-size: 12px;
-  font-weight: 850;
-}
-
-.machine-kiosk-footer span,
-.reward-footer > div {
-  padding: 7px 10px;
-  border: 2px solid var(--ink);
-  border-radius: 999px;
+  border: 2px solid #8bad92;
+  border-radius: 50%;
   background: var(--white);
+  font-size: 20px;
+  font-weight: 800;
 }
-
-.reward-footer > div {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.machine-kiosk-finish {
-  min-height: 48px;
-  padding: 0 20px;
-  border-radius: 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* ---------- Water refill screen ---------- */
-
-.water-kiosk-card {
+.machine-progress-step.active span,
+.reward-steps span,
+.water-guide-step span { background: var(--lime-green); border-color: var(--deep-green); }
+.machine-progress-step p { font-size: 18px; }
+.machine-progress-line { flex: 1; height: 4px; margin-top: 15px; background: #bdd5bb; }
+.machine-kiosk-footer,
+.reward-footer {
+  min-height: 32px;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  gap: 20px;
-}
-
-.water-status-panel {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-}
-
-.water-status-panel h2 {
-  font-size: clamp(29px, 3.8vw, 44px);
-}
-
-.water-status-icon {
-  background: var(--blue);
-}
-
-.water-qr-layout {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: 1.28fr 0.72fr;
-  align-items: center;
-  gap: 28px;
-}
-
-.water-qr-frame {
-  justify-self: center;
-}
-
-.water-scan-guide {
-  align-self: center;
-  padding: 22px;
-  border: var(--border);
-  border-radius: 20px;
-  background: var(--mint-green);
-  box-shadow: var(--shadow);
-}
-
-.water-scan-guide > svg {
-  color: var(--deep-green);
-}
-
-.water-scan-guide h3 {
-  margin: 9px 0 18px;
-  color: var(--ink);
-  font-size: 28px;
-  font-weight: 950;
-  letter-spacing: -0.6px;
-}
-
-.water-guide-step {
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr);
-  align-items: center;
-  gap: 12px;
-  margin: 12px 0;
-}
-
-.water-guide-step p {
-  margin: 0;
-  color: var(--dark-green);
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.water-center-state {
-  width: 100%;
-  min-height: 340px;
-  display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--deep-green);
-  text-align: center;
-}
-
-.water-center-state.error {
-  color: var(--danger);
-}
-
-.water-center-state h2 {
-  margin: 18px 0 7px;
-  color: var(--ink);
-  font-size: 31px;
-  font-weight: 950;
-  letter-spacing: -0.8px;
-}
-
-.water-center-state p {
-  max-width: 500px;
-  margin: 0 0 22px;
+  gap: 12px;
   color: var(--dark-green);
-  font-size: 16px;
-  font-weight: 700;
+  text-align: center;
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
+/* Keep the reward instructions beside the QR, including on short displays. */
+.reward-kiosk { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.reward-celebration,
+.reward-scan-panel { min-width: 0; padding: 22px; border: var(--border); border-radius: 20px; }
+.reward-celebration { display: flex; flex-direction: column; justify-content: center; background: var(--mint-green); }
+.reward-celebration h2 { font-size: 32px; font-weight: 850; line-height: 1.1; }
+.reward-celebration > p { margin-top: 8px; font-size: 20px; }
+.reward-points { margin: 18px 0; }
+.reward-points span { display: block; font-size: 18px; }
+.reward-points strong { font-size: 60px; font-weight: 850; line-height: 1.05; }
+.reward-points p { display: inline; margin-left: 10px; font-size: 24px; }
+.reward-scan-panel { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; background: white; text-align: center; }
+.reward-scan-heading h3 { font-size: 28px; font-weight: 800; }
+.reward-qr-frame,
+.water-qr-frame { width: fit-content; max-width: 100%; padding: 4px; border: 2px solid #abc5b1; border-radius: 12px; background: white; }
+.reward-qr-frame canvas,
+.water-qr-frame svg { display: block; width: var(--machine-qr-size) !important; height: var(--machine-qr-size) !important; max-width: 100%; }
+.reward-steps { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: center; gap: 10px; }
+.reward-steps p { font-size: 20px; }
+.reward-expiry { display: flex; align-items: center; gap: 8px; font-size: 18px; }
+.reward-footer .green-button-guide { font-size: 20px; }
+
+/* Water refill: one instruction panel and one state-specific panel. */
+.water-kiosk-card { display: flex; flex-direction: column; gap: 18px; }
+.water-status-panel { display: flex; align-items: center; gap: 16px; }
+.water-status-icon { background: var(--blue); }
+.water-status-panel h2 { font-size: 32px; }
+.water-status-panel p { font-size: 20px; margin-top: 6px; }
+.water-qr-layout { flex: 1; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 28px; }
+.water-qr-frame { justify-self: center; }
+.water-scan-guide h3 { font-size: 26px; margin-bottom: 16px; }
+.water-guide-step { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: center; gap: 12px; margin-top: 12px; }
+.water-guide-step p { font-size: 22px; }
+.water-center-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; color: var(--deep-green); }
+.water-center-state.error { color: var(--danger); }
+.water-center-state h2 { font-size: 32px; }
+.water-center-state p { max-width: 600px; font-size: 22px; }
 .water-big-message,
 .water-dispense-display,
-.water-complete-display {
-  flex: 1;
-  min-height: 270px;
-  padding: 28px;
-  border: var(--border);
-  border-radius: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 26px;
-  box-shadow: var(--shadow);
-}
-
-.water-big-message {
-  background: var(--mint-green);
-  color: var(--deep-green);
-}
-
-.water-dispense-display {
-  background: var(--blue);
-  color: #114e6c;
-}
-
-.water-complete-display {
-  background: var(--main-green);
-  color: var(--ink);
-}
-
-.water-big-message h3 {
-  margin: 0;
-  color: var(--ink);
-  font-size: 30px;
-  font-weight: 950;
-}
-
-.water-big-message p {
-  margin: 7px 0 0;
-  color: var(--dark-green);
-  font-size: 17px;
-  font-weight: 700;
-}
-
-.water-big-message > .water-cup-icon {
-  width: 96px;
-  height: 96px;
-  flex: 0 0 96px;
-  padding: 15px;
-  border: var(--border);
-  border-radius: 22px;
-  background: var(--lime-green);
-  color: var(--ink);
-  box-shadow: var(--shadow-sm);
-}
-
-.water-processing-status {
-  width: fit-content;
-  margin-top: 18px;
-  padding: 9px 13px;
-  border: 2px solid var(--ink);
-  border-radius: 999px;
-  background: var(--white);
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 900;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.water-dispense-display span {
-  display: block;
-  font-size: 12px;
-  font-weight: 950;
-  letter-spacing: 0.1em;
-}
-
+.water-complete-display { flex: 1; display: flex; align-items: center; justify-content: center; gap: 24px; padding: 22px; border-radius: 16px; background: var(--blue); }
+.water-big-message { background: var(--mint-green); }
+.water-big-message h3 { font-size: 28px; }
+.water-big-message p { margin-top: 10px; font-size: 22px; }
+.water-cup-icon { width: 72px; height: 72px; }
+.water-processing-status { display: flex; align-items: center; gap: 8px; margin-top: 16px; font-size: 18px; }
+.water-dispense-display span { font-size: 18px; }
 .water-dispense-display strong,
-.water-complete-display strong {
-  display: block;
-  color: var(--ink);
-  font-size: clamp(48px, 7vw, 78px);
-  font-weight: 950;
-  letter-spacing: -2px;
-  line-height: 0.95;
-}
+.water-complete-display strong { display: block; font-size: 64px; line-height: 1.1; font-weight: 850; }
+.water-complete-display { background: var(--lime-green); }
+.water-complete-display small { display: block; margin-top: 10px; font-size: 18px; }
+.machine-page [role="alert"] { color: var(--danger); font-size: 20px; overflow-wrap: anywhere; }
+.machine-spin { animation: ecorefill-spin 1s linear infinite; }
+@keyframes ecorefill-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .machine-spin { animation: none; } }
 
-.water-dispense-display p,
-.water-complete-display p {
-  margin: 8px 0 0;
-  color: var(--dark-green);
-  font-size: 17px;
-  font-weight: 850;
-}
-
-.water-complete-display small {
-  display: block;
-  margin-top: 9px;
-  color: var(--dark-green);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-/* ---------- Motion ---------- */
-
-.machine-spin {
-  animation: ecorefill-spin 1s linear infinite;
-}
-
-@keyframes ecorefill-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .machine-page *,
-  .machine-page *::before,
-  .machine-page *::after {
-    scroll-behavior: auto !important;
-    transition: none !important;
-  }
-
-  .machine-spin {
-    animation-duration: 2s;
-  }
-}
-
-/* ---------- 7-inch landscape kiosks ---------- */
-
-@media (max-width: 900px), (max-height: 650px) {
-  .machine-kiosk-page {
-    padding: 12px;
-  }
-
-  .machine-kiosk-shell {
-    min-height: calc(100dvh - 24px);
-    gap: 11px;
-  }
-
-  .machine-kiosk-header {
-    min-height: 58px;
-  }
-
-  .machine-brand-icon {
-    width: 48px;
-    height: 48px;
-    flex-basis: 48px;
-    border-radius: 14px;
-    box-shadow: 4px 4px 0 var(--ink);
-  }
-
-  .machine-kiosk-brand h1 {
-    font-size: clamp(25px, 3.5vw, 34px);
-  }
-
-  .machine-kiosk-brand p {
-    margin-top: 4px;
-    font-size: 12px;
-  }
-
-  .machine-kiosk-status,
-  .machine-kiosk-back {
-    min-height: 42px;
-    padding: 0 13px;
-    font-size: 12px;
-    box-shadow: 4px 4px 0 var(--ink);
-  }
-
+/* Use spacing, not tiny type or clipped content, to fit a 7-inch panel.
+   Unusually long error messages can scroll instead of hiding controls. */
+@media (min-width: 681px) and (max-height: 650px) {
+  .machine-kiosk-page { padding: 12px; }
+  .machine-kiosk-shell { min-height: calc(100dvh - 24px); gap: 10px; }
+  .machine-kiosk-brand p { display: none; }
   .machine-kiosk-card,
-  .water-kiosk-card {
-    padding: 14px 17px;
-    border-radius: 19px;
-    box-shadow: 7px 7px 0 var(--ink);
-  }
-
-  .machine-kiosk-card {
-    gap: 11px;
-  }
-
-  .machine-kiosk-hero-icon,
-  .water-status-icon {
-    width: 72px;
-    height: 72px;
-    flex-basis: 72px;
-    border-radius: 18px;
-    box-shadow: 5px 5px 0 var(--ink);
-  }
-
-  .machine-kiosk-hero-icon svg,
-  .water-status-icon svg {
-    width: 48px;
-    height: 48px;
-  }
-
-  .machine-kiosk-eyebrow {
-    margin-bottom: 6px;
-    padding: 4px 8px;
-    font-size: 10px;
-  }
-
-  .machine-kiosk-copy h2 {
-    font-size: clamp(27px, 5vw, 40px);
-  }
-
-  .machine-kiosk-copy p {
-    margin-top: 6px;
-    font-size: 14px;
-  }
-
-  .machine-choice-grid {
-    gap: 12px;
-  }
-
-  .machine-choice-card {
-    min-height: 122px;
-    grid-template-columns: 58px minmax(0, 1fr);
-    gap: 11px;
-    padding: 13px;
-    border-radius: 16px;
-    box-shadow: 5px 5px 0 var(--ink);
-  }
-
-  .machine-choice-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 14px;
-    box-shadow: 3px 3px 0 var(--ink);
-  }
-
-  .machine-choice-icon svg {
-    width: 38px;
-    height: 38px;
-  }
-
-  .machine-choice-tag {
-    padding: 3px 7px;
-    font-size: 8px;
-  }
-
-  .machine-choice-text h3 {
-    margin: 6px 0 3px;
-    font-size: 20px;
-  }
-
-  .machine-choice-text p {
-    font-size: 11px;
-  }
-
-  .machine-progress-step span {
-    width: 34px;
-    height: 34px;
-    font-size: 14px;
-  }
-
-  .machine-progress-line {
-    margin-top: 15px;
-  }
-
-  .machine-progress-step p {
-    font-size: 9px;
-  }
-
-  .machine-detection-pill {
-    padding: 7px 10px;
-    font-size: 11px;
-  }
-
-  .machine-kiosk-primary {
-    min-height: 52px;
-    font-size: 16px;
-  }
-
-  .reward-kiosk {
-    gap: 12px;
-  }
-
+  .water-kiosk-card { padding: 18px; gap: 18px; }
+  .machine-choice-card { padding: 18px; }
   .reward-celebration,
-  .reward-scan-panel {
-    padding: 13px 15px;
-    border-radius: 18px;
-    box-shadow: 6px 6px 0 var(--ink);
-  }
-
-  .reward-success-badge {
-    padding: 6px 9px;
-    font-size: 10px;
-  }
-
-  .reward-celebration h2 {
-    margin: 11px 0 5px;
-    font-size: 29px;
-  }
-
-  .reward-celebration > p {
-    font-size: 12px;
-  }
-
-  .reward-points {
-    margin-top: 12px;
-    padding: 9px;
-    border-radius: 15px;
-    box-shadow: 5px 5px 0 var(--ink);
-  }
-
-  .reward-points strong {
-    font-size: 54px;
-  }
-
-  .reward-points p {
-    font-size: 14px;
-  }
-
-  .reward-scan-heading h3 {
-    font-size: 20px;
-  }
-
-  .reward-qr-frame,
-  .water-qr-frame {
-    padding: 4px;
-    border-radius: 14px;
-    box-shadow: 5px 5px 0 var(--ink);
-  }
-
-  .reward-qr-frame {
-    margin-top: 6px;
-  }
-
-  .reward-steps {
-    margin-top: 9px;
-    gap: 4px 8px;
-  }
-
-  .reward-steps span,
-  .water-guide-step span {
-    width: 23px;
-    height: 23px;
-    border-radius: 7px;
-    font-size: 10px;
-  }
-
-  .reward-steps p {
-    font-size: 10px;
-  }
-
-  .reward-expiry {
-    margin-top: 7px;
-    padding: 5px 8px;
-    font-size: 9px;
-  }
-
-  .water-kiosk-card {
-    gap: 12px;
-  }
-
-  .water-status-panel {
-    gap: 13px;
-  }
-
-  .water-status-panel h2 {
-    font-size: 27px;
-  }
-
-  .water-status-panel p {
-    margin-top: 4px;
-    font-size: 13px;
-  }
-
-  .water-qr-layout {
-    gap: 16px;
-  }
-
-  .water-scan-guide {
-    padding: 13px;
-    border-radius: 16px;
-    box-shadow: 5px 5px 0 var(--ink);
-  }
-
-  .water-scan-guide h3 {
-    margin: 4px 0 8px;
-    font-size: 20px;
-  }
-
-  .water-guide-step {
-    margin: 6px 0;
-  }
-
-  .water-guide-step p {
-    font-size: 11px;
-  }
-
+  .reward-scan-panel { padding: 18px; }
+}
+@media (min-width: 681px) and (max-height: 520px) {
+  .machine-page { --machine-qr-size: 208px; }
+  .machine-kiosk-page { padding: 8px 12px; }
+  .machine-kiosk-shell { min-height: calc(100dvh - 16px); gap: 8px; }
+  .machine-kiosk-card,
+  .water-kiosk-card { padding: 14px 18px; gap: 14px; }
+  .machine-kiosk-copy h2 { font-size: 32px; }
+  .machine-kiosk-copy p { font-size: 20px; margin-top: 6px; }
+  .machine-choice-grid { gap: 16px; }
+  .machine-choice-card { padding: 16px; gap: 10px; }
+  .machine-choice-text { gap: 8px; }
+  .machine-choice-text h3 { font-size: 30px; }
+  .machine-choice-text p { font-size: 20px; }
+  .machine-choice-action { padding-top: 6px; }
+  .machine-choice-icon svg { width: 36px; height: 36px; }
+  .machine-session-total { padding: 10px; }
+  .reward-celebration,
+  .reward-scan-panel { padding: 14px 18px; }
+  .reward-celebration h2 { font-size: 28px; }
+  .reward-points { margin: 12px 0; }
+  .reward-points strong { font-size: 48px; }
+  .reward-steps { gap: 8px 10px; }
+  .reward-scan-panel { gap: 8px; }
+  .reward-scan-heading .machine-kiosk-eyebrow { display: none; }
+  .water-status-icon { width: 56px; height: 56px; flex-basis: 56px; }
+  .water-status-icon svg { width: 36px; height: 36px; }
+  .water-status-panel h2 { font-size: 28px; }
+  .water-kiosk-card { gap: 12px; }
+  .water-qr-layout { gap: 22px; }
+  .water-scan-guide h3 { font-size: 24px; margin-bottom: 10px; }
+  .water-guide-step { margin-top: 10px; }
+  .water-guide-step p { font-size: 20px; }
   .water-big-message,
   .water-dispense-display,
-  .water-complete-display {
-    min-height: 210px;
-    padding: 18px;
-    border-radius: 18px;
-    box-shadow: 6px 6px 0 var(--ink);
-  }
-
-  .machine-kiosk-footer,
-  .reward-footer {
-    min-height: 34px;
-    font-size: 9px;
-  }
-
-  .machine-kiosk-footer span,
-  .reward-footer > div {
-    padding: 5px 7px;
-  }
-}
-
-@media (max-height: 650px) {
-  .reward-steps {
-    display: none;
-  }
+  .water-complete-display { padding: 18px; }
 }
 
 @media (max-width: 680px) {
-  .machine-kiosk-page {
-    padding: 16px;
-  }
-
-  .machine-kiosk-shell {
-    min-height: calc(100dvh - 32px);
-    gap: 16px;
-  }
-
-  .machine-kiosk-header {
-    align-items: flex-start;
-  }
-
-  .machine-kiosk-brand p {
-    display: none;
-  }
-
+  .machine-kiosk-page { padding: 12px; }
+  .machine-kiosk-shell { min-height: calc(100dvh - 24px); }
+  .machine-kiosk-brand p { display: none; }
+  .machine-kiosk-brand h1 { font-size: 24px; }
+  .machine-brand-icon { display: none; }
   .machine-kiosk-status,
-  .machine-kiosk-back {
-    max-width: 42%;
-  }
-
+  .machine-kiosk-back { padding: 10px 12px; font-size: 18px; }
+  .machine-kiosk-card,
+  .water-kiosk-card { padding: 18px; }
   .machine-choice-grid,
   .reward-kiosk,
-  .water-qr-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .machine-kiosk-card,
-  .water-kiosk-card,
-  .reward-celebration,
-  .reward-scan-panel {
-    padding: 20px;
-  }
-
-  .machine-kiosk-card {
-    justify-content: flex-start;
-  }
-
-  .machine-choice-card {
-    min-height: 118px;
-  }
-
-  .reward-kiosk,
-  .water-qr-layout {
-    overflow: visible;
-  }
-
-  .machine-kiosk-footer {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
-  .machine-kiosk-footer span {
-    width: fit-content;
-  }
-
-  .reward-footer {
-    flex-wrap: wrap;
-  }
-
-  .water-status-panel {
-    align-items: flex-start;
-  }
-}
-
-@media (max-width: 430px) {
-  .machine-kiosk-brand h1 {
-    font-size: 24px;
-  }
-
-  .machine-brand-icon {
-    width: 44px;
-    height: 44px;
-    flex-basis: 44px;
-  }
-
-  .machine-kiosk-status,
-  .machine-kiosk-back {
-    min-height: 40px;
-    padding: 0 10px;
-    font-size: 10px;
-  }
-
-  .machine-choice-card {
-    grid-template-columns: 50px minmax(0, 1fr);
-  }
-
-  .machine-choice-icon {
-    width: 48px;
-    height: 48px;
-  }
-
-  .water-status-panel {
-    flex-direction: column;
-  }
-}
-
-/*
- * A 7-inch Raspberry Pi display is normally 1024x600 (some panels are
- * 800x480). Keep the complete kiosk flow inside that landscape viewport so
- * the operator never has to scroll to reach a control or scan a QR code.
- */
-@media (min-width: 681px) and (max-height: 650px) {
-  .machine-page {
-    --machine-qr-size: min(42vmin, 250px);
-  }
-
-  .machine-kiosk-page {
-    width: 100%;
-    height: 100dvh;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .machine-kiosk-shell {
-    height: 100%;
-    min-height: 0;
-  }
-
-  .machine-kiosk-card,
-  .water-kiosk-card,
-  .reward-kiosk {
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .machine-kiosk-header,
-  .machine-kiosk-footer,
-  .reward-footer {
-    flex-shrink: 0;
-  }
-}
-
-/* Extra-tight sizing for lower-resolution 800x480 7-inch panels. */
-@media (min-width: 681px) and (max-height: 520px) {
-  .machine-kiosk-page {
-    padding: 8px;
-  }
-
-  .machine-kiosk-shell {
-    gap: 7px;
-  }
-
-  .machine-kiosk-header {
-    min-height: 48px;
-  }
-
-  .machine-kiosk-brand {
-    gap: 10px;
-  }
-
-  .machine-brand-icon {
-    width: 42px;
-    height: 42px;
-    flex-basis: 42px;
-  }
-
-  .machine-kiosk-brand h1 {
-    font-size: 25px;
-  }
-
-  .machine-kiosk-brand p {
-    margin-top: 2px;
-    font-size: 10px;
-  }
-
-  .machine-kiosk-status,
-  .machine-kiosk-back {
-    min-height: 36px;
-    padding: 0 11px;
-    font-size: 10px;
-  }
-
-  .machine-kiosk-card,
-  .water-kiosk-card {
-    gap: 7px;
-    padding: 10px 14px;
-  }
-
-  .machine-kiosk-hero-icon,
-  .water-status-icon {
-    width: 58px;
-    height: 58px;
-    flex-basis: 58px;
-  }
-
-  .machine-kiosk-hero-icon svg,
-  .water-status-icon svg {
-    width: 38px;
-    height: 38px;
-  }
-
-  .machine-kiosk-copy h2 {
-    font-size: clamp(24px, 5vw, 34px);
-  }
-
-  .machine-kiosk-copy p,
-  .water-status-panel p {
-    margin-top: 4px;
-    font-size: 12px;
-    line-height: 1.3;
-  }
-
-  .machine-choice-grid {
-    gap: 9px;
-  }
-
-  .machine-choice-card {
-    min-height: 96px;
-    grid-template-columns: 50px minmax(0, 1fr);
-    gap: 9px;
-    padding: 9px;
-  }
-
-  .machine-choice-icon {
-    width: 48px;
-    height: 48px;
-  }
-
-  .machine-choice-icon svg {
-    width: 32px;
-    height: 32px;
-  }
-
-  .machine-choice-text h3 {
-    margin: 4px 0 2px;
-    font-size: 18px;
-  }
-
-  .machine-choice-text p {
-    font-size: 10px;
-  }
-
-  .reward-celebration,
-  .reward-scan-panel {
-    padding: 10px 12px;
-  }
-
-  .reward-celebration h2 {
-    margin: 7px 0 4px;
-    font-size: 25px;
-  }
-
-  .reward-points {
-    margin-top: 8px;
-    padding: 7px;
-  }
-
-  .reward-points strong {
-    font-size: 42px;
-  }
-
-  .reward-qr-frame {
-    margin-top: 4px;
-  }
-
-  .reward-expiry {
-    margin-top: 4px;
-  }
-
-  .water-status-panel {
-    gap: 10px;
-  }
-
-  .water-status-panel h2 {
-    font-size: 23px;
-  }
-
-  .water-qr-layout {
-    gap: 10px;
-  }
-
-  .water-scan-guide {
-    padding: 10px;
-  }
-
-  .water-scan-guide h3 {
-    margin: 3px 0 5px;
-    font-size: 18px;
-  }
-
-  .water-guide-step {
-    gap: 8px;
-    margin: 3px 0;
-  }
-
-  .water-guide-step p {
-    font-size: 10px;
-    line-height: 1.2;
-  }
-
+  .water-qr-layout { grid-template-columns: 1fr; }
+  .machine-home-heading,
+  .water-status-panel { flex-direction: column; text-align: center; }
+  .machine-kiosk-copy h2 { font-size: 30px; }
+  .machine-choice-card { flex-direction: row; }
+  .machine-choice-text h3 { font-size: 28px; }
+  .machine-choice-text p { font-size: 20px; }
   .water-big-message,
   .water-dispense-display,
-  .water-complete-display {
-    min-height: 0;
-    padding: 14px;
-  }
-
-  .machine-kiosk-footer,
-  .reward-footer {
-    min-height: 28px;
-    gap: 6px;
-    font-size: 8px;
-  }
-
-  .machine-kiosk-footer span,
-  .reward-footer > div {
-    padding: 3px 5px;
-  }
+  .water-complete-display { flex-direction: column; text-align: center; }
+  .machine-session-total { gap: 12px; }
+  .machine-button-guide { text-align: left; }
 }

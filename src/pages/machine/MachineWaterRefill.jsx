@@ -14,7 +14,6 @@ import {
   Droplets,
   LoaderCircle,
   RefreshCw,
-  ScanLine,
   XCircle,
 } from "lucide-react";
 import "../../styles/machine.css";
@@ -426,7 +425,7 @@ function MachineWaterRefill() {
           eyebrow: "Step 2 of 3",
 
           title:
-            "Place your cup near the sensor",
+            "Place your cup under the nozzle",
 
           message:
             "Set it under the water dispenser and keep it there.",
@@ -443,7 +442,7 @@ function MachineWaterRefill() {
           eyebrow: "Step 3 of 3",
 
           title:
-            "Water is flowing 💧",
+            "Filling your container",
 
           message: `Dispensing ${
             session.waterAmountMl ||
@@ -463,7 +462,7 @@ function MachineWaterRefill() {
           eyebrow: "All done!",
 
           title:
-            "Refill complete 🎉",
+            "Take your water",
 
           message: `You received ${
             session.waterAmountMl ||
@@ -557,7 +556,7 @@ function MachineWaterRefill() {
           >
             <ArrowLeft size={22} />
 
-            {leaving ? "Returning..." : "Back to Recycling"}
+            {leaving ? "Returning..." : "Back"}
           </button>
         </header>
 
@@ -592,7 +591,7 @@ function MachineWaterRefill() {
                   Couldn't start refill
                 </h2>
 
-                <p>{error}</p>
+                <p>Please try again or ask for help.</p>
 
                 <button
                   className="machine-kiosk-primary"
@@ -613,7 +612,7 @@ function MachineWaterRefill() {
             !error &&
             session && (
               <>
-                <section className="water-status-panel">
+                <section className="water-status-panel" role="status" aria-live="polite">
                   <div className="water-status-icon">
                     {
                       statusContent.icon
@@ -657,10 +656,6 @@ function MachineWaterRefill() {
                       </div>
 
                       <div className="water-scan-guide">
-                        <ScanLine
-                          size={42}
-                        />
-
                         <h3>
                           How to refill
                         </h3>
@@ -669,9 +664,7 @@ function MachineWaterRefill() {
                           <span>1</span>
 
                           <p>
-                            Place your
-                            container under
-                            the dispenser.
+                            Place your cup under the nozzle.
                           </p>
                         </div>
 
@@ -679,10 +672,7 @@ function MachineWaterRefill() {
                           <span>2</span>
 
                           <p>
-                            Open the
-                            EcoRefill app
-                            and scan this
-                            QR.
+                            Open EcoRefill. Tap <strong>Scan QR</strong>.
                           </p>
                         </div>
 
@@ -690,9 +680,7 @@ function MachineWaterRefill() {
                           <span>3</span>
 
                           <p>
-                            Choose your
-                            water amount
-                            and confirm.
+                            Scan, choose an amount, then confirm on your phone.
                           </p>
                         </div>
                       </div>
@@ -709,15 +697,11 @@ function MachineWaterRefill() {
 
                     <div>
                       <h3>
-                        Put your cup under
-                        the dispenser
+                        Keep your cup in place
                       </h3>
 
                       <p>
-                        Move it close to
-                        the sensor. Do not
-                        remove it while the
-                        machine is working.
+                        Move it close to the sensor. Wait until filling is complete.
                       </p>
 
                       <div
@@ -765,35 +749,6 @@ function MachineWaterRefill() {
                 {session.status ===
                   "failed" && (
                   <div className="water-center-state error">
-                    <AlertTriangle
-                      size={58}
-                    />
-
-                    <h3>
-                      {
-                        getFriendlyRefillError()
-                          .title
-                      }
-                    </h3>
-
-                    <p>
-                      {
-                        getFriendlyRefillError()
-                          .message
-                      }
-                    </p>
-
-                    {getFriendlyRefillError()
-                      .detail && (
-                      <small>
-                        Machine error:{" "}
-                        {
-                          getFriendlyRefillError()
-                            .detail
-                        }
-                      </small>
-                    )}
-
                     <button
                       className="machine-kiosk-primary"
                       onClick={retrySession}
@@ -839,16 +794,9 @@ function MachineWaterRefill() {
         </main>
 
         <footer className="machine-kiosk-footer">
-          <span>
-            {refillBusy
-              ? "💧 Please wait for your refill to finish"
-              : "🔵 Press BLUE again to return to recycling"}
-          </span>
-
-          <span>
-            ✋ Keep it under the nozzle
-            while dispensing
-          </span>
+          <span>{refillBusy
+            ? "Keep your container under the nozzle until filling is complete."
+            : "Press BLUE on the machine or tap Back to return."}</span>
         </footer>
       </div>
     </div>
