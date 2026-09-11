@@ -82,6 +82,16 @@ machine.close()
         self.assertEqual(self.machine.get_state()["phase"], "water_refill_requested")
         self.assertTrue(self.machine.recycling_paused.is_set())
 
+    def test_second_blue_press_requests_back_without_resuming_early(self):
+        self.machine.request_water_refill()
+        self.machine.request_water_refill()
+        state = self.machine.get_state()
+        self.assertIsNotNone(state["waterReturnRequestedAt"])
+        self.assertEqual(state["phase"], "water_refill_requested")
+        self.assertTrue(self.machine.recycling_paused.is_set())
+        self.machine.reset_state()
+        self.assertIsNone(self.machine.get_state()["waterReturnRequestedAt"])
+
 
 class ButtonTests(unittest.TestCase):
     def test_gpio_callbacks_reach_the_machine_state(self):
@@ -254,7 +264,10 @@ class APITests(unittest.TestCase):
     def setUp(self):
         self.machine = MachineRuntime()
         self.firebase_patch = patch.dict(sys.modules, {
-            "firebase_admin": SimpleNamespace(firestore=SimpleNamespace(), auth=Mock()),
+            "firebase_admin": SimpleNamespace(firestore=SimpleNamespace(
+                transactional=lambda callback: callback,
+                SERVER_TIMESTAMP="server-timestamp",
+            ), auth=Mock()),
         })
         self.firebase_patch.start()
         self.addCleanup(self.firebase_patch.stop)
@@ -286,6 +299,50 @@ class APITests(unittest.TestCase):
     def test_missing_firebase_returns_service_unavailable(self):
         self.assertEqual(self.local.post("/api/water-refill/session").status_code, 503)
         self.assertEqual(self.public.post("/api/recycling/redeem").status_code, 503)
+
+    def test_blue_press_after_touchscreen_entry_requests_back(self):
+        self.local.post("/api/machine/pause-recycling")
+        self.machine.request_water_refill()
+        state = self.local.get("/api/machine/state").json
+        self.assertIsNotNone(state["waterReturnRequestedAt"])
+        self.assertTrue(self.machine.recycling_paused.is_set())
+
+    def test_cancel_unused_refill_restores_recycling_and_invalidates_qr(self):
+        self.machine.db = Mock()
+        session_ref = self.machine.db.collection.return_value.document.return_value
+        session_ref.get.return_value.to_dict.return_value = {"status": "waiting_for_user"}
+        self.machine.request_water_refill()
+        self.machine.request_water_refill()
+        response = self.local.post("/api/water-refill/session/refill-1/cancel")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["session"]["status"], "cancelled")
+        self.assertFalse(self.machine.recycling_paused.is_set())
+        self.assertEqual(self.machine.get_state()["phase"], "idle")
+        self.assertIsNone(self.machine.get_state()["waterReturnRequestedAt"])
+        transaction = self.machine.db.transaction.return_value
+        session_ref.get.assert_called_once_with(transaction=transaction)
+        self.assertEqual(transaction.update.call_args.args[1]["status"], "cancelled")
+
+    def test_cancel_started_refill_keeps_recycling_paused(self):
+        for status in ("processing", "dispensing", "completed"):
+            with self.subTest(status=status):
+                self.machine.db = Mock()
+                session_ref = self.machine.db.collection.return_value.document.return_value
+                session_ref.get.return_value.to_dict.return_value = {"status": status}
+                self.machine.recycling_paused.set()
+                response = self.local.post("/api/water-refill/session/refill-1/cancel")
+                self.assertEqual(response.status_code, 409)
+                self.assertTrue(self.machine.recycling_paused.is_set())
+                self.machine.db.transaction.return_value.update.assert_not_called()
+
+    def test_cancel_failure_keeps_recycling_paused(self):
+        self.machine.db = Mock()
+        self.machine.db.transaction.side_effect = RuntimeError("Firebase unavailable")
+        self.machine.recycling_paused.set()
+        with self.assertLogs("ecorefill.machine", level="ERROR"):
+            response = self.local.post("/api/water-refill/session/refill-1/cancel")
+        self.assertEqual(response.status_code, 500)
+        self.assertTrue(self.machine.recycling_paused.is_set())
 
     def test_redemption_requires_authentication_when_firebase_is_available(self):
         self.machine.db = Mock()

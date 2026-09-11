@@ -40,6 +40,7 @@ flowchart TD
     M --> B
     B -->|Refill water| N[Press blue button or choose Refill Water]
     N --> O[Scan the refill QR in the app]
+    N -->|Press blue again or Back before refill starts| C
     O --> P[Choose amount and confirm]
     P --> Q[Pi validates request and deducts points]
     Q --> R[ESP32 handles dispensing]

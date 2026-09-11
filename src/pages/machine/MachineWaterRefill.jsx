@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -33,6 +34,14 @@ function MachineWaterRefill() {
 
   const [error, setError] =
     useState("");
+
+  const [backError, setBackError] = useState("");
+  const [leaving, setLeaving] = useState(false);
+  const leavingRef = useRef(false);
+  const lastReturnRequestRef = useRef(null);
+  const sessionId = session?.sessionId;
+  const sessionStatus = session?.status;
+  const refillBusy = ["processing", "dispensing"].includes(sessionStatus);
 
   const sessionCreatedRef =
     useRef(false);
@@ -251,51 +260,90 @@ function MachineWaterRefill() {
     navigate,
   ]);
 
-  const cancelSession =
-    async () => {
+  const cancelSession = useCallback(async () => {
+    if (creating || leavingRef.current) return;
+    if (["processing", "dispensing"].includes(sessionStatus)) {
+      setBackError("Please wait for your refill to finish before returning to recycling.");
+      return;
+    }
+
+    leavingRef.current = true;
+    setLeaving(true);
+    setBackError("");
+    try {
+      if (
+        sessionId &&
+        sessionStatus !==
+          "completed" &&
+        sessionStatus !==
+          "failed"
+      ) {
+        const response = await fetch(
+          `${API_BASE_URL}/api/water-refill/session/${sessionId}/cancel`,
+          {
+            method: "POST",
+          }
+        );
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.message || "Unable to cancel this refill. Please try again.");
+        }
+      }
+      // Resume only after cancellation succeeds; a refill may have started
+      // since the screen last polled its status.
+      const response = await fetch(
+        `${API_BASE_URL}/api/machine/resume-recycling`,
+        {
+          method: "POST",
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Unable to resume recycling. Please press Back again.");
+      }
+      window.clearTimeout(redirectTimerRef.current);
+      navigate("/machine", {
+        replace: true,
+      });
+    } catch (err) {
+      console.error("Return to recycling error:", err);
+      setBackError(err.message || "Unable to return to recycling. Please try again.");
+    } finally {
+      leavingRef.current = false;
+      setLeaving(false);
+    }
+  }, [creating, sessionId, sessionStatus, navigate]);
+
+  useEffect(() => {
+    // Keep a press made while the QR is being created pending until its
+    // session exists, so that QR can be cancelled before leaving.
+    if (creating) return;
+    let active = true;
+    let polling = false;
+    const checkBlueButton = async () => {
+      if (polling) return;
+      polling = true;
       try {
-        if (
-          session?.sessionId &&
-          session.status !==
-            "completed" &&
-          session.status !==
-            "failed"
-        ) {
-          await fetch(
-            `${API_BASE_URL}/api/water-refill/session/${session.sessionId}/cancel`,
-            {
-              method: "POST",
-            }
-          );
+        const response = await fetch(`${API_BASE_URL}/api/machine/state`);
+        if (!response.ok) return;
+        const state = await response.json();
+        const requestedAt = state.waterReturnRequestedAt;
+        if (active && requestedAt && requestedAt !== lastReturnRequestRef.current) {
+          lastReturnRequestRef.current = requestedAt;
+          await cancelSession();
         }
       } catch (err) {
-        console.error(
-          "Cancel refill session error:",
-          err
-        );
+        console.error("Blue button polling error:", err);
       } finally {
-        // Water refill entry paused automatic recycling detection
-        // (see MachineHome's openWaterRefill). Always resume it when
-        // leaving this screen, or the camera stays paused forever.
-        try {
-          await fetch(
-            `${API_BASE_URL}/api/machine/resume-recycling`,
-            {
-              method: "POST",
-            }
-          );
-        } catch (resumeErr) {
-          console.error(
-            "Resume recycling error:",
-            resumeErr
-          );
-        }
-
-        navigate("/machine", {
-          replace: true,
-        });
+        polling = false;
       }
     };
+    checkBlueButton();
+    const interval = window.setInterval(checkBlueButton, 500);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [creating, cancelSession]);
 
   const retrySession = () => {
     sessionCreatedRef.current =
@@ -505,14 +553,16 @@ function MachineWaterRefill() {
           <button
             className="machine-kiosk-back"
             onClick={cancelSession}
+            disabled={creating || leaving || refillBusy}
           >
             <ArrowLeft size={22} />
 
-            Back
+            {leaving ? "Returning..." : "Back to Recycling"}
           </button>
         </header>
 
         <main className="water-kiosk-card">
+          {backError && <p role="alert">{backError}</p>}
           {creating && (
             <div className="water-center-state">
               <LoaderCircle
@@ -790,7 +840,9 @@ function MachineWaterRefill() {
 
         <footer className="machine-kiosk-footer">
           <span>
-            💧 Use a clean container
+            {refillBusy
+              ? "💧 Please wait for your refill to finish"
+              : "🔵 Press BLUE again to return to recycling"}
           </span>
 
           <span>

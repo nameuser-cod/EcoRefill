@@ -329,50 +329,35 @@ class WaterAPI:
                 )
             )
 
-            snapshot = (
-                session_ref.get()
-            )
+            # Compete atomically with point reservation: a second blue press
+            # must never cancel a refill that has already started processing.
+            @firestore.transactional
+            def cancel_refill(transaction):
+                snapshot = session_ref.get(transaction=transaction)
+                if not snapshot.exists:
+                    return None, 404
 
-            if not snapshot.exists:
+                session = snapshot.to_dict() or {}
+                if session.get("status") in {"processing", "dispensing", "completed"}:
+                    return session, 409
+
+                transaction.update(session_ref, {
+                    "status": "cancelled",
+                    "message": "Water refill session cancelled.",
+                    "updatedAt": firestore.SERVER_TIMESTAMP,
+                })
+                return session, 200
+
+            session, status = cancel_refill(self.db.transaction())
+            if status != 200:
                 return jsonify({
                     "ok": False,
-                    "message":
-                        "Water refill session "
-                        "was not found.",
-                }), 404
-
-            session = (
-                snapshot.to_dict()
-                or {}
-            )
-
-            if (
-                session.get("status")
-                in {
-                    "processing",
-                    "dispensing",
-                    "completed",
-                }
-            ):
-                return jsonify({
-                    "ok": False,
-                    "message":
-                        "This refill can no "
-                        "longer be cancelled.",
-                }), 409
-
-            session_ref.update({
-                "status":
-                    "cancelled",
-
-                "message":
-                    "Water refill session "
-                    "cancelled.",
-
-                "updatedAt":
-                    firestore
-                    .SERVER_TIMESTAMP,
-            })
+                    "message": (
+                        "Water refill session was not found."
+                        if status == 404
+                        else "This refill can no longer be cancelled."
+                    ),
+                }), status
 
             # A cancelled refill must also leave water mode and restore recycling.
             self.recycling_paused.clear()

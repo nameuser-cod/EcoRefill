@@ -38,6 +38,7 @@ class MachineState:
             firebaseSaved=False,
             recyclingRecordId=None,
             error=None,
+            waterReturnRequestedAt=None,
         )
 
     def rearm_for_next_item(self, message=None):
@@ -84,11 +85,12 @@ class MachineState:
         self.finish_session_event.set()
 
     def request_water_refill(self):
-        """Open water-refill mode from the physical BLUE button.
+        """Open water refill, or request a return to recycling on another press.
 
         The button is accepted only when no recycling batch is in progress.
         The kiosk sees the `water_refill_requested` phase through /api/machine/state
         and navigates to the water-refill screen.
+        In water mode the kiosk cancels the session before resuming recycling.
         """
         current = self.get_state()
 
@@ -102,6 +104,11 @@ class MachineState:
                     "your reward QR, then use the BLUE button for water."
                 )
             )
+            return
+
+        if self.recycling_paused.is_set():
+            log("Blue button pressed. Requesting return to recycling...")
+            self.update_state(waterReturnRequestedAt=time.time())
             return
 
         if current.get("phase") not in {"idle", "rejected", "error"}:
