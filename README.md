@@ -152,7 +152,7 @@ flowchart LR
 ```
 
 - **The Raspberry Pi** runs the camera, material model, inspection module, machine state, reward redemption API, and refill request worker.
-- **The ESP32** receives physical sorting and dispensing commands over USB serial at **115200 baud**. Its firmware is not included in this repository.
+- **The ESP32** receives physical sorting and dispensing commands over USB serial at **115200 baud**. The [controller firmware and upload notes](firmware/README.md) are included; hardware calibration is required.
 - **The kiosk** reads the Pi's local API on port **5000**. Its home screen polls machine state every **500 ms**.
 - **The user app** uses Firebase Authentication, reads Firestore records, submits refill requests, and calls the Pi's authenticated reward redemption endpoint.
 - **The owner dashboard** subscribes to Firestore records for the owner's assigned machine.
@@ -301,7 +301,7 @@ Build and run the Android project through Android Studio. A phone's `127.0.0.1` 
 
 - **250 mL pricing is inconsistent** between the app/Cloud Function and the active Pi worker, as documented in the price table.
 - **GCash verification is manual.** Owners check received payments themselves before approving the point transfer.
-- **ESP32 firmware and full hardware schematics are absent.** This repository defines the Pi-side command protocol but does not establish the attached controller's physical behavior or dispensing accuracy.
+- **ESP32 firmware needs hardware validation.** The [included controller](firmware/README.md) has host regression tests, but has not been validated on the physical machine. Full hardware schematics and measured dispensing calibration are not included. The Pi sorting sender does not yet handle firmware `BUSY` responses.
 - **Cleanliness and size checks are optional.** They require real training data or calibration before enforcement. Camera appearance checks do not measure weight or establish water quality.
 - **Monitoring depends on supplied data.** Water level, water-quality status, tamper status, and alerts need an appropriate source writing those records; the dashboard alone does not produce sensor readings.
 - **Firebase setup is external.** Authentication, credentials, access rules, and machine records must be configured for the installation. Internet access is needed for the described cloud account, reward, and refill workflows.
