@@ -16,6 +16,7 @@ from .config import (
     GREEN_BUTTON_BOUNCE_SECONDS, GREEN_BUTTON_GPIO, MACHINE_ID, MODEL_PATH,
     HX711_OFFSET, HX711_COUNTS_PER_GRAM, HX711_MAX_SPREAD_G,
     BOTTLE_MAX_WEIGHT_G, CAN_MAX_WEIGHT_G,
+    WEIGHT_SENSOR_ENABLED,
 )
 from .detection import MaterialDetection
 from .diagnostics import log
@@ -151,6 +152,10 @@ class MachineRuntime(
 
 
     def initialize_weight_sensor(self):
+        if not WEIGHT_SENSOR_ENABLED:
+            log("Weight sensor disabled by configuration; skipping weight checks.")
+            return
+
         from weight_sensor import CalibratedScale
 
         try:

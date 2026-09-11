@@ -71,7 +71,12 @@ GREEN_BUTTON_BOUNCE_SECONDS = 0.15
 BLUE_BUTTON_GPIO = int(os.getenv("BLUE_BUTTON_GPIO", "27"))
 BLUE_BUTTON_BOUNCE_SECONDS = 0.15
 
-# Required HX711 weight check: DT=BCM5/pin29, SCK=BCM6/pin31.
+# Temporarily disabled. Set WEIGHT_SENSOR_ENABLED=true to restore weighing.
+WEIGHT_SENSOR_ENABLED = (
+    os.getenv("WEIGHT_SENSOR_ENABLED", "false").strip().lower()
+    in {"1", "true", "yes"}
+)
+# HX711 wiring: DT=BCM5/pin29, SCK=BCM6/pin31.
 # Latest measured calibration from the installed 1 kg load cell.
 # Do not auto-tare at startup or per item: an item may already be on the scale.
 HX711_OFFSET = float(os.getenv("HX711_OFFSET", "-639408"))

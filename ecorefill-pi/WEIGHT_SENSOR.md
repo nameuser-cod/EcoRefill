@@ -44,6 +44,25 @@ different acquisition method before integration into the running machine.
 
 ## Automatic rejection in the recycling controller
 
+**Temporarily disabled by default.** The controller skips HX711 initialization,
+weight settling, and sampling. It records `inspection.weight.status` as
+`disabled`, without inventing a weight reading. Material and enabled visual
+checks still decide acceptance, sorting, and points. The separate rearm delay
+also remains active.
+
+Copy the updated `machine/` directory to the Pi and restart the controller for
+this change to take effect. To explicitly keep weighing off:
+
+```bash
+WEIGHT_SENSOR_ENABLED=false python3 machine_flow.py
+```
+
+To restore weighing later, use `WEIGHT_SENSOR_ENABLED=true` in the controller's
+environment and restart it. The saved calibration and limits are retained.
+If a service manager starts the controller, set the variable in that service.
+
+The following behavior applies **when `WEIGHT_SENSOR_ENABLED=true`**.
+
 The controller starts a **2-second** settling interval when the camera confirms
 the item is still. Material detection and visual checks run during that interval.
 If they pass, the controller waits only for any remaining settling time, then
@@ -60,8 +79,8 @@ detection finishes, so the GPIO sampling loop does not compete with inference.
 | Plastic bottle (`plastic_bottle`, `pet_bottle`) | Up to and including 300 g | Above 300 g |
 | Aluminum can (`aluminum_can`, `aluminium_can`) | Up to and including 300 g | Above 300 g |
 
-Other material, confidence, and visual rules still apply. The weight check is
-required even when visual inspection is `off` or `observe`. Rejected items send
+Other material, confidence, and visual rules still apply. When enabled, the weight
+check is required even when visual inspection is `off` or `observe`. Rejected items send
 `REJECT` to the ESP32 and earn zero points; existing session totals are retained.
 The kiosk displays the weight-limit rejection reason. Local logs and Firestore
 recycling records include `inspection.weight` with grams, limit, status, spread,
@@ -75,6 +94,7 @@ To use a later calibration, export both values before starting the controller:
 ```bash
 export HX711_OFFSET=-639408
 export HX711_COUNTS_PER_GRAM=414.59
+export WEIGHT_SENSOR_ENABLED=true
 python3 machine_flow.py
 ```
 

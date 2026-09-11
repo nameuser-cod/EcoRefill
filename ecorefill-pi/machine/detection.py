@@ -1,4 +1,4 @@
-"""Material acceptance, optional visual inspection, and required weight limits."""
+"""Material acceptance, optional visual inspection, and configurable weight limits."""
 
 import math
 from time import monotonic, sleep
@@ -17,6 +17,7 @@ from .config import (
     BOTTLE_MAX_WEIGHT_G,
     CAN_MAX_WEIGHT_G,
     WEIGHT_SETTLE_SECONDS,
+    WEIGHT_SENSOR_ENABLED,
 )
 from .diagnostics import log
 from .scan_region import scan_region_bounds
@@ -226,9 +227,12 @@ class MaterialDetection:
         return self.apply_weight_check(result, settling_started)
 
     def apply_weight_check(self, result, settling_started=None):
-        """Mandatory in every visual-inspection mode, before sorting/rewards."""
+        """Enforce weight limits before sorting/rewards when the sensor is enabled."""
         report = dict(result.get("inspection") or {})
         result = dict(result, inspection=report)
+        if not WEIGHT_SENSOR_ENABLED:
+            report["weight"] = {"status": "disabled"}
+            return result
         if not result["accepted"]:
             report["weight"] = {"status": "not_checked"}
             return result

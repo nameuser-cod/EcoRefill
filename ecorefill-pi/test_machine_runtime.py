@@ -296,6 +296,21 @@ class APITests(unittest.TestCase):
 
 
 class LifecycleTests(unittest.TestCase):
+    def setUp(self):
+        for target in ("machine.runtime.WEIGHT_SENSOR_ENABLED", "machine.detection.WEIGHT_SENSOR_ENABLED"):
+            enabled = patch(target, True)
+            enabled.start()
+            self.addCleanup(enabled.stop)
+
+    def test_disabled_weight_sensor_does_not_open_gpio(self):
+        machine = MachineRuntime()
+        with patch("machine.runtime.WEIGHT_SENSOR_ENABLED", False), \
+             patch("weight_sensor.CalibratedScale") as factory:
+            machine.initialize_weight_sensor()
+            factory.assert_not_called()
+        self.assertIsNone(machine.weight_scale)
+        machine.close()
+
     def test_weight_initialization_and_shutdown_use_saved_calibration(self):
         machine = MachineRuntime()
         with patch("weight_sensor.CalibratedScale") as factory:
@@ -375,6 +390,11 @@ class LifecycleTests(unittest.TestCase):
 
 
 class RecyclingWeightTests(unittest.TestCase):
+    def setUp(self):
+        enabled = patch("machine.detection.WEIGHT_SENSOR_ENABLED", True)
+        enabled.start()
+        self.addCleanup(enabled.stop)
+
     def test_overweight_item_is_recorded_and_rejected_without_changing_batch_totals(self):
         for category, item, grams in (("bottle", "plastic_bottle", 301),
                                       ("can", "aluminum_can", 301)):
@@ -401,8 +421,10 @@ class RecyclingWeightTests(unittest.TestCase):
                 machine.queue_recycling_upload = Mock(side_effect=save)
                 machine.recycling_upload_queue = Mock()
                 machine.recycling_upload_queue.contains.return_value = True
-                with patch.dict(sys.modules, {"firebase_admin": SimpleNamespace(firestore=Mock())}), \
-                     patch("cv2.imwrite", return_value=True):
+                with patch.dict(sys.modules, {
+                    "firebase_admin": SimpleNamespace(firestore=Mock()),
+                    "cv2": SimpleNamespace(imwrite=Mock(return_value=True)),
+                }):
                     machine.machine_worker()
                 state = machine.get_state()
                 self.assertEqual(state["phase"], "rejected")

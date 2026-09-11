@@ -4,8 +4,10 @@ The existing material detector stays in place. `visual_inspection.py` adds
 optional approximate size measurement and a **separate** trained appearance
 classifier before sorting and awarding points. No existing checkpoint has
 been retrained. This module leaves weight `not_checked`; the controller then
-applies the separate required [HX711 weight check](WEIGHT_SENSOR.md) to items
-that passed material and visual checks. Weight is never simulated.
+applies the separate [HX711 weight check](WEIGHT_SENSOR.md) to items
+that passed material and visual checks when `WEIGHT_SENSOR_ENABLED=true`.
+Weighing is temporarily disabled by default and recorded as `disabled`.
+Weight is never simulated.
 
 ## Start by collecting real examples
 
@@ -115,7 +117,7 @@ pass.** You can enable cleanliness before size calibration is ready, or vice
 versa. Missing models/calibration, uncertain results, partial views, multiple
 meaningful detections, unsupported sizes, or overlapping size profiles reject
 the item with zero points. Enforce mode with no checks enabled also rejects.
-Off mode and observe mode do not enforce visual checks. The separate required
+Off mode and observe mode do not enforce visual checks. When enabled, the separate
 [HX711 weight check](WEIGHT_SENSOR.md) rejects both bottles and cans
 above 300 g, or items whose weight cannot be verified.
 

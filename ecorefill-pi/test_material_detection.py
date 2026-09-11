@@ -10,6 +10,41 @@ from weight_sensor import WeightReadingError
 
 
 class MaterialDetectionTests(unittest.TestCase):
+    def setUp(self):
+        enabled = patch("machine.detection.WEIGHT_SENSOR_ENABLED", True)
+        enabled.start()
+        self.addCleanup(enabled.stop)
+
+    def test_disabled_weight_skips_sensor_and_settling_but_preserves_material_checks(self):
+        with patch("machine.detection.WEIGHT_SENSOR_ENABLED", False):
+            for label, confidence, accepted, command in (
+                ("plastic_bottle", 0.95, True, "BOTTLE"),
+                ("aluminum_can", 0.95, True, "CAN"),
+                ("plastic_bottle", 0.66, False, "REJECT"),
+            ):
+                with self.subTest(label=label, confidence=confidence):
+                    machine, result = self.verify_and_sort(
+                        label, confidence, weight_error=RuntimeError("Disconnected sensor"))
+                    self.assertEqual(result["accepted"], accepted)
+                    self.assertEqual(result["points"], 1 if accepted else 0)
+                    machine.weight_scale.read_weight.assert_not_called()
+                    machine.send_to_esp32.assert_called_once_with(command)
+                    if accepted:
+                        self.assertEqual(result["inspection"]["weight"], {"status": "disabled"})
+
+    def test_disabled_weight_does_not_override_visual_rejection_or_fake_a_measurement(self):
+        machine = MaterialDetection()
+        result = {"accepted": False, "category": "reject", "points": 0,
+                  "rejection_reason": "Visual check failed", "inspection": {"cleanliness": "reject"}}
+        with patch("machine.detection.WEIGHT_SENSOR_ENABLED", False), \
+             patch("machine.detection.sleep") as settle:
+            checked = machine.apply_weight_check(result)
+        self.assertFalse(checked["accepted"])
+        self.assertEqual(checked["rejection_reason"], "Visual check failed")
+        self.assertEqual(checked["inspection"]["cleanliness"], "reject")
+        self.assertEqual(checked["inspection"]["weight"], {"status": "disabled"})
+        settle.assert_not_called()
+
     def verify_and_sort(self, label, confidence, grams=20.0, weight_error=None,
                         inference_seconds=0):
         machine = MaterialDetection()
