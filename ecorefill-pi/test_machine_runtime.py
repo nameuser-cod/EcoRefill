@@ -1,5 +1,6 @@
 """Controller regressions using fake hardware and Firebase; no Pi required."""
 
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import subprocess
 import sys
@@ -10,6 +11,7 @@ from unittest.mock import Mock, patch
 from machine.diagnostics import log
 from machine.routes import create_apps
 from machine.runtime import MachineRuntime
+from machine.config import MACHINE_ID
 
 
 class StateTests(unittest.TestCase):
@@ -91,6 +93,98 @@ machine.close()
         self.assertTrue(self.machine.recycling_paused.is_set())
         self.machine.reset_state()
         self.assertIsNone(self.machine.get_state()["waterReturnRequestedAt"])
+
+
+class WaterPollingTests(unittest.TestCase):
+    def setUp(self):
+        self.machine = MachineRuntime()
+        self.machine.db = Mock()
+        self.machine.process_water_refill_request = Mock()
+        self.expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+        self.request = self.machine.db.collection.return_value.document.return_value.get.return_value
+        self.request.exists = True
+        self.request.to_dict.return_value = {
+            "status": "pending", "machineId": MACHINE_ID, "sessionId": "refill-1",
+        }
+
+    def run_worker(self, cycles=2):
+        # Exercise complete loop iterations without sleeping or real hardware.
+        with patch.object(self.machine.shutdown_event, "is_set", side_effect=[False] * cycles + [True]), \
+             patch.object(self.machine.shutdown_event, "wait"):
+            self.machine.water_request_worker()
+
+    def test_idle_and_blue_button_without_qr_do_not_read_firestore(self):
+        self.run_worker()
+        self.machine.request_water_refill()
+        self.run_worker()
+        self.machine.db.collection.assert_not_called()
+
+    def test_active_qr_reads_only_its_request_and_stops_after_processing(self):
+        self.machine.start_water_request_polling("refill-1", self.expires_at)
+        self.run_worker()
+        self.machine.db.collection.assert_called_once_with("water_refill_requests")
+        self.machine.db.collection.return_value.document.assert_called_once_with("refill-1")
+        self.machine.process_water_refill_request.assert_called_once_with(self.request)
+        self.assertIsNone(self.machine.get_water_request_session())
+
+    def test_missing_request_keeps_waiting_for_phone(self):
+        self.machine.start_water_request_polling("refill-1", self.expires_at)
+        self.request.exists = False
+        self.run_worker()
+        self.assertEqual(self.machine.db.collection.call_count, 2)
+        self.machine.process_water_refill_request.assert_not_called()
+        self.assertEqual(self.machine.get_water_request_session(), "refill-1")
+
+    def test_expired_or_reset_session_does_not_read_firestore(self):
+        self.machine.start_water_request_polling(
+            "refill-1", datetime.now(timezone.utc) - timedelta(seconds=1),
+        )
+        self.run_worker()
+        self.machine.start_water_request_polling("refill-1", self.expires_at)
+        self.machine.reset_state()
+        self.run_worker()
+        self.machine.db.collection.assert_not_called()
+
+    def test_terminal_request_stops_polling_without_dispensing(self):
+        for status in ("completed", "cancelled", "expired", "failed"):
+            with self.subTest(status=status):
+                self.machine.start_water_request_polling("refill-1", self.expires_at)
+                self.request.to_dict.return_value["status"] = status
+                self.run_worker()
+                self.assertIsNone(self.machine.get_water_request_session())
+        self.machine.process_water_refill_request.assert_not_called()
+
+    def test_other_machine_or_session_cannot_dispense(self):
+        self.machine.start_water_request_polling("refill-1", self.expires_at)
+        for field in ("machineId", "sessionId"):
+            original = self.request.to_dict.return_value[field]
+            self.request.to_dict.return_value[field] = "other"
+            self.run_worker()
+            self.request.to_dict.return_value[field] = original
+        self.machine.process_water_refill_request.assert_not_called()
+
+    def test_reset_during_read_prevents_processing(self):
+        self.machine.start_water_request_polling("refill-1", self.expires_at)
+        def reset_during_read():
+            self.machine.reset_state()
+            return self.request
+        self.machine.db.collection.return_value.document.return_value.get.side_effect = reset_during_read
+        self.run_worker()
+        self.machine.process_water_refill_request.assert_not_called()
+
+    def test_old_session_cannot_stop_new_session_polling(self):
+        self.machine.start_water_request_polling("refill-2", self.expires_at)
+        self.machine.stop_water_request_polling("refill-1")
+        self.assertEqual(self.machine.get_water_request_session(), "refill-2")
+
+    def test_transient_read_error_retries_active_session(self):
+        self.machine.start_water_request_polling("refill-1", self.expires_at)
+        self.machine.db.collection.return_value.document.return_value.get.side_effect = [
+            RuntimeError("temporarily unavailable"), self.request,
+        ]
+        with self.assertLogs("ecorefill.machine", level="ERROR"):
+            self.run_worker()
+        self.machine.process_water_refill_request.assert_called_once_with(self.request)
 
 
 class ButtonTests(unittest.TestCase):
@@ -307,18 +401,46 @@ class APITests(unittest.TestCase):
         self.assertIsNotNone(state["waterReturnRequestedAt"])
         self.assertTrue(self.machine.recycling_paused.is_set())
 
+    def test_created_qr_starts_polling_and_expiry_stops_it(self):
+        self.machine.db = Mock()
+        response = self.local.post("/api/water-refill/session")
+        self.assertEqual(response.status_code, 201)
+        session_id = response.json["session"]["sessionId"]
+        self.assertEqual(self.machine.get_water_request_session(), session_id)
+        session_ref = self.machine.db.collection.return_value.document.return_value
+        session_ref.get.return_value.to_dict.return_value = {
+            "status": "waiting_for_user",
+            "expiresAt": datetime.now(timezone.utc) - timedelta(seconds=1),
+        }
+        response = self.local.get(f"/api/water-refill/session/{session_id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["session"]["status"], "expired")
+        self.assertIsNone(self.machine.get_water_request_session())
+
+    def test_failed_qr_creation_does_not_start_polling(self):
+        self.machine.db = Mock()
+        self.machine.db.collection.return_value.document.return_value.set.side_effect = RuntimeError("offline")
+        with self.assertLogs("ecorefill.machine", level="ERROR"):
+            response = self.local.post("/api/water-refill/session")
+        self.assertEqual(response.status_code, 500)
+        self.assertIsNone(self.machine.get_water_request_session())
+
     def test_cancel_unused_refill_restores_recycling_and_invalidates_qr(self):
         self.machine.db = Mock()
         session_ref = self.machine.db.collection.return_value.document.return_value
         session_ref.get.return_value.to_dict.return_value = {"status": "waiting_for_user"}
         self.machine.request_water_refill()
         self.machine.request_water_refill()
+        self.machine.start_water_request_polling(
+            "refill-1", datetime.now(timezone.utc) + timedelta(minutes=5),
+        )
         response = self.local.post("/api/water-refill/session/refill-1/cancel")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json["session"]["status"], "cancelled")
         self.assertFalse(self.machine.recycling_paused.is_set())
         self.assertEqual(self.machine.get_state()["phase"], "idle")
         self.assertIsNone(self.machine.get_state()["waterReturnRequestedAt"])
+        self.assertIsNone(self.machine.get_water_request_session())
         transaction = self.machine.db.transaction.return_value
         session_ref.get.assert_called_once_with(transaction=transaction)
         self.assertEqual(transaction.update.call_args.args[1]["status"], "cancelled")

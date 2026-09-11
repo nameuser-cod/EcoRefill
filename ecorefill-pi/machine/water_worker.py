@@ -1,7 +1,6 @@
 """Firestore refill requests, point deduction, dispensing, and refunds."""
 
 from datetime import datetime, timezone
-import time
 from .config import (
     MACHINE_ID,
     WATER_COMMANDS,
@@ -752,23 +751,14 @@ class WaterRequestWorker:
         log("Water mode ended. Recycling automatically resumed.")
 
     def water_request_worker(self):
-        """
-        Continuously checks Firestore for pending
-        water refill requests for this machine.
-        """
-
-        log("========================================")
-        log("Water refill Firestore worker started.")
-        log(f"Machine ID: {MACHINE_ID}")
-        log("========================================")
+        """Poll only the request belonging to the current, unexpired QR session."""
+        log("Water refill worker started. Waiting for an active QR session.")
 
         while not self.shutdown_event.is_set():
-
+            # Keep startup recovery available so session creation can succeed
+            # after Firebase becomes available, even while the machine is idle.
             if self.db is None:
-                log(
-                    "Firebase database unavailable. "
-                    "Trying to reconnect..."
-                )
+                log("Firebase database unavailable. Trying to reconnect...")
                 try:
                     self.db = self.initialize_firebase()
                 except Exception as error:
@@ -776,97 +766,36 @@ class WaterRequestWorker:
                     self.db = None
 
                 if self.db is None:
-                    time.sleep(3)
+                    self.shutdown_event.wait(3)
                     continue
 
                 log("Firebase connection recovered.")
 
+            session_id = self.get_water_request_session()
+            if session_id is None:
+                self.shutdown_event.wait(1)
+                continue
+
             try:
-                log(
-                    "Checking Firestore for "
-                    "pending water requests..."
-                )
+                # The phone uses sessionId as the request document ID.
+                request_doc = self.db.collection("water_refill_requests").document(
+                    session_id
+                ).get()
+                data = (request_doc.to_dict() or {}) if request_doc.exists else {}
 
-                # Do NOT limit to 10 while debugging.
-                pending_requests = list(
-                    self.db.collection(
-                        "water_refill_requests"
-                    )
-                    .where(
-                        "status",
-                        "==",
-                        "pending"
-                    )
-                    .stream()
-                )
-
-                log(
-                    f"Pending requests found: "
-                    f"{len(pending_requests)}"
-                )
-
-                for request_doc in pending_requests:
-
-                    data = (
-                        request_doc.to_dict()
-                        or {}
-                    )
-
-                    log("--------------------------------")
-                    log(
-                        "Request document:",
-                        request_doc.id
-                    )
-
-                    log(
-                        "Request data:",
-                        data
-                    )
-
-                    request_machine_id = (
-                        data.get("machineId")
-                    )
-
-                    log(
-                        "Request machineId:",
-                        request_machine_id
-                    )
-
-                    log(
-                        "This Raspberry Pi:",
-                        MACHINE_ID
-                    )
-
-                    if (
-                        request_machine_id
-                        != MACHINE_ID
+                # A cancellation, reset, or new QR may happen during the read.
+                if self.get_water_request_session() == session_id:
+                    if data.get("status") in {"completed", "cancelled", "expired", "failed"}:
+                        self.stop_water_request_polling(session_id)
+                    elif (
+                        data.get("status") == "pending"
+                        and data.get("machineId") == MACHINE_ID
+                        and data.get("sessionId") == session_id
                     ):
-                        log(
-                            "Skipping request: "
-                            "machineId does not match."
-                        )
-                        continue
-
-                    log(
-                        "Matching request found. "
-                        "Processing..."
-                    )
-
-                    try:
-                        self.process_water_refill_request(
-                            request_doc
-                        )
-
-                    except Exception as error:
-                        log(
-                            "PROCESS REQUEST ERROR:",
-                            repr(error)
-                        )
-
+                        log("Processing water refill request:", session_id)
+                        self.process_water_refill_request(request_doc)
+                        self.stop_water_request_polling(session_id)
             except Exception as error:
-                log(
-                    "FIRESTORE WORKER ERROR:",
-                    repr(error)
-                )
+                log("FIRESTORE WORKER ERROR:", repr(error))
 
-            time.sleep(1)
+            self.shutdown_event.wait(1)

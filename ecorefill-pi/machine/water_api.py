@@ -106,6 +106,7 @@ class WaterAPI:
             session_ref.set(
                 session_data
             )
+            self.start_water_request_polling(session_id, expires_at)
 
             log(
                 "Created Firestore "
@@ -234,6 +235,9 @@ class WaterAPI:
                 data["status"] = (
                     "expired"
                 )
+
+            if data.get("status") in {"completed", "cancelled", "expired", "failed"}:
+                self.stop_water_request_polling(session_id)
 
             return jsonify({
                 "ok":
@@ -499,6 +503,8 @@ class WaterAPI:
                         firestore
                         .SERVER_TIMESTAMP,
                 })
+
+            self.stop_water_request_polling(session_id)
 
             return jsonify({
                 "ok": True,

@@ -1,5 +1,6 @@
 """Session state, locks, and GPIO button actions."""
 
+from datetime import datetime, timezone
 import time
 from .diagnostics import log
 
@@ -16,8 +17,31 @@ class MachineState:
         with self.state_lock:
             return dict(self.machine_state)
 
+    def start_water_request_polling(self, session_id, expires_at):
+        with self.state_lock:
+            self.active_water_session = (session_id, expires_at)
+
+    def stop_water_request_polling(self, session_id=None):
+        with self.state_lock:
+            if session_id is None or (
+                self.active_water_session
+                and self.active_water_session[0] == session_id
+            ):
+                self.active_water_session = None
+
+    def get_water_request_session(self):
+        with self.state_lock:
+            if self.active_water_session is None:
+                return None
+            session_id, expires_at = self.active_water_session
+            if datetime.now(timezone.utc) >= expires_at:
+                self.active_water_session = None
+                return None
+            return session_id
+
     def reset_state(self):
         """Start a completely new customer recycling session."""
+        self.stop_water_request_polling()
         self.finish_session_event.clear()
         self.resume_session_event.clear()
         self.update_state(

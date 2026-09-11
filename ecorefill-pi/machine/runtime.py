@@ -39,6 +39,7 @@ class MachineRuntime(
 ):
     def __init__(self):
         self.state_lock = threading.RLock()
+        self.active_water_session = None
         self.camera_lock = threading.Lock()
         self.serial_lock = threading.Lock()
         self.esp32_connection_lock = threading.Lock()
