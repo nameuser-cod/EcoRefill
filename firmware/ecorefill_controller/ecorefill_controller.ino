@@ -20,7 +20,10 @@ constexpr uint32_t WATER_250_TIME = 25000, WATER_500_TIME = 30000;
 constexpr uint32_t WATER_1000_TIME = 45000;
 constexpr uint32_t BOTTLE_WAIT_TIMEOUT = 30000;
 constexpr uint32_t SENSOR_INTERVAL = 100, ECHO_TIMEOUT_US = 30000;
-constexpr uint32_t CONTAINER_LOSS_TIMEOUT = 600;
+constexpr uint32_t BOTTLE_SENSOR_INTERVAL = 200;
+// Preserve the original four-far / twenty-no-echo tolerance. Also cap a mixed
+// run of far/no-echo samples at twenty; only confirmed presence clears that run.
+constexpr unsigned REQUIRED_FAR_READINGS = 4, MAX_UNCONFIRMED_READINGS = 20;
 constexpr uint32_t REMOVAL_CONFIRM_TIME = 1000;
 constexpr float TRIGGER_DISTANCE_CM = 10.0f, REMOVE_DISTANCE_CM = 14.0f;
 constexpr unsigned REQUIRED_BOTTLE_READINGS = 2;
@@ -30,11 +33,11 @@ Servo gateServo, sortServo;
 enum class State { IDLE, WAIT_BOTTLE, DISPENSING, SORT_MOVE, GATE_DROP,
                    GATE_CLOSE, SORT_CENTERING, RESETTING };
 State state = State::RESETTING;
-uint32_t stateStarted = 0, lastSensorAt = 0, lastPresentAt = 0;
+uint32_t stateStarted = 0, lastSensorAt = 0;
 uint32_t waterDuration = 0, absenceStarted = 0;
 unsigned bottleReadings = 0;
+unsigned farReadings = 0, unconfirmedReadings = 0;
 bool waterNeedsRemoval = false, trackingAbsence = false, servoReady = false;
-bool sensorMissing = false;
 const char *activeCommand = nullptr;
 
 // Fixed memory for input and output. Never wait for a newline or serial reader.
@@ -179,7 +182,7 @@ void handleCommand(char *command) {
     pumpsOff();
     waterDuration = duration;
     bottleReadings = 0;
-    lastSensorAt = now - SENSOR_INTERVAL;
+    lastSensorAt = now - BOTTLE_SENSOR_INTERVAL;
     enterState(State::WAIT_BOTTLE, now);
     sendLine("WATER REQUEST", activeCommand);
     sendLine("WAITING FOR BOTTLE");
@@ -234,9 +237,6 @@ void serviceOperation() {
   uint32_t now = millis();
   if (state == State::DISPENSING) {
     if (elapsed(now, stateStarted) >= waterDuration) { finishWater(); return; }
-    if (elapsed(now, lastPresentAt) >= CONTAINER_LOSS_TIMEOUT) {
-      finishWater(sensorMissing ? "SENSOR_LOST" : "CONTAINER_REMOVED"); return;
-    }
   }
   if (state == State::WAIT_BOTTLE &&
       elapsed(now, stateStarted) >= BOTTLE_WAIT_TIMEOUT) {
@@ -245,11 +245,14 @@ void serviceOperation() {
 
   bool needsSensor = state == State::WAIT_BOTTLE || state == State::DISPENSING ||
                      (state == State::IDLE && waterNeedsRemoval);
-  if (needsSensor && elapsed(now, lastSensorAt) >= SENSOR_INTERVAL) {
-    lastSensorAt = now;
+  uint32_t sensorInterval = state == State::WAIT_BOTTLE
+    ? BOTTLE_SENSOR_INTERVAL : SENSOR_INTERVAL;
+  if (needsSensor && elapsed(now, lastSensorAt) >= sensorInterval) {
     float distance = getDistance(); // Bounded to 30 ms; recheck deadlines afterward.
-    sensorMissing = distance <= 0;
     now = millis();
+    // Like the original sketch, wait 100 ms (200 while waiting for a bottle)
+    // AFTER each measurement, including its possible 30 ms no-echo timeout.
+    lastSensorAt = now;
     if (state == State::WAIT_BOTTLE) {
       if (elapsed(now, stateStarted) >= BOTTLE_WAIT_TIMEOUT) {
         finishWater("NO_BOTTLE"); return;
@@ -259,20 +262,26 @@ void serviceOperation() {
       if (bottleReadings >= REQUIRED_BOTTLE_READINGS) {
         waterNeedsRemoval = true;
         trackingAbsence = false;
-        lastPresentAt = now;
+        farReadings = unconfirmedReadings = 0;
         digitalWrite(RELAY1, RELAY_ON);
         enterState(State::DISPENSING, now);
         sendLine("DISPENSING", activeCommand, "", true);
       }
     } else if (state == State::DISPENSING) {
       if (elapsed(now, stateStarted) >= waterDuration) { finishWater(); return; }
-      // Test expiry before accepting a late recovery reading. Far and no-echo
-      // readings both consume the SAME grace period, never resetting each other.
-      if (elapsed(now, lastPresentAt) >= CONTAINER_LOSS_TIMEOUT) {
-        finishWater(distance <= 0 ? "SENSOR_LOST" : "CONTAINER_REMOVED");
-        return;
+      if (distance > 0 && distance <= REMOVE_DISTANCE_CM) {
+        farReadings = unconfirmedReadings = 0;
+      } else {
+        ++unconfirmedReadings;
+        if (distance > REMOVE_DISTANCE_CM) ++farReadings;
+        else farReadings = 0;
+        if (farReadings >= REQUIRED_FAR_READINGS) {
+          finishWater("CONTAINER_REMOVED"); return;
+        }
+        if (unconfirmedReadings >= MAX_UNCONFIRMED_READINGS) {
+          finishWater("SENSOR_LOST"); return;
+        }
       }
-      if (distance > 0 && distance <= REMOVE_DISTANCE_CM) lastPresentAt = now;
     } else {
       // Require a full second of absence after every started refill. No echo
       // counts as absence here only (pump is off), to support an empty backdrop.

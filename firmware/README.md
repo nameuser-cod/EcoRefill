@@ -28,13 +28,19 @@ its next newline; its suffix is never treated as a command.
 - Commands arriving while busy are consumed, not queued, and receive
   `ERROR <command> BUSY`. A duplicate of the active water command reports its
   existing waiting/dispensing state without restarting its timer.
-- Water starts after two consecutive valid readings at or below 10 cm, sampled
-  approximately 100 ms apart. Waiting expires after 30 seconds with
+- Water starts after two consecutive valid readings at or below 10 cm, with a
+  200 ms interval after each measurement, as in the original sketch. Waiting expires after 30 seconds with
   `ERROR <command> NO_BOTTLE`.
 - While dispensing, any valid reading at or below 14 cm confirms presence.
-  After 600 ms without confirmation, the pump stops. Far and missing-echo readings
-  share this timeout, so alternating failures cannot defeat it. The error is
-  `SENSOR_LOST` or `CONTAINER_REMOVED` according to the latest sensor result.
+  The original thresholds are retained: four consecutive valid readings beyond
+  14 cm stop with `CONTAINER_REMOVED`; twenty consecutive missing echoes stop
+  with `SENSOR_LOST`. Measurements have a 100 ms interval after each reading,
+  plus up to 30 ms waiting for an echo. Continuous no-echo shutdown therefore
+  takes roughly 2.5–2.6 seconds, rather than the previous replacement's 600 ms.
+  A combined run of twenty far/no-echo readings also stops with `SENSOR_LOST`,
+  closing the original loophole where alternating failures reset each other.
+  One valid reading within 14 cm clears both counters. Actual bottle movement
+  cannot be proven from a distance reading alone.
 - `DISPENSING <command>` and `OK <command>` retain the Pi's existing water protocol.
   Relay shutdown always occurs before completion/error messages are queued.
 - Once a refill starts, another water request receives
@@ -79,7 +85,7 @@ Check on the actual machine before unattended use:
    pin on the original ESP32; verify the specific board and relay wiring.
 2. Verify the sensor's electrical levels are compatible with the ESP32 input and
    that its readings distinguish the bottle from the background. Adjust the
-   distance thresholds and 600 ms loss tolerance based on measured spill volume
+   distance thresholds and bad-reading limits based on measured spill volume
    and real pump noise.
 3. Test container removal, sensor disconnection, a short sensor dropout, `RESET`
    while waiting/dispensing/sorting, and repeated water commands. Confirm rearming

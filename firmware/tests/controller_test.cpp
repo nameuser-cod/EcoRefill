@@ -24,10 +24,10 @@ void fresh(uint32_t start = 0) {
   hardwareEvents.clear();
   state = State::RESETTING;
   activeCommand = nullptr;
-  stateStarted = lastSensorAt = lastPresentAt = 0;
+  stateStarted = lastSensorAt = 0;
   waterDuration = absenceStarted = 0;
-  bottleReadings = 0;
-  waterNeedsRemoval = trackingAbsence = sensorMissing = false;
+  bottleReadings = farReadings = unconfirmedReadings = 0;
+  waterNeedsRemoval = trackingAbsence = false;
   commandLength = 0;
   discardingCommand = false;
   txHead = txCount = txOffset = 0;
@@ -43,6 +43,8 @@ void fresh(uint32_t start = 0) {
 void startWater(const char *command = "WATER_250\n") {
   receive(command);
   runFor(150);
+  assert(state == State::WAIT_BOTTLE && levels[RELAY1] == RELAY_OFF);
+  runFor(100);
   assert(state == State::DISPENSING && levels[RELAY1] == RELAY_ON);
 }
 bool reported(const std::string &text) {
@@ -50,31 +52,58 @@ bool reported(const std::string &text) {
   return Serial.output.find(text) != std::string::npos;
 }
 
+void sampleEcho(unsigned long echo) {
+  fakeEcho = echo;
+  fakeNow = lastSensorAt + (state == State::WAIT_BOTTLE
+    ? BOTTLE_SENSOR_INTERVAL : SENSOR_INTERVAL);
+  loop();
+}
+
 int main() {
   fresh();
   startWater();
   uint32_t lostAt = fakeNow;
-  for (int i = 0; i < 10 && state == State::DISPENSING; ++i) {
-    fakeEcho = i % 2 ? 0 : 1166; // Alternate no echo and 20 cm.
-    runFor(100);
+  for (int i = 0; i < 19; ++i) {
+    sampleEcho(i % 2 ? 0 : 1166); // Alternate no echo and 20 cm.
+    assert(state == State::DISPENSING);
   }
+  sampleEcho(0);
   assert(state == State::IDLE && levels[RELAY1] == RELAY_OFF);
-  assert(elapsed(fakeNow, lostAt) <= 700);
+  assert(elapsed(fakeNow, lostAt) <= 2700);
+  assert(reported("ERROR WATER_250 SENSOR_LOST\n"));
 
   fresh(); startWater();
-  fakeEcho = 0;
-  runFor(650);
+  for (int i = 0; i < 19; ++i) {
+    sampleEcho(0);
+    assert(state == State::DISPENSING && levels[RELAY1] == RELAY_ON);
+  }
+  sampleEcho(0);
   assert(levels[RELAY1] == RELAY_OFF);
   assert(reported("ERROR WATER_250 SENSOR_LOST\n"));
 
   fresh(); startWater();
-  fakeEcho = 1166;
-  runFor(650);
+  for (int i = 0; i < 3; ++i) {
+    sampleEcho(1166);
+    assert(state == State::DISPENSING);
+  }
+  sampleEcho(1166);
+  assert(levels[RELAY1] == RELAY_OFF);
   assert(reported("ERROR WATER_250 CONTAINER_REMOVED\n"));
 
   fresh(); startWater();
-  fakeEcho = 0; runFor(200); fakeEcho = 292; runFor(500);
-  assert(state == State::DISPENSING); // Brief noise recovers within grace time.
+  for (int burst = 0; burst < 2; ++burst) {
+    for (int i = 0; i < 19; ++i) sampleEcho(i % 2 ? 0 : 1166);
+    assert(state == State::DISPENSING);
+    sampleEcho(292);
+    assert(state == State::DISPENSING && unconfirmedReadings == 0 && farReadings == 0);
+  }
+
+  fresh(); startWater();
+  // Regression: a one-second no-echo burst used to trip the 600 ms replacement.
+  fakeEcho = 0; runFor(1100);
+  assert(state == State::DISPENSING && levels[RELAY1] == RELAY_ON);
+  fakeEcho = 292; runFor(500);
+  assert(state == State::DISPENSING && unconfirmedReadings == 0);
   receive("RESET\n");
   assert(levels[RELAY1] == RELAY_OFF && levels[RELAY2] == RELAY_OFF);
   assert(state == State::RESETTING);
@@ -87,10 +116,10 @@ int main() {
   fresh();
   receive("WATER_500\n"); // One good sample.
   assert(state == State::WAIT_BOTTLE);
-  fakeEcho = 0; runFor(250);
-  fakeEcho = 292; runFor(75); // One new good sample must not start the pump.
+  sampleEcho(0);
+  sampleEcho(292); // One new good sample must not start the pump.
   assert(state == State::WAIT_BOTTLE && levels[RELAY1] == RELAY_OFF);
-  runFor(150);
+  sampleEcho(292);
   assert(state == State::DISPENSING);
 
   fresh(); fakeEcho = 0;
@@ -129,14 +158,14 @@ int main() {
   assert(reported("ERROR SERIAL LINE_TIMEOUT\n"));
   receive(std::string("WATER_250\0junk\n", 15));
   assert(state == State::IDLE);
-  receive("  water_250\r\n"); runFor(150);
+  receive("  water_250\r\n"); runFor(250);
   assert(state == State::DISPENSING);
 
   fresh(); startWater();
   Serial.txRoom = 0; // Unread/full serial output must not stall the pump cutoff.
   fakeEcho = 0;
   Serial.receive(std::string(30000, 'X'));
-  runFor(650);
+  runFor(2700);
   assert(levels[RELAY1] == RELAY_OFF);
   assert(commandLength < sizeof(commandBuffer) && txCount <= TX_SLOTS);
 
@@ -187,7 +216,7 @@ int main() {
   assert(reported("ERROR WATER_1000 NO_BOTTLE\n"));
 
   fresh(); fakeNow = UINT32_MAX - 500; startWater();
-  fakeEcho = 0; runFor(650);
+  fakeEcho = 0; runFor(2700);
   assert(levels[RELAY1] == RELAY_OFF && reported("ERROR WATER_250 SENSOR_LOST\n"));
   std::cout << "All controller regression scenarios passed.\n";
 }
