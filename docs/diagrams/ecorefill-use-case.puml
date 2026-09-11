@@ -1,0 +1,66 @@
+@startuml
+title EcoRefill — Use case diagram
+left to right direction
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor #EAF7F1
+skinparam usecaseBorderColor #23765C
+actor Customer
+actor "Device owner" as Owner
+rectangle "EcoRefill system\nApp • kiosk • Pi services • cloud storage • machine hardware" {
+  usecase "Sign in / sign out" as Login
+  usecase "Manage own profile" as Profile
+  usecase "Register customer account" as RegisterCustomer
+  usecase "View EcoPoint balance" as Balance
+  usecase "Recycle bottles and cans" as Recycle
+  usecase "Claim recycling reward by QR" as Claim
+  usecase "Request water refill by QR" as Refill
+  usecase "Buy EcoPoints via GCash" as Buy
+  usecase "Check purchase status" as PurchaseStatus
+  usecase "View own transaction history" as History
+  usecase "Register owner and link available machine" as RegisterOwner
+  usecase "Monitor machine and recycling statistics" as Monitor
+  usecase "View scan photos and rejection details" as Photos
+  usecase "View machine alerts" as Alerts
+  usecase "Approve or reject point purchases" as Review
+  usecase "Configure GCash receiving account" as GCashSettings
+  usecase "Update machine details and location" as Location
+  usecase "View machine transactions and owner points" as OwnerHistory
+}
+Customer -- Login
+Owner -- Login
+Customer -- Profile
+Owner -- Profile
+Customer -- RegisterCustomer
+Customer -- Balance
+Customer -- Recycle
+Customer -- Claim
+Customer -- Refill
+Customer -- Buy
+Customer -- PurchaseStatus
+Customer -- History
+Owner -- RegisterOwner
+Owner -- Monitor
+Owner -- Photos
+Owner -- Alerts
+Owner -- Review
+Owner -- GCashSettings
+Owner -- Location
+Owner -- OwnerHistory
+note bottom of Buy
+  Available from a scanned refill session.
+  Customer pays outside EcoRefill in GCash.
+  Only owner approval transfers EcoPoints.
+end note
+note bottom of Monitor
+  Sensor readings and alerts are displayed
+  when supplied by the installation.
+end note
+legend bottom
+  Actors are human roles; lines show participation, not sequence.
+  Recycling is available without login. Account operations require authentication.
+  Machine hardware and Firebase are within this whole-system boundary.
+  GCash has no automatic API integration in the current implementation.
+endlegend
+@enduml

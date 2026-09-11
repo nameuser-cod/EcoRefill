@@ -12,8 +12,9 @@ import {
   getStatusTone,
   normalizeText,
 } from "../utils/ownerDashboard";
+import OwnerPoints from "./OwnerPoints";
 
-function MachineOverview({ machine }) {
+function MachineOverview({ machine, owner }) {
   const machineName =
     machine.machineName || machine.machineId || machine.id || "EcoRefill machine";
   const machineStatus = machine.machineStatus || "Unknown";
@@ -80,6 +81,7 @@ function MachineOverview({ machine }) {
           <strong className={`text-${securityTone}`}>{securityLabel}</strong>
         </div>
       </div>
+      <OwnerPoints owner={owner} embedded />
     </section>
   );
 }

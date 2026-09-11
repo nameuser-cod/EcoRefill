@@ -1,0 +1,174 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="2480" viewBox="0 0 1900 2480" role="img" aria-labelledby="title desc">
+<title id="title">EcoRefill activity diagram</title><desc id="desc">Alternative recycling and water refill activities, including reward claiming, optional owner-approved point purchases, request validation, and dispenser failure handling.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8" fill="#536D63"/></marker></defs>
+<rect width="1900" height="2480" fill="white"/>
+<style>text {font-family: Arial, Helvetica, sans-serif; fill: #183D32;} .edge {fill:none;stroke:#536D63;stroke-width:2;stroke-linejoin:round;stroke-linecap:round;}</style>
+<text x="70" y="65.0" text-anchor="start" dominant-baseline="middle" font-size="38" font-weight="bold" style="fill:#183D32">EcoRefill</text>
+<text x="70" y="110.0" text-anchor="start" dominant-baseline="middle" font-size="22" font-weight="normal" style="fill:#64776E">ACTIVITY DIAGRAM  /  Customer service workflow</text>
+<rect x="30" y="375" width="820" height="1740" rx="14" fill="#F6FAF8" stroke="#D9E7E0" stroke-width="2"/>
+<rect x="890" y="375" width="980" height="1740" rx="14" fill="#F6FAF8" stroke="#D9E7E0" stroke-width="2"/>
+<text x="65" y="405.0" text-anchor="start" dominant-baseline="middle" font-size="20" font-weight="bold" style="fill:#183D32">01  RECYCLE &amp; CLAIM ECOPOINTS</text>
+<text x="925" y="405.0" text-anchor="start" dominant-baseline="middle" font-size="20" font-weight="bold" style="fill:#183D32">02  REFILL WATER</text>
+<circle cx="950" cy="155" r="10" fill="#183D32"/>
+<rect x="740.0" y="188.0" width="420" height="64" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="950" y="220.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Customer approaches EcoRefill</text>
+<path d="M950,271.0 L1095.0,315 L950,359.0 L805.0,315 Z" fill="#FFF6DE" stroke="#A58030" stroke-width="2"/>
+<text x="950" y="315.0" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Choose service</text>
+<path d="M950,165 L950,188" class="edge" marker-end="url(#arrow)"/>
+<path d="M950,252 L950,271" class="edge" marker-end="url(#arrow)"/>
+<path d="M805,315 L520,315 L520,454" class="edge" marker-end="url(#arrow)"/>
+<text x="650" y="295.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal" style="fill:#536D63">Recycle</text>
+<path d="M1095,315 L1270,315 L1270,454" class="edge" marker-end="url(#arrow)"/>
+<text x="1170" y="295.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal" style="fill:#536D63">Refill</text>
+<rect x="335.0" y="454.0" width="370" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="520" y="490.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Insert one bottle or can</text>
+<rect x="310.0" y="564.0" width="420" height="92" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="520" y="597.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Capture image; identify material;</text>
+<text x="520" y="623.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">check weight and enforced inspection</text>
+<path d="M520,680.0 L655.0,730 L520,780.0 L385.0,730 Z" fill="#FFF6DE" stroke="#A58030" stroke-width="2"/>
+<text x="520" y="730.0" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Item accepted?</text>
+<rect x="335.0" y="814.0" width="370" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="520" y="837.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Send sorting command;</text>
+<text x="520" y="863.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">record accepted item</text>
+<rect x="335.0" y="909.0" width="370" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="520" y="945.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Add 1 EcoPoint to session</text>
+<rect x="45.0" y="794.0" width="230" height="112" rx="14" fill="#FFF0E9" stroke="#247558" stroke-width="2"/>
+<text x="160" y="826.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">Reject item;</text>
+<text x="160" y="850.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">record reason;</text>
+<text x="160" y="874.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">no points awarded</text>
+<path d="M520,1000.0 L655.0,1050 L520,1100.0 L385.0,1050 Z" fill="#FFF6DE" stroke="#A58030" stroke-width="2"/>
+<text x="520" y="1050.0" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Another item?</text>
+<rect x="335.0" y="1124.0" width="370" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="520" y="1160.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Press green button</text>
+<path d="M520,1220.0 L655.0,1270 L520,1320.0 L385.0,1270 Z" fill="#FFF6DE" stroke="#A58030" stroke-width="2"/>
+<text x="520" y="1257.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Any accepted</text>
+<text x="520" y="1282.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">items?</text>
+<rect x="45.0" y="1354.0" width="230" height="72" rx="14" fill="#FFF0E9" stroke="#247558" stroke-width="2"/>
+<text x="160" y="1378.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">Show no-reward</text>
+<text x="160" y="1402.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">message</text>
+<rect x="335.0" y="1354.0" width="370" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="520" y="1377.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Save batch reward;</text>
+<text x="520" y="1403.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">display reward QR</text>
+<rect x="335.0" y="1464.0" width="370" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="520" y="1487.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Sign in / register in app;</text>
+<text x="520" y="1513.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">scan reward QR</text>
+<path d="M520,1580.0 L655.0,1630 L520,1680.0 L385.0,1630 Z" fill="#FFF6DE" stroke="#A58030" stroke-width="2"/>
+<text x="520" y="1630.0" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Claim valid?</text>
+<rect x="45.0" y="1714.0" width="230" height="72" rx="14" fill="#FFF0E9" stroke="#247558" stroke-width="2"/>
+<text x="160" y="1738.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">Show claim error;</text>
+<text x="160" y="1762.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">no points credited</text>
+<rect x="335.0" y="1714.0" width="370" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="520" y="1737.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Credit customer points;</text>
+<text x="520" y="1763.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">mark reward claimed</text>
+<rect x="335.0" y="1824.0" width="370" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="520" y="1860.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Record reward transaction</text>
+<path d="M520,526 L520,564" class="edge" marker-end="url(#arrow)"/>
+<path d="M520,656 L520,680" class="edge" marker-end="url(#arrow)"/>
+<path d="M520,780 L520,814" class="edge" marker-end="url(#arrow)"/>
+<path d="M520,886 L520,909" class="edge" marker-end="url(#arrow)"/>
+<path d="M520,981 L520,1000" class="edge" marker-end="url(#arrow)"/>
+<path d="M520,1100 L520,1124" class="edge" marker-end="url(#arrow)"/>
+<path d="M520,1196 L520,1220" class="edge" marker-end="url(#arrow)"/>
+<path d="M520,1320 L520,1354" class="edge" marker-end="url(#arrow)"/>
+<path d="M520,1426 L520,1464" class="edge" marker-end="url(#arrow)"/>
+<path d="M520,1536 L520,1580" class="edge" marker-end="url(#arrow)"/>
+<path d="M520,1680 L520,1714" class="edge" marker-end="url(#arrow)"/>
+<path d="M520,1786 L520,1824" class="edge" marker-end="url(#arrow)"/>
+<text x="548" y="798.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal" style="fill:#183D32">Yes</text>
+<path d="M385,730 L160,730 L160,794" class="edge" marker-end="url(#arrow)"/>
+<text x="270" y="710.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal" style="fill:#536D63">No</text>
+<path d="M160,906 L160,1050 L385,1050" class="edge" marker-end="url(#arrow)"/>
+<path d="M655,1050 L805,1050 L805,490 L705,490" class="edge" marker-end="url(#arrow)"/>
+<text x="750" y="1028.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal" style="fill:#536D63">Yes</text>
+<text x="548" y="1114.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal" style="fill:#183D32">No</text>
+<text x="548" y="1339.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal" style="fill:#183D32">Yes</text>
+<path d="M385,1270 L160,1270 L160,1354" class="edge" marker-end="url(#arrow)"/>
+<text x="265" y="1250.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal" style="fill:#536D63">No</text>
+<path d="M160,1426 L160,1555 L35,1555 L35,2040 L520,2040" class="edge" marker-end="url(#arrow)"/>
+<path d="M385,1630 L160,1630 L160,1714" class="edge" marker-end="url(#arrow)"/>
+<text x="265" y="1610.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal" style="fill:#536D63">No</text>
+<path d="M160,1786 L160,2000 L520,2000" class="edge" marker-end="url(#arrow)"/>
+<text x="548" y="1697.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal" style="fill:#183D32">Yes</text>
+<path d="M520,1896 L520,2170 L750,2170" class="edge" marker-end="url(#arrow)"/>
+<rect x="1035.0" y="454.0" width="470" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1270" y="490.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Press blue button or select Refill Water</text>
+<rect x="1055.0" y="554.0" width="430" height="82" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1270" y="582.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Pause recycling; create session;</text>
+<text x="1270" y="608.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">display refill QR</text>
+<rect x="1055.0" y="674.0" width="430" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1270" y="697.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Sign in / register in app;</text>
+<text x="1270" y="723.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">scan refill QR</text>
+<rect x="1055.0" y="774.0" width="430" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1270" y="810.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Select 250, 500, or 1,000 mL</text>
+<path d="M1270,875.0 L1405.0,925 L1270,975.0 L1135.0,925 Z" fill="#FFF6DE" stroke="#A58030" stroke-width="2"/>
+<text x="1270" y="925.0" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Buy points?</text>
+<rect x="1515.0" y="951.0" width="320" height="168" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1675" y="987.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">If purchase is available:</text>
+<text x="1675" y="1011.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">Pay owner via GCash;</text>
+<text x="1675" y="1035.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">submit receipt reference.</text>
+<text x="1675" y="1059.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">Owner verifies manually.</text>
+<text x="1675" y="1083.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">Approval transfers points.</text>
+<rect x="1055.0" y="1124.0" width="430" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1270" y="1160.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Place container; confirm refill</text>
+<rect x="1055.0" y="1229.0" width="430" height="82" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1270" y="1257.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Validate customer, session,</text>
+<text x="1270" y="1283.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">machine, amount, and point balance</text>
+<path d="M1270,1330.0 L1405.0,1380 L1270,1430.0 L1135.0,1380 Z" fill="#FFF6DE" stroke="#A58030" stroke-width="2"/>
+<text x="1270" y="1367.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Valid request +</text>
+<text x="1270" y="1392.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">enough points?</text>
+<rect x="1515.0" y="1454.0" width="320" height="72" rx="14" fill="#FFF0E9" stroke="#247558" stroke-width="2"/>
+<text x="1675" y="1478.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">Show validation error;</text>
+<text x="1675" y="1502.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">do not dispense</text>
+<rect x="1055.0" y="1464.0" width="430" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1270" y="1487.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Deduct points; reserve session;</text>
+<text x="1270" y="1513.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">record refill transaction</text>
+<rect x="1045.0" y="1569.0" width="450" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1270" y="1605.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Send dispensing command to ESP32</text>
+<path d="M1270,1670.0 L1405.0,1720 L1270,1770.0 L1135.0,1720 Z" fill="#FFF6DE" stroke="#A58030" stroke-width="2"/>
+<text x="1270" y="1707.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Dispensing</text>
+<text x="1270" y="1732.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">completed?</text>
+<rect x="1055.0" y="1804.0" width="430" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1270" y="1827.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Mark refill completed;</text>
+<text x="1270" y="1853.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">credit machine owner</text>
+<rect x="1515.0" y="1804.0" width="320" height="72" rx="14" fill="#FFF0E9" stroke="#247558" stroke-width="2"/>
+<text x="1675" y="1828.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">Attempt point refund;</text>
+<text x="1675" y="1852.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">record failed refill</text>
+<rect x="1045.0" y="1944.0" width="450" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1270" y="1980.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Return machine to recycling mode</text>
+<path d="M1270,526 L1270,554" class="edge" marker-end="url(#arrow)"/>
+<path d="M1270,636 L1270,674" class="edge" marker-end="url(#arrow)"/>
+<path d="M1270,746 L1270,774" class="edge" marker-end="url(#arrow)"/>
+<path d="M1270,846 L1270,875" class="edge" marker-end="url(#arrow)"/>
+<path d="M1270,975 L1270,1124" class="edge" marker-end="url(#arrow)"/>
+<path d="M1270,1196 L1270,1229" class="edge" marker-end="url(#arrow)"/>
+<path d="M1270,1311 L1270,1330" class="edge" marker-end="url(#arrow)"/>
+<path d="M1270,1430 L1270,1464" class="edge" marker-end="url(#arrow)"/>
+<path d="M1270,1536 L1270,1569" class="edge" marker-end="url(#arrow)"/>
+<path d="M1270,1641 L1270,1670" class="edge" marker-end="url(#arrow)"/>
+<path d="M1270,1770 L1270,1804" class="edge" marker-end="url(#arrow)"/>
+<path d="M1270,1876 L1270,1944" class="edge" marker-end="url(#arrow)"/>
+<text x="1298" y="1001.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal" style="fill:#183D32">No</text>
+<path d="M1405,925 L1675,925 L1675,951" class="edge" marker-end="url(#arrow)"/>
+<text x="1535" y="905.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal" style="fill:#536D63">Yes</text>
+<path d="M1675,1119 L1675,1160 L1485,1160" class="edge" marker-end="url(#arrow)"/>
+<text x="1645" y="1210.0" text-anchor="middle" dominant-baseline="middle" font-size="16" font-weight="normal" style="fill:#183D32">Return; rescan QR if expired</text>
+<text x="1300" y="1446.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal" style="fill:#183D32">Yes</text>
+<path d="M1405,1380 L1675,1380 L1675,1454" class="edge" marker-end="url(#arrow)"/>
+<text x="1535" y="1360.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal" style="fill:#536D63">No</text>
+<path d="M1675,1526 L1840,1526 L1840,2070 L1270,2070" class="edge" marker-end="url(#arrow)"/>
+<text x="1298" y="1788.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal" style="fill:#183D32">Yes</text>
+<path d="M1405,1720 L1675,1720 L1675,1804" class="edge" marker-end="url(#arrow)"/>
+<text x="1630" y="1698.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal" style="fill:#536D63">Error / timeout</text>
+<path d="M1675,1876 L1675,1980 L1495,1980" class="edge" marker-end="url(#arrow)"/>
+<path d="M1270,2016 L1270,2170 L1150,2170" class="edge" marker-end="url(#arrow)"/>
+<rect x="750.0" y="2134.0" width="400" height="72" rx="14" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="950" y="2170.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="normal" style="fill:#183D32">Finish or start another service</text>
+<path d="M950,2206 L950,2245" class="edge" marker-end="url(#arrow)"/>
+<circle cx="950" cy="2260" r="15" fill="white" stroke="#183D32" stroke-width="2"/>
+<circle cx="950" cy="2260" r="10" fill="#183D32"/>
+<rect x="45" y="2320" width="1810" height="145" rx="8" fill="#F1F6F3" stroke="#D9E7E0" stroke-width="2"/>
+<text x="75" y="2350.0" text-anchor="start" dominant-baseline="middle" font-size="17" font-weight="bold" style="fill:#183D32">READING NOTES</text>
+<text x="75" y="2384.0" text-anchor="start" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">Accepted items require supported material, detection checks, and a stable weight of 300 g or less. Visual checks apply when enforced.</text>
+<text x="75" y="2415.0" text-anchor="start" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">Refill QR: 5 minutes while waiting. Purchases may remain pending or be rejected without a point transfer. See companion notes for persistence limits.</text>
+<text x="75" y="2443.0" text-anchor="start" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">A valid reward claim requires authentication and an available, unclaimed QR reward within its 60-second validity period.</text>
+</svg>

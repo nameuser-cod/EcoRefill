@@ -147,8 +147,25 @@ service cloud.firestore {
 
     // Machine alerts
     match /machine_alerts/{documentId} {
+      function currentAlertStatus() {
+        let status = resource.data.get('status', 'unread');
+        let normalized = status == null ? '' : status.lower().trim();
+        return normalized == '' ? 'unread' : normalized;
+      }
+
       allow read: if isSignedIn();
-      allow write: if false;
+      allow update: if ownsMachine(resource.data.machineId)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'statusUpdatedAt', 'statusUpdatedBy'])
+        && request.resource.data.statusUpdatedAt == request.time
+        && request.resource.data.statusUpdatedBy == request.auth.uid
+        && (
+          (currentAlertStatus() == 'unread'
+            && request.resource.data.status in ['read', 'resolved'])
+          || (currentAlertStatus() == 'read'
+            && request.resource.data.status == 'resolved')
+        );
+      allow create, delete: if false;
     }
 
     // Main transaction history

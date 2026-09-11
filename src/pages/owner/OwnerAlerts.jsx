@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
-import { Bell, BellRing } from "lucide-react";
+import { Bell } from "lucide-react";
+import { db } from "../../firebase/firebase";
+import OwnerAlertRow from "./components/OwnerAlertRow";
 import OwnerPageShell from "./components/OwnerPageShell";
 import {
   OwnerEmpty,
@@ -8,33 +10,29 @@ import {
 } from "./components/OwnerFeedback";
 import useMachineCollection from "./hooks/useMachineCollection";
 import useOwnerMachine from "./hooks/useOwnerMachine";
-import {
-  formatTimestamp,
-  getStatusTone,
-  normalizeText,
-} from "./utils/ownerDashboard";
+import { getAlertStatus, updateMachineAlertStatus } from "./utils/ownerAlerts";
 
-const FILTERS = ["all", "unread", "resolved"];
+const FILTERS = ["all", "unread", "read", "resolved"];
 
 function OwnerAlerts() {
   const [activeFilter, setActiveFilter] = useState("all");
-  const { machine, loading: machineLoading, error: machineError } =
+  const { currentUser, machine, loading: machineLoading, error: machineError } =
     useOwnerMachine();
   const {
     records: alerts,
     loading: alertsLoading,
     error: alertsError,
-  } = useMachineCollection("alerts", machine?.id, 50);
+  } = useMachineCollection("machine_alerts", machine?.id, 50);
 
   const filteredAlerts = useMemo(() => {
     if (activeFilter === "all") return alerts;
     return alerts.filter(
-      (alert) => normalizeText(alert.status) === activeFilter
+      (alert) => getAlertStatus(alert) === activeFilter
     );
   }, [activeFilter, alerts]);
 
   const unreadAlerts = alerts.filter(
-    (alert) => normalizeText(alert.status) === "unread"
+    (alert) => getAlertStatus(alert) === "unread"
   ).length;
 
   return (
@@ -59,7 +57,7 @@ function OwnerAlerts() {
           {FILTERS.map((filter) => {
             const count = filter === "all"
               ? alerts.length
-              : alerts.filter((alert) => normalizeText(alert.status) === filter).length;
+              : alerts.filter((alert) => getAlertStatus(alert) === filter).length;
 
             return (
               <button
@@ -79,6 +77,8 @@ function OwnerAlerts() {
       <section className="owner-panel owner-page-list-panel">
         {machineLoading || alertsLoading ? (
           <OwnerLoading label="Loading alerts..." />
+        ) : machineError || alertsError ? (
+          <OwnerError message={machineError || alertsError} />
         ) : filteredAlerts.length === 0 ? (
           <OwnerEmpty
             icon={Bell}
@@ -87,25 +87,15 @@ function OwnerAlerts() {
           />
         ) : (
           <div className="owner-record-list" aria-live="polite">
-            {filteredAlerts.map((alert) => {
-              const status = alert.status || "unread";
-
-              return (
-                <article className="owner-record-row" key={alert.id}>
-                  <span className="owner-record-icon owner-alert-record-icon">
-                    <BellRing size={21} />
-                  </span>
-                  <div>
-                    <strong>{alert.alertType || "Machine alert"}</strong>
-                    <p>{alert.message || "No details provided"}</p>
-                    <time>{formatTimestamp(alert.createdAt)}</time>
-                  </div>
-                  <span className={`owner-status tone-${getStatusTone(status)}`}>
-                    {status}
-                  </span>
-                </article>
-              );
-            })}
+            {filteredAlerts.map((alert) => (
+              <OwnerAlertRow
+                key={`${machine.id}:${alert.id}`}
+                alert={alert}
+                onStatusChange={(alertId, status) => updateMachineAlertStatus(db, {
+                  alertId, status, machineId: machine.id, userId: currentUser?.uid,
+                })}
+              />
+            ))}
           </div>
         )}
       </section>

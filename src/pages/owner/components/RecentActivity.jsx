@@ -13,6 +13,7 @@ import PhotoActivityRow from "./PhotoActivityRow";
 import RecyclingPhotoDialog from "./RecyclingPhotoDialog";
 import { isRecyclingActivity } from "../utils/recyclingPhotos";
 import useActivityNames from "../hooks/useActivityNames";
+import { getAlertStatus } from "../utils/ownerAlerts";
 import {
   formatTimestamp,
   getActivityLabel,
@@ -82,7 +83,7 @@ export function RecentAlerts({ alerts }) {
               icon={Bell}
               title={alert.alertType || "Machine alert"}
               description={alert.message || "No details provided"}
-              status={alert.status || "unread"}
+              status={getAlertStatus(alert)}
               date={formatTimestamp(alert.createdAt)}
             />
           ))}

@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1500" viewBox="0 0 1600 1500" role="img" aria-labelledby="title desc">
+<title id="title">EcoRefill use case diagram</title><desc id="desc">Customer and device owner actors associated with supported account, recycling, refill, point purchase, and machine management use cases inside the whole EcoRefill system boundary.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8" fill="#536D63"/></marker></defs>
+<rect width="1600" height="1500" fill="white"/>
+<style>text {font-family: Arial, Helvetica, sans-serif; fill: #183D32;} .edge {fill:none;stroke:#536D63;stroke-width:2;stroke-linejoin:round;stroke-linecap:round;}</style>
+<text x="65" y="60.0" text-anchor="start" dominant-baseline="middle" font-size="38" font-weight="bold" style="fill:#183D32">EcoRefill</text>
+<text x="65" y="104.0" text-anchor="start" dominant-baseline="middle" font-size="22" font-weight="normal" style="fill:#64776E">USE CASE DIAGRAM  /  Roles and system capabilities</text>
+<rect x="210" y="150" width="1180" height="1160" rx="0" fill="#FAFCFB" stroke="#247558" stroke-width="2"/>
+<text x="800" y="184.0" text-anchor="middle" dominant-baseline="middle" font-size="26" font-weight="bold" style="fill:#183D32">EcoRefill system</text>
+<text x="800" y="220.0" text-anchor="middle" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#64776E">App • kiosk • Pi services • cloud storage • machine hardware</text>
+<path d="M120,756 L230,756 L230,295 L602.5,295" class="edge"/>
+<path d="M1480,756 L1370,756 L1370,295 L997.5,295" class="edge"/>
+<path d="M120,756 L230,756 L230,390 L602.5,390" class="edge"/>
+<path d="M1480,756 L1370,756 L1370,390 L997.5,390" class="edge"/>
+<path d="M120,756 L260,540 L292.5,540" class="edge"/>
+<path d="M1480,756 L1340,540 L1307.5,540" class="edge"/>
+<path d="M120,756 L260,638 L292.5,638" class="edge"/>
+<path d="M1480,756 L1340,638 L1307.5,638" class="edge"/>
+<path d="M120,756 L260,736 L292.5,736" class="edge"/>
+<path d="M1480,756 L1340,736 L1307.5,736" class="edge"/>
+<path d="M120,756 L260,834 L292.5,834" class="edge"/>
+<path d="M1480,756 L1340,834 L1307.5,834" class="edge"/>
+<path d="M120,756 L260,932 L292.5,932" class="edge"/>
+<path d="M1480,756 L1340,932 L1307.5,932" class="edge"/>
+<path d="M120,756 L260,1030 L292.5,1030" class="edge"/>
+<path d="M1480,756 L1340,1030 L1307.5,1030" class="edge"/>
+<path d="M120,756 L260,1128 L292.5,1128" class="edge"/>
+<path d="M1480,756 L1340,1128 L1307.5,1128" class="edge"/>
+<path d="M120,756 L260,1226 L292.5,1226" class="edge"/>
+<path d="M1480,756 L1340,1226 L1307.5,1226" class="edge"/>
+<ellipse cx="800" cy="295" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="800" y="295.0" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Sign in / sign out</text>
+<ellipse cx="800" cy="390" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="800" y="390.0" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Manage own profile</text>
+<text x="490" y="473.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="bold" style="fill:#64776E">CUSTOMER SERVICES</text>
+<text x="1110" y="473.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="bold" style="fill:#64776E">OWNER SERVICES</text>
+<ellipse cx="490" cy="540" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="490" y="540.0" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Register customer account</text>
+<ellipse cx="1110" cy="540" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1110" y="527.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Register owner and link</text>
+<text x="1110" y="552.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">available machine</text>
+<ellipse cx="490" cy="638" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="490" y="638.0" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">View EcoPoint balance</text>
+<ellipse cx="1110" cy="638" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1110" y="625.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Monitor machine and</text>
+<text x="1110" y="650.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">recycling statistics</text>
+<ellipse cx="490" cy="736" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="490" y="736.0" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Recycle bottles and cans</text>
+<ellipse cx="1110" cy="736" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1110" y="723.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">View scan photos and</text>
+<text x="1110" y="748.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">rejection details</text>
+<ellipse cx="490" cy="834" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="490" y="834.0" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Claim recycling reward by QR</text>
+<ellipse cx="1110" cy="834" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1110" y="834.0" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">View machine alerts</text>
+<ellipse cx="490" cy="932" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="490" y="932.0" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Request water refill by QR</text>
+<ellipse cx="1110" cy="932" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1110" y="919.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Approve or reject</text>
+<text x="1110" y="944.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">point purchases</text>
+<ellipse cx="490" cy="1030" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="490" y="1030.0" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Buy EcoPoints via GCash</text>
+<ellipse cx="1110" cy="1030" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1110" y="1017.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Configure GCash</text>
+<text x="1110" y="1042.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">receiving account</text>
+<ellipse cx="490" cy="1128" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="490" y="1128.0" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Check purchase status</text>
+<ellipse cx="1110" cy="1128" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1110" y="1115.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">Update machine details</text>
+<text x="1110" y="1140.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">and location</text>
+<ellipse cx="490" cy="1226" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="490" y="1226.0" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">View own transaction history</text>
+<ellipse cx="1110" cy="1226" rx="197.5" ry="36.0" fill="#EAF7F1" stroke="#247558" stroke-width="2"/>
+<text x="1110" y="1213.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">View machine transactions</text>
+<text x="1110" y="1238.5" text-anchor="middle" dominant-baseline="middle" font-size="19" font-weight="normal" style="fill:#183D32">and owner points</text>
+<g fill="none" stroke="#183D32" stroke-width="3"><circle cx="85" cy="713" r="19"/><path d="M85,732 V793 M50,756 H120 M85,793 L55,838 M85,793 L115,838"/></g>
+<text x="85" y="872.0" text-anchor="middle" dominant-baseline="middle" font-size="22" font-weight="bold" style="fill:#183D32">Customer</text>
+<g fill="none" stroke="#183D32" stroke-width="3"><circle cx="1515" cy="713" r="19"/><path d="M1515,732 V793 M1480,756 H1550 M1515,793 L1485,838 M1515,793 L1545,838"/></g>
+<text x="1515" y="872.0" text-anchor="middle" dominant-baseline="middle" font-size="22" font-weight="bold" style="fill:#183D32">Device owner</text>
+<rect x="45" y="1345" width="1510" height="120" rx="8" fill="#F1F6F3" stroke="#D9E7E0" stroke-width="2"/>
+<text x="70" y="1375.0" text-anchor="start" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">Lines show participation, not sequence. Recycling is available without login; account operations require authentication.</text>
+<text x="70" y="1408.0" text-anchor="start" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">GCash is paid outside EcoRefill and verified by the owner. Buy Points is accessed through a scanned refill session.</text>
+<text x="70" y="1441.0" text-anchor="start" dominant-baseline="middle" font-size="18" font-weight="normal" style="fill:#183D32">Machine readings and alerts depend on supplied data. Hardware and Firebase are inside this whole-system boundary.</text>
+</svg>

@@ -1,6 +1,7 @@
 import { AlertTriangle, LogOut } from "lucide-react";
 import LogoutButton from "../../components/LogoutButton";
 import MachineOverview from "./components/MachineOverview";
+import DashboardSection from "./components/DashboardSection";
 import OwnerPoints from "./components/OwnerPoints";
 import OwnerPageShell from "./components/OwnerPageShell";
 import {
@@ -17,7 +18,7 @@ import {
 } from "./components/RecentActivity";
 import useOwnerDashboard from "./hooks/useOwnerDashboard";
 import useOwnerMachine from "./hooks/useOwnerMachine";
-import { normalizeText } from "./utils/ownerDashboard";
+import { getAlertStatus } from "./utils/ownerAlerts";
 
 function OwnerDashboard() {
   const {
@@ -27,6 +28,7 @@ function OwnerDashboard() {
     error: machineError,
   } = useOwnerMachine();
   const dashboard = useOwnerDashboard(machine?.id);
+  const { recycling, transactions, alerts, refills } = dashboard.sections;
   const logoutAction = (
     <LogoutButton
       className="owner-header-button"
@@ -38,7 +40,7 @@ function OwnerDashboard() {
   );
 
   const unreadAlerts = dashboard.recentAlerts.filter(
-    (alert) => normalizeText(alert.status) === "unread"
+    (alert) => getAlertStatus(alert) === "unread"
   ).length;
 
   if (machineLoading) {
@@ -83,34 +85,58 @@ function OwnerDashboard() {
       unreadAlerts={unreadAlerts}
       action={logoutAction}
     >
-      <OwnerError message={machineError || dashboard.error} />
-      <MachineOverview machine={machine} />
-      <OwnerPoints owner={owner} />
+      <OwnerError message={machineError} />
+      <MachineOverview machine={machine} owner={owner} />
 
-      {dashboard.loading ? (
-        <OwnerLoading label="Loading live machine activity..." />
-      ) : (
-        <>
-          <div className="owner-dashboard-layout">
-            <div className="owner-dashboard-main">
-              <RecyclingOverview analytics={dashboard.analytics} machine={machine} />
-              <RecentScans key={machine.id} items={dashboard.recentItems} />
-            </div>
+      <div className="owner-dashboard-layout">
+        <div className="owner-dashboard-main">
+          <DashboardSection
+            title="Recycling overview and scan history"
+            sources={[recycling]}
+            hasContent={dashboard.recentItems.length > 0}
+            onRetry={() => dashboard.retry(["recycling"])}
+          >
+            <RecyclingOverview analytics={dashboard.analytics} machine={machine} />
+            <RecentScans key={machine.id} items={dashboard.recentItems} />
+          </DashboardSection>
+        </div>
 
-            <aside className="owner-dashboard-side">
-              <RecentAlerts alerts={dashboard.recentAlerts} />
-              <RecentTransactions
-                machineId={machine.id}
-                transactions={dashboard.recentTransactions}
-                recyclingRecords={dashboard.recentItems}
-              />
-              <RejectedBreakdown
-                rejectedTypes={dashboard.analytics.rejectedTypes}
-              />
-            </aside>
-          </div>
-        </>
-      )}
+        <aside className="owner-dashboard-side">
+          <DashboardSection
+            title="Recent alerts"
+            sources={[alerts]}
+            hasContent={dashboard.recentAlerts.length > 0}
+            onRetry={() => dashboard.retry(["alerts"])}
+          >
+            <RecentAlerts alerts={dashboard.recentAlerts} />
+          </DashboardSection>
+          <DashboardSection
+            title="Transactions"
+            sources={[transactions, recycling, refills]}
+            hasContent={dashboard.recentTransactions.length > 0}
+            onRetry={() => dashboard.retry(
+              ["transactions", "recycling", "refills"].filter((key) =>
+                dashboard.sections[key].loading || dashboard.sections[key].error
+              )
+            )}
+          >
+            <RecentTransactions
+              key={machine.id}
+              machineId={machine.id}
+              transactions={dashboard.recentTransactions}
+              recyclingRecords={dashboard.recentItems}
+            />
+          </DashboardSection>
+          <DashboardSection
+            title="Rejected items"
+            sources={[recycling]}
+            hasContent={dashboard.recentItems.length > 0}
+            onRetry={() => dashboard.retry(["recycling"])}
+          >
+            <RejectedBreakdown rejectedTypes={dashboard.analytics.rejectedTypes} />
+          </DashboardSection>
+        </aside>
+      </div>
     </OwnerPageShell>
   );
 }

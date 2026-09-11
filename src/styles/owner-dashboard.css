@@ -485,6 +485,34 @@
   min-width: 0;
 }
 
+.owner-section-feedback h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+
+.owner-section-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--owner-muted);
+  line-height: 1.5;
+}
+
+.owner-section-loading svg {
+  flex-shrink: 0;
+}
+
+.owner-section-feedback button {
+  padding: 9px 14px;
+  border: 2px solid var(--owner-line);
+  border-radius: 10px;
+  background: var(--owner-green);
+  color: var(--owner-line);
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+
 .owner-analytics-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -998,6 +1026,44 @@
 .owner-alert-record-icon {
   background: var(--owner-warning);
   color: var(--owner-warning-ink);
+}
+
+.owner-alert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.owner-alert-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 9px 13px;
+  border: 2px solid var(--owner-ink);
+  border-radius: 12px;
+  background: var(--owner-green-soft);
+  color: var(--owner-ink);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.owner-alert-actions button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.owner-alert-actions button:focus-visible {
+  outline: 3px solid var(--owner-green-dark);
+  outline-offset: 3px;
+}
+
+.owner-record-row .owner-alert-help {
+  margin-top: 8px;
 }
 
 .owner-profile-layout {

@@ -10,3 +10,14 @@
 .owner-points-total { display: block; font-size: 32px; color: #166534; }
 .owner-points p { margin: 8px 0 0; color: #64748b; line-height: 1.5; }
 .owner-points-sync { margin-top: 12px; }
+
+.owner-points-embedded {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 18px 0 0;
+  border-top: 2px solid var(--owner-ink);
+}
+
+.owner-points-embedded > div { min-width: 0; }
+.owner-points-embedded .owner-points-total,
+.owner-points-embedded p { color: var(--owner-ink); }

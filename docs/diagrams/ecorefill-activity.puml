@@ -1,0 +1,87 @@
+@startuml
+title EcoRefill — Activity diagram
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam activityBackgroundColor #EAF7F1
+skinparam activityBorderColor #23765C
+skinparam ArrowColor #425B54
+start
+:Customer approaches EcoRefill;
+if (Choose service) then (Recycle)
+  repeat
+    :Insert one bottle or can;
+    :Capture image; identify material;
+    :Check detection thresholds, stable weight <= 300 g,
+    and any enforced visual inspection;
+    if (Item accepted?) then (Yes)
+      :Send sorting command; record accepted item;
+      :Add 1 EcoPoint to the machine session;
+    else (No)
+      :Reject item; record reason; award no points;
+    endif
+  repeat while (Insert another item?) is (Yes) not (No)
+  :Press green button;
+  if (Session has accepted items?) then (Yes)
+    :Save batch reward; display reward QR;
+    :Sign in or register in app; scan reward QR;
+    if (Authenticated claim and valid, unclaimed,
+    unexpired reward?) then (Yes)
+      :Credit customer points; mark reward claimed;
+      :Record reward transaction;
+    else (No)
+      :Show claim error; no points credited;
+    endif
+  else (No)
+    :Show no-reward message;
+  endif
+else (Refill water)
+  :Press blue button or select Refill Water;
+  :Pause recycling; create refill session;
+  :Display refill QR;
+  :Sign in or register in app; scan refill QR;
+  :Select 250, 500, or 1,000 mL;
+  if (Choose optional Buy Points?) then (Yes)
+    :Check owner accepts GCash and has enough points;
+    if (Purchase available?) then (Yes)
+      :Create purchase; customer pays owner in GCash;
+      :Submit sender name and receipt reference;
+      :Owner manually checks received payment;
+      if (Owner approves and transfer checks pass?) then (Yes)
+        :Atomically transfer owner points to customer;
+        :Record approved purchase transaction;
+      else (No)
+        :Show rejected or pending status;
+        :Do not transfer points;
+      endif
+    else (No)
+      :Show purchase unavailable;
+    endif
+    :Return to refill; scan a new QR if expired;
+  endif
+  :Place container; confirm refill;
+  :Validate customer, session, machine,
+  selected amount, and point balance;
+  if (Request valid and enough points?) then (Yes)
+    :Atomically deduct customer points,
+    reserve session, and record transaction;
+    :Send dispensing command to ESP32;
+    if (Dispensing completes?) then (Yes)
+      :Mark refill completed and credit machine owner;
+    else (Error / timeout)
+      :Attempt point refund and record failed refill;
+    endif
+    :Return machine to recycling mode;
+  else (No)
+    :Show validation error; do not dispense;
+  endif
+endif
+:Customer finishes or starts another service;
+stop
+legend bottom
+  Reward QR validity: 60 seconds. Waiting refill QR validity: 5 minutes.
+  Recycling requires no app login; claiming points and requesting refills do.
+  Purchase review is asynchronous. Pending purchases can be checked later.
+  Rejected payment requests do not automatically refund GCash.
+  Persistence steps show the normal online path; see SYSTEM_DIAGRAMS.md for limits.
+endlegend
+@enduml
