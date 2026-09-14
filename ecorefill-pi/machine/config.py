@@ -14,8 +14,12 @@ INFERENCE_IMAGE_SIZE = 416
 # Center tray, estimated from the machine-camera screenshots.
 # Fractions of the full frame: (left, top, right, bottom). Set None for full view.
 DETECTION_REGION = (0.33, 0.04, 0.65, 0.96)
-MOTION_MIN_AREA = 3000
-MOTION_TRIGGER_FRAMES = 2
+# Sensitive scan trigger, measured on the normalized 640x480 frame.
+# Area is the largest contour after dilation; it is not raw object size.
+MOTION_MIN_AREA = 25
+MOTION_PIXEL_THRESHOLD = 8
+MOTION_BLUR_SIZE = (5, 5)
+MOTION_TRIGGER_FRAMES = 1
 STABLE_FRAMES_REQUIRED = 2
 MOTION_FRAME_DELAY = 0.03
 AUTO_REJECT_RESET_SECONDS = 0.7

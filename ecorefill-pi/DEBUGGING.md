@@ -69,6 +69,23 @@ at 85%, but still mislabeled the silver can as a bottle at 83%. Test original
 camera frames of both materials before relying on the new crop in operation.
 The camera waits 2 seconds before checking that the scene is stable to rearm.
 
+## Motion sensitivity
+
+The scanner now triggers on a single frame of small movement inside the scan
+box, then waits for the item to hold still before classification. In
+`machine/config.py`, `MOTION_MIN_AREA = 25` replaces 3000 (contour area after
+dilation at 640 × 480), `MOTION_PIXEL_THRESHOLD = 8` replaces 25 (grayscale
+change), and `MOTION_BLUR_SIZE = (5, 5)` replaces `(21, 21)` to retain small
+changes. `MOTION_TRIGGER_FRAMES = 1` replaces 2 so brief motion can trigger.
+
+Copy the updated `machine/` directory to the Pi and restart the controller.
+Check small, slow movements in the tray and an empty tray under normal lighting.
+The smallest detectable movement still depends on contrast, focus, and camera
+noise. If scans trigger on an empty tray, increase `MOTION_MIN_AREA` or
+`MOTION_PIXEL_THRESHOLD`; setting `MOTION_TRIGGER_FRAMES = 2` requires sustained
+movement. These motion settings also affect the stillness checks, so check that
+the camera rearms after sorting. Material acceptance settings are unchanged.
+
 ## Green or blue physical button does not respond
 
 Stop the running machine controller first so two processes do not claim the

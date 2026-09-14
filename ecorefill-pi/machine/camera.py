@@ -5,9 +5,11 @@ import time
 from .config import (
     CAMERA_HEIGHT,
     CAMERA_WIDTH,
+    MOTION_BLUR_SIZE,
     MOTION_FRAME_DELAY,
     MOTION_FRAME_SIZE,
     MOTION_MIN_AREA,
+    MOTION_PIXEL_THRESHOLD,
     MOTION_TRIGGER_FRAMES,
     REARM_SETTLE_MIN_SECONDS,
     REARM_STABLE_FRAMES_REQUIRED,
@@ -121,7 +123,7 @@ class CameraSupport:
         left, top, right, bottom = scan_region_bounds(frame)
         # Picamera2's RGB888 format supplies BGR bytes, as OpenCV expects.
         gray = cv2.cvtColor(frame[top:bottom, left:right], cv2.COLOR_BGR2GRAY)
-        gray = cv2.GaussianBlur(gray, (21, 21), 0)
+        gray = cv2.GaussianBlur(gray, MOTION_BLUR_SIZE, 0)
         return gray
 
     def frame_has_motion(self, previous_gray, current_frame):
@@ -131,7 +133,7 @@ class CameraSupport:
         frame_delta = cv2.absdiff(previous_gray, current_gray)
         threshold = cv2.threshold(
             frame_delta,
-            25,
+            MOTION_PIXEL_THRESHOLD,
             255,
             cv2.THRESH_BINARY,
         )[1]

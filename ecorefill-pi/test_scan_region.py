@@ -1,12 +1,14 @@
 """Check scan isolation, inspection coordinates, and unchanged clean photos."""
 
 from types import SimpleNamespace
+from threading import Event
 import unittest
 from unittest.mock import Mock, patch
 
 import numpy as np
 
 from machine.camera import CameraSupport
+from machine.config import REARM_STABLE_FRAMES_REQUIRED, STABLE_FRAMES_REQUIRED
 from machine.detection import MaterialDetection
 from machine.scan_region import scan_region_bounds
 
@@ -55,6 +57,36 @@ class ScanRegionTests(unittest.TestCase):
                 self.assertEqual(large_motion, motion)
                 self.assertEqual(large_area, changed_area)
                 np.testing.assert_array_equal(large_gray, gray)
+
+    def test_tiny_low_contrast_change_triggers_but_minor_noise_does_not(self):
+        camera = CameraSupport()
+        self.frame[:] = 100
+        baseline = camera.prepare_motion_frame(self.frame)
+        noise = np.random.default_rng(0).integers(-2, 3, self.frame.shape)
+        noisy = (self.frame.astype(np.int16) + noise).astype(np.uint8)
+        self.assertFalse(camera.frame_has_motion(baseline, noisy)[0])
+        self.frame[180:185, 280:285] = 120
+        self.assertTrue(camera.frame_has_motion(baseline, self.frame)[0])
+
+    def test_single_small_movement_scans_after_settling(self):
+        camera = CameraSupport()
+        camera.shutdown_event = Event()
+        camera.recycling_paused = Event()
+        camera.finish_session_event = Event()
+        camera.update_state = Mock()
+        moved = self.frame.copy()
+        moved[180:185, 280:285] = 20
+        # First rearm on a still scene, then make one small change and hold it.
+        camera.capture_camera_array = Mock(side_effect=(
+            [self.frame] * (REARM_STABLE_FRAMES_REQUIRED + 2)
+            + [moved] * (STABLE_FRAMES_REQUIRED + 1)
+        ))
+        with patch("machine.camera.time.sleep"):
+            scanned = camera.wait_for_item_motion()
+        self.assertIs(scanned, moved)
+        camera.update_state.assert_called_once_with(
+            phase="motion_detected", message="Item detected. Hold it still...", error=None,
+        )
 
     def test_inference_receives_only_scan_pixels_and_inspection_gets_full_coordinates(self):
         left, top, right, bottom = self.bounds
