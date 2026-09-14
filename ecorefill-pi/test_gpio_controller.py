@@ -101,7 +101,7 @@ class ControllerTests(unittest.TestCase):
     def test_sort_sequence_and_final_settle(self):
         self.assertEqual(self.controller.execute(" bottle "), (True, None))
         self.assertEqual([c.args for c in self.hardware.servo.call_args_list], [
-            ("sort", 500), ("gate", 500), ("gate", 1450), ("sort", 1450),
+            ("sort", 606), ("gate", 500), ("gate", 1450), ("sort", 1450),
         ])
         self.assertAlmostEqual(self.now, 3.6)
         self.hardware.pump.assert_not_called()

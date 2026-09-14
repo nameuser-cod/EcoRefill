@@ -9,13 +9,13 @@ import time
 
 @dataclass(frozen=True)
 class ControllerSettings:
-    # Nominal 0/90/180 degrees, matching the original 500-2400 us range.
+    # Nominal angles use the original 500-2400 us range for 0-180 degrees.
     # Physical angles depend on the servo; calibrate with the linkage detached.
     gate_center_us: int = 1450
     gate_accept_us: int = 500
     gate_reject_us: int = 2400
     sort_center_us: int = 1450
-    sort_bottle_us: int = 500
+    sort_bottle_us: int = 606  # 10 degrees, rounded to the nearest microsecond.
     sort_can_us: int = 2400
     move_seconds: float = 0.7
     drop_seconds: float = 1.5

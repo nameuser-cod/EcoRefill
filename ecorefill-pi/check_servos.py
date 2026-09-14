@@ -59,7 +59,8 @@ def exercise_servo(hardware, name, report, settings=None):
     else:
         center, low, high = settings.sort_center_us, settings.sort_bottle_us, settings.sort_can_us
     try:
-        for angle, pulse in ((90, center), (180, high), (0, low), (90, center)):
+        for pulse in (center, high, low, center):
+            angle = round((pulse - 500) * 180 / 1900)
             hardware.servo(name, pulse)
             print(f"{name}: nominal {angle} degrees ({pulse} us at 50 Hz); observe movement now.", flush=True)
             report(name)
