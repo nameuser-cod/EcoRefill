@@ -1,0 +1,131 @@
+.finder-controls,
+.finder-selection {
+  margin-bottom: 22px;
+  padding: 20px;
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+.finder-controls label,
+.finder-selection label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 800;
+}
+
+.finder-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 0 12px;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+}
+
+.finder-search input {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+}
+
+.finder-search:focus-within {
+  outline: 3px solid var(--deep-green);
+  outline-offset: 2px;
+}
+
+.finder-search input:focus { outline: none; }
+.finder-controls button { display: flex; align-items: center; gap: 8px; }
+
+.finder-note {
+  margin: 12px 0 0;
+  color: var(--dark-green);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.finder-map {
+  height: clamp(280px, 48dvh, 420px);
+  margin-bottom: 20px;
+  border: var(--border);
+  border-radius: var(--radius);
+  isolation: isolate;
+  z-index: 0;
+}
+
+.finder-marker { background: transparent; border: 0; }
+.finder-pin {
+  display: block;
+  width: 30px;
+  height: 30px;
+  border: 3px solid #08110b;
+  border-radius: 50% 50% 50% 0;
+  background: #9cff59;
+  box-shadow: 2px 2px 0 #08110b;
+  transform: rotate(-45deg);
+}
+.finder-pin::after {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #08110b;
+}
+.finder-pin.selected { background: #ffd43b; outline: 3px solid white; }
+
+.finder-selection { background: var(--mint-green); overflow-wrap: anywhere; scroll-margin-bottom: 110px; }
+.finder-selection h2 { margin: 8px 0; }
+.finder-selection select {
+  width: 100%;
+  min-height: 46px;
+  padding: 8px;
+  margin-bottom: 14px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+}
+.finder-directions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 50px;
+  padding: 12px;
+  border: var(--border);
+  border-radius: 12px;
+  background: var(--main-green);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  font-weight: 900;
+}
+.finder-directions:focus-visible,
+.finder-selection select:focus-visible { outline: 4px solid var(--warning); outline-offset: 3px; }
+.finder-directions:hover { background: var(--lime-green); }
+.finder-results h2 { font-size: 20px; }
+.finder-results ul { display: grid; gap: 14px; padding: 0; list-style: none; }
+.machine-finder-page .finder-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: var(--white);
+}
+.machine-finder-page .finder-result.selected { background: var(--mint-green); }
+.finder-result svg { flex-shrink: 0; }
+.finder-result > span:first-of-type { display: grid; gap: 7px; min-width: 0; overflow-wrap: anywhere; }
+.finder-result span span,
+.finder-result small { font-size: 13px; font-weight: 600; line-height: 1.4; }
+.finder-result-action { margin-left: auto; font-size: 12px; }
+.machine-finder-page .empty-card button { margin-top: 16px; }

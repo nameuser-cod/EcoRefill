@@ -14,6 +14,7 @@ import CameraScan from "./pages/user/CameraScan";
 import UserHistory from "./pages/user/UserHistory";
 import BuyPoints from "./pages/user/BuyPoints";
 import UserProfile from "./pages/user/UserProfile";
+import FindMachines from "./pages/user/FindMachines";
 import MachineWaterRefill from "./pages/machine/MachineWaterRefill";
 import UserWaterRefill from "./pages/user/UserWaterRefill";
 
@@ -35,6 +36,7 @@ function App() {
         <Route path="/user/history" element={<UserHistory />} />
         <Route path="/user/buy-points" element={<BuyPoints />} />
         <Route path="/user/profile" element={<UserProfile />} />
+        <Route path="/user/machines" element={<FindMachines />} />
         <Route path="/user/camera-scan" element={<CameraScan />} />
         <Route path="/machine/water-refill" element={<MachineWaterRefill />} />
         <Route path="/user/water-refill/:sessionId" element={<UserWaterRefill />} />

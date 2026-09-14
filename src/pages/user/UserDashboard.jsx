@@ -15,6 +15,7 @@ import {
   Droplets,
   History,
   LogOut,
+  MapPin,
   QrCode,
   Recycle,
 } from "lucide-react";
@@ -168,6 +169,17 @@ function UserDashboard() {
               </span>
             </button>
 
+            <button
+              type="button"
+              className="dashboard-action-card dashboard-action-card-alt"
+              onClick={() => navigate("/user/machines")}
+            >
+              <span className="dashboard-action-icon"><MapPin size={26} /></span>
+              <span>
+                <strong>Find machines</strong>
+                <small>Explore the map and get directions</small>
+              </span>
+            </button>
           </div>
         </section>
 

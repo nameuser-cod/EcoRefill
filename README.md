@@ -114,6 +114,11 @@ Five accepted recyclable items earn 5 points, enough for a **500 mL refill** und
 - Select water amounts and follow refill progress.
 - View recycling rewards, point purchases, and refill transactions.
 - Buy points from a device owner using GCash, with owner verification.
+- Find machines on a map and open walking or driving directions.
+
+Select **Find machines** on the user dashboard or **Map** in the bottom navigation. The finder reads saved machine coordinates from Firestore and updates as owners change locations. Search by machine name, ID, or location, then select a pin or list entry and choose **Get directions**. Directions open Google Maps using its [Maps URLs](https://developers.google.com/maps/documentation/urls/get-started#directions) interface; no additional API key is needed. Machines without valid coordinates are omitted, and reported offline machines remain visible with an availability notice.
+
+**Use my location** requests location permission, shows the user's position, and sorts results by approximate straight-line distance. This position stays in page memory and is not saved to Firestore. If permission is denied or location is unavailable, searching and directions still work; Google Maps lets the user choose a starting point. Map tiles and directions need an internet connection. Verify finder logic with `node --test src/pages/user/utils/machineFinder.test.mjs`.
 
 ### Device owner
 
