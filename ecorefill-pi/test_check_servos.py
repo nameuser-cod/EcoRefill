@@ -32,7 +32,7 @@ class ServoDiagnosticTests(unittest.TestCase):
         with patch.object(check_servos.time, "sleep"), patch("builtins.print"):
             check_servos.exercise_servo(hardware, "gate", Mock())
         self.assertEqual([call.args for call in hardware.servo.call_args_list], [
-            ("gate", 1450), ("gate", 2400), ("gate", 500), ("gate", 1450),
+            ("gate", 1450), ("gate", 2200), ("gate", 500), ("gate", 1450),
         ])
         hardware.servos["gate"].close.assert_called_once()
         hardware.servos["sort"].close.assert_not_called()

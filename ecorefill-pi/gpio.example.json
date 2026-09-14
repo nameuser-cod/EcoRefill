@@ -1,7 +1,7 @@
 {
   "gate_center_us": 1450,
   "gate_accept_us": 500,
-  "gate_reject_us": 2400,
+  "gate_reject_us": 2200,
   "sort_center_us": 1450,
   "sort_bottle_us": 975,
   "sort_can_us": 2400,

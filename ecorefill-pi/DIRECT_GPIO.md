@@ -243,18 +243,19 @@ cannot be verified. If either pin reports input, output, SPI, or I2S, check that
 `dtoverlay=pwm-2chan` applies under `[all]`, reboot, and stop conflicting programs
 or overlays. Exporting PWM channels alone does not set the header pin routing.
 
-Each motion test sends only the selected servo to nominal **90°, 180°, then its
-accept/bottle position, then 90°**, holding each setting for one second. The gate
+Each motion test sends only the selected servo to **center, reject/can, then its
+accept/bottle position, then center**, holding each setting for one second. The gate
 accept position is 0° (500 µs); the sorter bottle position is 45° (975 µs).
-The 90° and 180° defaults are 1450 and 2400 µs, using the original sketch's
-500–2400 µs range. Use
+Center is 90° (1450 µs), gate reject is about 161° (2200 µs), and sorter can is
+180° (2400 µs), using the original sketch's 500–2400 µs range. Use
 `--config gpio.local.json` to test your saved positions. Both relays stay OFF, the sensor is not sampled,
 and the camera/model/Firebase are not loaded. A missing sensor need not be wired
 for this test. All controller resources must nevertheless be available; stop any
 other process claiming their GPIOs before running it.
 
 During movement, the printed PWM settings should include `enable=1`,
-`period=20000000`, and `duty_cycle=1450000`, `2400000`, `500000` (gate accept),
+`period=20000000`, and `duty_cycle=1450000`, `2200000` (gate reject),
+`2400000` (sorter can), `500000` (gate accept),
 or `975000` (sorter bottle) with the defaults. Those are
 software settings, not a measured waveform. The test disables PWM afterward.
 
@@ -317,11 +318,12 @@ format. There is no automatic retry of a GPIO refill or fallback to the ESP32.
 
 Edit `gpio.local.json` for both the console and the app:
 
-- Servo positions are **pulse widths in microseconds**, not degrees. Defaults
-  are **500/1450/2400 µs at 50 Hz** for nominal **0°/90°/180°**, matching the
+- Servo positions are **pulse widths in microseconds**, not degrees. The scale
+  uses **500/1450/2400 µs at 50 Hz** for nominal **0°/90°/180°**, matching the
   pasted sketch's pulse range. Gate accept uses 0°; sorter bottle uses
-  **45° (975 µs)**. Gate reject
-  and sorter can use 180°; startup/reset use 90°. Physical travel varies by servo:
+  **45° (975 µs)**. Gate reject uses **about 161° (2200 µs)** to back off the
+  endpoint while investigating reject jitter. Sorter can uses 180°;
+  startup/reset uses 90°. Physical travel varies by servo:
   stop the test if a motor presses against a mechanical stop or stalls.
   Adjust each saved position for the actual mechanism rather than forcing a
   servo beyond its physical travel.
@@ -348,7 +350,7 @@ import json
 from pathlib import Path
 path = Path('gpio.local.json')
 data = json.loads(path.read_text()) if path.exists() else {}
-data.update(gate_center_us=1450, gate_accept_us=500, gate_reject_us=2400,
+data.update(gate_center_us=1450, gate_accept_us=500, gate_reject_us=2200,
             sort_center_us=1450, sort_bottle_us=975, sort_can_us=2400)
 path.write_text(json.dumps(data, indent=2) + '\n')
 PY

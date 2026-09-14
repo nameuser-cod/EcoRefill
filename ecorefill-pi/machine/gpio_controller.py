@@ -13,7 +13,7 @@ class ControllerSettings:
     # Physical angles depend on the servo; calibrate with the linkage detached.
     gate_center_us: int = 1450
     gate_accept_us: int = 500
-    gate_reject_us: int = 2400
+    gate_reject_us: int = 2200  # About 161 degrees; back off the reject endpoint.
     sort_center_us: int = 1450
     sort_bottle_us: int = 975  # 45 degrees.
     sort_can_us: int = 2400
