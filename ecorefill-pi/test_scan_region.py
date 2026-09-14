@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 
 from machine.camera import CameraSupport
-from machine.config import REARM_STABLE_FRAMES_REQUIRED, STABLE_FRAMES_REQUIRED
+from machine.config import REARM_STABLE_FRAMES_REQUIRED
 from machine.detection import MaterialDetection
 from machine.scan_region import scan_region_bounds
 
@@ -69,24 +69,55 @@ class ScanRegionTests(unittest.TestCase):
         self.assertTrue(camera.frame_has_motion(baseline, self.frame)[0])
 
     def test_single_small_movement_scans_after_settling(self):
-        camera = CameraSupport()
-        camera.shutdown_event = Event()
-        camera.recycling_paused = Event()
-        camera.finish_session_event = Event()
-        camera.update_state = Mock()
         moved = self.frame.copy()
         moved[180:185, 280:285] = 20
-        # First rearm on a still scene, then make one small change and hold it.
-        camera.capture_camera_array = Mock(side_effect=(
-            [self.frame] * (REARM_STABLE_FRAMES_REQUIRED + 2)
-            + [moved] * (STABLE_FRAMES_REQUIRED + 1)
-        ))
-        with patch("machine.camera.time.sleep"):
-            scanned = camera.wait_for_item_motion()
-        self.assertIs(scanned, moved)
-        camera.update_state.assert_called_once_with(
-            phase="motion_detected", message="Item detected. Hold it still...", error=None,
-        )
+        shifted = self.frame.copy()
+        shifted[200:205, 280:285] = 20
+        # Samples are 0.125 seconds apart: one trigger frame, then nine
+        # still frames spanning a full second. A bounce resets that duration.
+        for sequence in ([moved] * 10, [moved] * 4 + [shifted] * 10):
+            with self.subTest(bounce=len(sequence) > 10):
+                camera = CameraSupport()
+                camera.shutdown_event = Event()
+                camera.recycling_paused = Event()
+                camera.finish_session_event = Event()
+                camera.update_state = Mock()
+                frames = [self.frame] * (REARM_STABLE_FRAMES_REQUIRED + 2) + sequence
+                captures = iter(enumerate(frames))
+                with patch("machine.camera.time.sleep"), \
+                     patch("machine.camera.time.monotonic") as clock:
+                    def capture():
+                        index, frame = next(captures)
+                        clock.return_value = index * 0.125
+                        return frame
+                    camera.capture_camera_array = Mock(side_effect=capture)
+                    scanned = camera.wait_for_item_motion()
+                self.assertIs(scanned, sequence[-1])
+                self.assertEqual(camera.capture_camera_array.call_count, len(frames))
+                camera.update_state.assert_called_once_with(
+                    phase="motion_detected", message="Item detected. Hold it still...", error=None,
+                )
+
+    def test_settling_wait_can_be_cancelled(self):
+        for event_name in ("shutdown_event", "recycling_paused", "finish_session_event"):
+            with self.subTest(event=event_name):
+                camera = CameraSupport()
+                camera.shutdown_event = Event()
+                camera.recycling_paused = Event()
+                camera.finish_session_event = Event()
+                camera.update_state = Mock()
+                moved = self.frame.copy()
+                moved[180:185, 280:285] = 20
+                frames = iter([self.frame] * (REARM_STABLE_FRAMES_REQUIRED + 2)
+                              + [moved] * 4)
+                camera.capture_camera_array = Mock(side_effect=lambda: next(frames))
+                def sleep(_):
+                    if camera.capture_camera_array.call_count == REARM_STABLE_FRAMES_REQUIRED + 6:
+                        getattr(camera, event_name).set()
+                with patch("machine.camera.time.sleep", side_effect=sleep), \
+                     patch("machine.camera.time.monotonic", return_value=0):
+                    self.assertIsNone(camera.wait_for_item_motion())
+                camera.update_state.assert_called_once()
 
     def test_inference_receives_only_scan_pixels_and_inspection_gets_full_coordinates(self):
         left, top, right, bottom = self.bounds

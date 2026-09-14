@@ -72,7 +72,12 @@ The camera waits 2 seconds before checking that the scene is stable to rearm.
 ## Motion sensitivity
 
 The scanner now triggers on a single frame of small movement inside the scan
-box, then waits for the item to hold still before classification. In
+box, then requires at least 1 second of continuous stillness before saving the
+photo and classifying that frame. Any detected movement restarts this wait;
+brief pauses while the bottle bounces do not finish the scan. The controller
+keeps watching for movement and responding to pause/finish requests during this
+wait. `SCAN_STABLE_SECONDS = 1.0` controls the duration, in addition to the
+minimum `STABLE_FRAMES_REQUIRED` frame count. In
 `machine/config.py`, `MOTION_MIN_AREA = 25` replaces 3000 (contour area after
 dilation at 640 × 480), `MOTION_PIXEL_THRESHOLD = 8` replaces 25 (grayscale
 change), and `MOTION_BLUR_SIZE = (5, 5)` replaces `(21, 21)` to retain small

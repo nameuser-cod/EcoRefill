@@ -16,6 +16,7 @@ from .config import (
     RECYCLING_IMAGE_HEIGHT,
     RECYCLING_IMAGE_JPEG_QUALITY,
     RECYCLING_IMAGE_WIDTH,
+    SCAN_STABLE_SECONDS,
     STABLE_FRAMES_REQUIRED,
 )
 from .diagnostics import log
@@ -210,6 +211,7 @@ class CameraSupport:
         # ---------------------------------------------------------
         motion_frames = 0
         stable_frames = 0
+        stable_since = None
         motion_started = False
         latest_frame = previous_frame
 
@@ -247,10 +249,15 @@ class CameraSupport:
             else:
                 if has_motion:
                     stable_frames = 0
+                    stable_since = None
                 else:
                     stable_frames += 1
+                    now = time.monotonic()
+                    if stable_since is None:
+                        stable_since = now
 
-                    if stable_frames >= STABLE_FRAMES_REQUIRED:
+                    if (stable_frames >= STABLE_FRAMES_REQUIRED
+                            and now - stable_since >= SCAN_STABLE_SECONDS):
                         return latest_frame
 
             time.sleep(MOTION_FRAME_DELAY)

@@ -21,6 +21,9 @@ MOTION_PIXEL_THRESHOLD = 8
 MOTION_BLUR_SIZE = (5, 5)
 MOTION_TRIGGER_FRAMES = 1
 STABLE_FRAMES_REQUIRED = 2
+# Require continuous stillness before saving/classifying the camera frame.
+# A short pause while a bottle bounces must not count as a settled item.
+SCAN_STABLE_SECONDS = 1.0
 MOTION_FRAME_DELAY = 0.03
 AUTO_REJECT_RESET_SECONDS = 0.7
 AUTO_REARM_DELAY = 0.20
