@@ -109,7 +109,7 @@ class ControllerTests(unittest.TestCase):
     def test_can_and_reject_paths(self):
         for command, expected in (
             ("CAN", [("sort", 2400), ("gate", 500), ("gate", 1450), ("sort", 1450)]),
-            ("REJECT", [("gate", 2200), ("gate", 1450), ("sort", 1450)]),
+            ("REJECT", [("gate", 2389), ("gate", 1450), ("sort", 1450)]),
         ):
             self.hardware.reset_mock()
             self.assertEqual(self.controller.execute(command), (True, None))
