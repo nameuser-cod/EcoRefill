@@ -261,6 +261,33 @@ Where available, an oscilloscope/logic analyzer can confirm actual 50 Hz pulses.
 Report the diagnostic output and whether the motor is silent, buzzing, or moving
 to narrow down power, wiring, signal-level compatibility, or mechanical issues.
 
+### Measure the actual PWM without a scope
+
+`check_pwm_signal.py` uses a temporary jumper to measure the output's pulse
+timing on a second Pi input. It does not rely on PWM sysfs readback.
+
+Stop the app and power down before changing connections. Disconnect both servo
+signal wires, then connect **physical pin 12 (GPIO18) to physical pin 36
+(GPIO16)** with a jumper. Leave external servo power off for this measurement;
+no external voltage connects to the jumper. GPIO16 is unused by the normal
+controller. Power the Pi, prepare PWM if rebooted, then run:
+
+```sh
+sudo python3 direct_gpio.py --prepare-pwm
+python3 check_pwm_signal.py --servo gate
+```
+
+The input should measure approximately 50 Hz at each requested pulse width:
+1500, 1300, and 1700 µs. Three `PASS` lines confirm that the Pi input detected
+those pulses. This does not measure signal voltage or establish that a servo
+accepts that voltage. `INSUFFICIENT EDGES` or `TIMING MISMATCH` means the output
+has not been verified; the temporary jumper and edge capture also need checking.
+
+To measure the sort output, power down and move the jumper's output end from
+physical pin 12 to physical pin 35; keep its input end on physical pin 36. Use
+`python3 check_pwm_signal.py --servo sort`. Remove the temporary jumper and
+restore servo signals with power off before returning to normal operation.
+
 ## Run with the existing EcoRefill app
 
 From the same directory, using the Python environment already configured for
