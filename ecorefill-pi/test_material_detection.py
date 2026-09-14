@@ -28,7 +28,7 @@ class MaterialDetectionTests(unittest.TestCase):
                     self.assertEqual(result["accepted"], accepted)
                     self.assertEqual(result["points"], 1 if accepted else 0)
                     machine.weight_scale.read_weight.assert_not_called()
-                    machine.send_to_esp32.assert_called_once_with(command)
+                    machine.send_command.assert_called_once_with(command)
                     if accepted:
                         self.assertEqual(result["inspection"]["weight"], {"status": "disabled"})
 
@@ -69,7 +69,7 @@ class MaterialDetectionTests(unittest.TestCase):
         machine.visual_inspector = SimpleNamespace(
             apply=Mock(side_effect=lambda result, *_: result),
         )
-        machine.send_to_esp32 = Mock(return_value=True)
+        machine.send_command = Mock(return_value=True)
         frame = MagicMock()
         frame.shape = (480, 640, 3)
         drawing = SimpleNamespace(
@@ -124,13 +124,13 @@ class MaterialDetectionTests(unittest.TestCase):
                 self.assertEqual(result["points"], 0)
                 self.assertEqual(result["item"], "unknown")
                 self.assertIn("uncertain", result["rejection_reason"])
-                machine.send_to_esp32.assert_called_once_with("REJECT")
+                machine.send_command.assert_called_once_with("REJECT")
                 machine.visual_inspector.apply.assert_not_called()
 
     def test_high_confidence_bottle_still_uses_bottle_gate(self):
         machine, result = self.verify_and_sort("plastic_bottle", 0.95)
         self.assertTrue(result["accepted"])
-        machine.send_to_esp32.assert_called_once_with("BOTTLE")
+        machine.send_command.assert_called_once_with("BOTTLE")
 
     def test_bottle_threshold_applies_to_all_bottle_aliases(self):
         for label in ("plastic_bottle", "pet_bottle"):
@@ -138,7 +138,7 @@ class MaterialDetectionTests(unittest.TestCase):
                 with self.subTest(label=label, confidence=confidence):
                     machine, result = self.verify_and_sort(label, confidence)
                     self.assertEqual(result["accepted"], accepted)
-                    machine.send_to_esp32.assert_called_once_with(
+                    machine.send_command.assert_called_once_with(
                         "BOTTLE" if accepted else "REJECT",
                     )
 
@@ -148,7 +148,7 @@ class MaterialDetectionTests(unittest.TestCase):
                 with self.subTest(label=label, confidence=confidence):
                     machine, result = self.verify_and_sort(label, confidence)
                     self.assertEqual(result["accepted"], accepted)
-                    machine.send_to_esp32.assert_called_once_with(
+                    machine.send_command.assert_called_once_with(
                         "CAN" if accepted else "REJECT",
                     )
 
@@ -163,7 +163,7 @@ class MaterialDetectionTests(unittest.TestCase):
                     allowed = grams <= limit
                     self.assertEqual(result["accepted"], allowed)
                     self.assertEqual(result["points"], int(allowed))
-                    machine.send_to_esp32.assert_called_once_with(command if allowed else "REJECT")
+                    machine.send_command.assert_called_once_with(command if allowed else "REJECT")
                     self.assertEqual(result["inspection"]["weight"]["grams"], grams)
                     self.assertEqual(result["inspection"]["weight"]["limit_g"], limit)
                     if not allowed:
@@ -179,13 +179,13 @@ class MaterialDetectionTests(unittest.TestCase):
                     machine, result = self.verify_and_sort(label, 0.95, weight_error=error)
                     self.assertFalse(result["accepted"])
                     self.assertEqual(result["points"], 0)
-                    machine.send_to_esp32.assert_called_once_with("REJECT")
+                    machine.send_command.assert_called_once_with("REJECT")
             for grams in (float("nan"), float("inf"), -1, 0):
                 with self.subTest(label=label, grams=grams), \
                      self.assertLogs("ecorefill.machine", level="ERROR"):
                     machine, result = self.verify_and_sort(label, 0.95, grams)
                     self.assertFalse(result["accepted"])
-                    machine.send_to_esp32.assert_called_once_with("REJECT")
+                    machine.send_command.assert_called_once_with("REJECT")
 
     def test_missing_sensor_cannot_fall_back_to_material_acceptance(self):
         machine = MaterialDetection()

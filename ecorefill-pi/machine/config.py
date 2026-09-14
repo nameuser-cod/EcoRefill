@@ -38,9 +38,6 @@ BOTTLE_ACCEPT_CONFIDENCE_LIMIT = 0.75
 # 0.05 means the bounding box must cover at least 5% of the image.
 MIN_OBJECT_AREA_RATIO = 0.05
 
-SERIAL_BAUD_RATE = 115200
-SERIAL_TIMEOUT = 0.25
-WATER_COMMAND_TIMEOUT_SECONDS = 120
 REWARD_READY_TIMEOUT_SECONDS = 60
 
 API_HOST = "0.0.0.0"
@@ -122,7 +119,7 @@ WATER_OPTIONS = {
     1000: 10,
 }
 
-# Water commands expected by the ESP32 firmware.
+# Water commands handled by the Raspberry Pi GPIO controller.
 WATER_COMMANDS = {
     250: "WATER_250",
     500: "WATER_500",

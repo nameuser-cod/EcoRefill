@@ -129,7 +129,7 @@ class InspectionTests(unittest.TestCase):
         machine.model = SimpleNamespace(
             names={0: "plastic_bottle"}, predict=lambda **kw: [prediction],
         )
-        machine.send_to_esp32 = commands.append
+        machine.send_command = commands.append
         for mode, command in (("enforce", "REJECT"), ("off", "BOTTLE"), ("observe", "BOTTLE")):
             self.config["mode"] = mode
             machine.visual_inspector = VisualInspector(self.config, classifier=Classifier(1))

@@ -1,8 +1,8 @@
 # Raspberry Pi 5: direct sorter and dispenser
 
-This replaces the ESP32 with the Pi 5's GPIO. The app selects it with
-`ECOREFILL_CONTROLLER=gpio`; the existing USB serial controller remains the
-default until you select GPIO. No ESP32 or PCA9685 is required.
+The machine app uses the Pi 5's GPIO directly for both sorting and dispensing.
+Start it with `python3 machine_flow.py`; no controller-selection variable is
+needed. The ESP32 serial connection path has been removed.
 
 ## Wiring
 
@@ -52,7 +52,7 @@ HX711 from Pi **3.3 V**, separate from the actuators' external 5 V supply.
 Weighing is disabled by default. To enable it with direct GPIO control:
 
 ```sh
-ECOREFILL_CONTROLLER=gpio ECOREFILL_GPIO_CONFIG=./gpio.local.json \
+ECOREFILL_GPIO_CONFIG=./gpio.local.json \
 WEIGHT_SENSOR_ENABLED=true python3 machine_flow.py
 ```
 
@@ -294,13 +294,15 @@ From the same directory, using the Python environment already configured for
 the camera, model, and Firebase dependencies:
 
 ```sh
-ECOREFILL_CONTROLLER=gpio ECOREFILL_GPIO_CONFIG=./gpio.local.json python3 machine_flow.py
+ECOREFILL_GPIO_CONFIG=./gpio.local.json python3 machine_flow.py
 ```
 
-Set those same two environment variables in your existing service configuration
-if you launch the app as a service, and run PWM preparation before the service
-starts after each boot. Relative calibration paths resolve from the working
-directory; use an absolute path in a service if needed.
+Set `ECOREFILL_GPIO_CONFIG` in your existing service configuration to load your
+calibration file, and run PWM preparation before the service starts after each
+boot. Without a calibration file, `python3 machine_flow.py` uses the defaults in
+`gpio.example.json`. The obsolete `ECOREFILL_CONTROLLER` variable is ignored and
+can be removed. Relative calibration paths resolve from the working directory;
+use an absolute path in a service if needed.
 
 The existing sorting and water APIs route to the direct controller. Sorting
 waits for the mechanism to settle before the camera rearms; a reported sorting

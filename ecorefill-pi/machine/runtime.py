@@ -25,7 +25,7 @@ from .machine_api import MachineAPI
 from .recycling import RecyclingWorker
 from .rewards_api import RewardsAPI
 from .routes import create_apps
-from .serial_controller import SerialController
+from .controller import ControllerCommands
 from .state import MachineState
 from .tunnel import RedemptionTunnel
 from .water_api import WaterAPI
@@ -33,7 +33,7 @@ from .water_worker import WaterRequestWorker
 
 
 class MachineRuntime(
-    MachineState, FirebaseSupport, SerialController, CameraSupport,
+    MachineState, FirebaseSupport, ControllerCommands, CameraSupport,
     MaterialDetection, RecyclingWorker, WaterRequestWorker,
     MachineAPI, WaterAPI, RewardsAPI, RedemptionTunnel,
 ):
@@ -41,8 +41,6 @@ class MachineRuntime(
         self.state_lock = threading.RLock()
         self.active_water_session = None
         self.camera_lock = threading.Lock()
-        self.serial_lock = threading.Lock()
-        self.esp32_connection_lock = threading.Lock()
         self.redemption_tunnel_lock = threading.Lock()
         self.shutdown_event = threading.Event()
         self.recycling_paused = threading.Event()
@@ -53,10 +51,6 @@ class MachineRuntime(
         self.visual_inspector = None
         self.weight_scale = None
         self.picam2 = None
-        self.esp32 = None
-        self.controller_backend = os.getenv("ECOREFILL_CONTROLLER", "serial").strip().lower()
-        if self.controller_backend not in {"serial", "gpio"}:
-            raise ValueError("ECOREFILL_CONTROLLER must be serial or gpio.")
         self.gpio_controller = None
         self.green_button = None
         self.blue_button = None
@@ -176,9 +170,6 @@ class MachineRuntime(
             log("Weight sensor unavailable; recycling items will be rejected:", error)
 
     def initialize_controller(self):
-        if self.controller_backend == "serial":
-            self.esp32 = self.connect_to_esp32()
-            return
         from .gpio_controller import ControllerSettings, GPIOController
         from .gpio_hardware import CONTROL_PINS, PiGPIOHardware
 
@@ -296,12 +287,3 @@ class MachineRuntime(
                     button.close()
                 except Exception:
                     log("Could not close GPIO button during shutdown.")
-
-        if self.esp32 is not None:
-            try:
-                if self.esp32.is_open:
-                    self.send_to_esp32("RESET")
-            except Exception:
-                log("Could not reset ESP32 during shutdown.")
-            finally:
-                self.mark_esp32_disconnected(self.esp32)

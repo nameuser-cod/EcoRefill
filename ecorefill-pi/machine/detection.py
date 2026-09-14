@@ -278,11 +278,11 @@ class MaterialDetection:
 
     def sort_item(self, result):
         if not result["accepted"]:
-            return self.send_to_esp32("REJECT")
+            return self.send_command("REJECT")
         if result["category"] == "bottle":
-            return self.send_to_esp32("BOTTLE")
+            return self.send_command("BOTTLE")
 
         if result["category"] == "can":
-            return self.send_to_esp32("CAN")
+            return self.send_command("CAN")
 
-        return self.send_to_esp32("REJECT")
+        return self.send_command("REJECT")

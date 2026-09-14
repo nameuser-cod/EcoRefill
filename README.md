@@ -4,16 +4,16 @@
 
 EcoRefill is a recycling and water refill machine connected to a web and Android app. It uses a camera and an AI object detection model to recognize plastic bottles and aluminum cans, sends sorting commands to a hardware controller, and rewards accepted items with EcoPoints. Users collect their rewards by scanning a QR code and spend their saved points on water from the machine.
 
-The project brings together a Raspberry Pi, an ESP32 controller, a machine display, a user app, and an owner dashboard. Its purpose is to encourage recycling by connecting recyclable collection with a useful everyday reward: water refills.
+The project brings together a Raspberry Pi 5, a machine display, a user app, and an owner dashboard. Its purpose is to encourage recycling by connecting recyclable collection with a useful everyday reward: water refills.
 
-This README describes the implementation in this repository. Hardware behavior depends on the connected machine and its ESP32 firmware; current implementation gaps are listed below.
+This README describes the implementation in this repository. Hardware behavior depends on the connected machine and its Raspberry Pi GPIO controller; current implementation gaps are listed below.
 
 ## What the system includes
 
 | Part | Purpose |
 | --- | --- |
 | Recycling machine | Receives items one at a time, captures images, identifies supported materials, and sends sorting commands. |
-| Water dispenser | Receives commands for a selected refill amount through the ESP32. |
+| Water dispenser | The Pi controls the pump relay and monitors the container sensor for the selected refill amount. |
 | Machine screen | Shows scanning progress, accepted or rejected results, session totals, reward QR codes, and refill status. |
 | User app | Provides registration, login, QR scanning, point balances, refill selection, owner-verified GCash point purchases, and transaction history. |
 | Device owner dashboard | Shows the assigned machine, recycling statistics, recent scan photos, transactions, alerts, and reported machine readings. |
@@ -43,7 +43,7 @@ flowchart TD
     N -->|Press blue again or Back before refill starts| C
     O --> P[Choose amount and confirm]
     P --> Q[Pi validates request and deducts points]
-    Q --> R[ESP32 handles dispensing]
+    Q --> R[Pi GPIO controls dispensing]
     R --> S[Record result and return machine to recycling mode]
 ```
 
@@ -52,7 +52,7 @@ flowchart TD
 1. **Prepare the items.** Bring clean, empty plastic bottles or aluminum cans and insert them one at a time.
 2. **Automatic detection starts.** The Pi uses camera motion detection to notice an item and waits for a stable view before capturing it. No start button is needed.
 3. **The model checks the item.** YOLO predicts its class. The machine accepts configured material classes only when the prediction passes its confidence and object-area thresholds. Optional visual inspection can add further checks.
-4. **The machine sorts or rejects it.** The Pi sends `BOTTLE`, `CAN`, or `REJECT` to the ESP32. Rejected items earn no points.
+4. **The machine sorts or rejects it.** The Pi runs `BOTTLE`, `CAN`, or `REJECT` directly through its GPIO controller. Rejected items earn no points.
 5. **Accepted items build one session total.** Each accepted bottle or can adds **1 EcoPoint**. The screen shows the item count and points. The user can continue inserting items.
 6. **The user presses the green button.** The machine creates one reward for the entire batch and displays a QR code. Account points are credited when that code is successfully claimed.
 7. **The user claims the reward.** A signed-in user opens the app's scanner and scans the QR. The redemption service verifies the Firebase login token and reward availability, then updates the balance and records a transaction.
@@ -89,7 +89,7 @@ For the 1 kg load cell and HX711 wired to a Raspberry Pi 5, use the [weight setu
 3. **Scan and select.** The signed-in user scans the code in the app, chooses 250 mL, 500 mL, or 1,000 mL, and confirms the request. Place a suitable container at the dispensing outlet before confirming.
 4. **Submit the request.** The app writes a pending request to Firestore. The Pi's request worker validates the session, machine, selected amount, and account balance.
 5. **Reserve the refill.** A database transaction deducts points, reserves the session, and records the refill transaction.
-6. **Dispense.** The Pi sends the corresponding water command to the ESP32 and waits for progress and completion responses.
+6. **Dispense.** The Pi runs the water command directly, monitors container presence, and switches the pump relay off at completion or on a sensor error.
 7. **Update the result.** On success, the request, session, and transaction are marked completed. On a dispenser error or timeout, the Pi attempts to refund the deducted points and records failure. The machine resumes recycling mode.
 
 ### Current refill prices
@@ -144,7 +144,8 @@ flowchart LR
     Camera[Pi camera] --> Pi[Raspberry Pi: Flask, OpenCV, YOLO]
     Buttons[Green and blue buttons] --> Pi
     Kiosk[Machine screen: React] <-->|Local HTTP API| Pi
-    Pi <-->|USB serial| ESP[ESP32: sorter and dispenser]
+    Pi -->|Hardware PWM and relay drivers| Actuators[Servos and pump]
+    Sensor[HC-SR04] -->|GPIO| Pi
     Pi <-->|Admin SDK| DB[(Cloud Firestore)]
     App[User and owner app: React / Capacitor] <-->|Live records and refill requests| DB
     App -->|Sign in| Auth[Firebase Authentication]
@@ -152,8 +153,7 @@ flowchart LR
 ```
 
 - **The Raspberry Pi** runs the camera, material model, inspection module, machine state, reward redemption API, and refill request worker.
-- **The ESP32** receives physical sorting and dispensing commands over USB serial at **115200 baud**. The [controller firmware and upload notes](firmware/README.md) are included; hardware calibration is required.
-- **Optional direct Pi 5 control** replaces the ESP32 with hardware PWM servos, HC-SR04 input, and relay drivers. See the [complete wiring, calibration, and launch guide](ecorefill-pi/DIRECT_GPIO.md); select it with `ECOREFILL_CONTROLLER=gpio`.
+- **Direct Pi 5 control** drives the servos with hardware PWM, reads the HC-SR04, and switches the relay drivers. See the [complete wiring, calibration, and launch guide](ecorefill-pi/DIRECT_GPIO.md). No ESP32 connection or controller-selection variable is needed.
 - **The kiosk** reads the Pi's local API on port **5000**. Its home screen polls machine state every **500 ms**.
 - **The user app** uses Firebase Authentication, reads Firestore records, submits refill requests, and calls the Pi's authenticated reward redemption endpoint.
 - **The owner dashboard** subscribes to Firestore records for the owner's assigned machine.
@@ -167,11 +167,11 @@ flowchart LR
 | Camera | Picamera2 capture with OpenCV processing |
 | Green button | Finish recycling and show reward QR; default BCM GPIO 17, physical pin 11, with the other button terminal connected to GND |
 | Blue button | Open water refill; default BCM GPIO 27, physical pin 13, with the other button terminal connected to GND |
-| Sorting commands | Newline-terminated `BOTTLE`, `CAN`, `REJECT`, and `RESET` |
-| Dispensing commands | Newline-terminated `WATER_250`, `WATER_500`, and `WATER_1000` |
+| Sorting commands | Direct GPIO operations: `BOTTLE`, `CAN`, `REJECT`, and `RESET` |
+| Dispensing commands | Direct GPIO operations: `WATER_250`, `WATER_500`, and `WATER_1000` |
 | Expected water responses | `DISPENSING <command>`, `OK <command>`, or `ERROR <command> <reason>` |
 
-The Pi waits up to **120 seconds** for a water command to finish. It does not automatically resend a water command after receiving a dispensing-start response. Pump wiring, sensor wiring, volume calibration, and mechanical construction must be supplied by the hardware implementation.
+The controller waits up to **30 seconds** for a container, then runs the selected calibrated pump timer (currently **25/30/45 seconds**). It monitors container presence during dispensing and never automatically retries a refill. Follow the wiring guide and measure the actual water output before treating timer selections as volumes.
 
 ## Data stored in Firebase
 
@@ -195,7 +195,7 @@ The Pi also writes local scan information to `sessions_log.txt`. Local logging i
 
 ## Technologies and project layout
 
-The frontend uses **React 19**, **Vite 8**, **React Router**, and custom CSS. QR generation uses `qrcode.react`; scanning uses `html5-qrcode`. **Capacitor** provides the Android wrapper. The machine service uses **Python**, **Flask**, **OpenCV**, **Ultralytics YOLO**, **Picamera2**, **gpiozero**, **pyserial**, and the **Firebase Admin SDK**.
+The frontend uses **React 19**, **Vite 8**, **React Router**, and custom CSS. QR generation uses `qrcode.react`; scanning uses `html5-qrcode`. **Capacitor** provides the Android wrapper. The machine service uses **Python**, **Flask**, **OpenCV**, **Ultralytics YOLO**, **Picamera2**, **gpiozero**, **lgpio**, and the **Firebase Admin SDK**.
 
 ```text
 ecorefill-app/
@@ -268,12 +268,12 @@ npm run lint
 
 ### Raspberry Pi machine service
 
-The physical workflow requires a configured Raspberry Pi camera, the material checkpoint, the ESP32 with compatible firmware, and Firebase Admin credentials. Starting only the web app does not start the machine service.
+The physical workflow requires a configured Raspberry Pi camera, the material checkpoint, the servos, sensor and relay drivers wired to Pi GPIO, and Firebase Admin credentials. Starting only the web app does not start the machine service.
 
 1. Prepare a Python environment on the Pi with the packages in `requirements.txt` including **`firebase-admin`**. Picamera2 also requires a working Raspberry Pi camera software installation.
 2. Ensure the checkpoint is available at `ecorefill-pi/models/ecorefill_best.pt`.
 3. Configure `FIREBASE_SERVICE_ACCOUNT` with an absolute path to the Firebase service-account JSON outside the repository, or use Application Default Credentials.
-4. Connect the ESP32, buttons, and calibrated HX711 scale. Follow the [weight setup guide](ecorefill-pi/WEIGHT_SENSOR.md) to make `lgpio` available in the machine's Python environment. Stop `check_weight.py` before starting the controller. The default machine ID is `machine_001` in `machine/config.py`; it must match the intended Firestore machine document. Copy the complete `machine/` directory, `weight_sensor.py`, and `visual_inspection.py` along with the launcher when updating the Pi. See the [machine debugging guide](ecorefill-pi/DEBUGGING.md) for the controller file map and test commands.
+4. Connect the servos, HC-SR04, relay drivers, buttons, and optional calibrated HX711 scale using the [Pi wiring guide](ecorefill-pi/DIRECT_GPIO.md). Enable the PWM overlay, reboot, and run `sudo python3 direct_gpio.py --prepare-pwm` once per boot. Follow the [weight setup guide](ecorefill-pi/WEIGHT_SENSOR.md) to make `lgpio` available in the machine's Python environment. Stop `check_weight.py` before starting the controller. The default machine ID is `machine_001` in `machine/config.py`; it must match the intended Firestore machine document. Copy the complete `machine/` directory, `weight_sensor.py`, and `visual_inspection.py` along with the launcher when updating the Pi. See the [machine debugging guide](ecorefill-pi/DEBUGGING.md) for the controller file map and test commands.
 5. Start the service from its own directory so relative model paths resolve correctly:
 
    ```bash
@@ -302,7 +302,7 @@ Build and run the Android project through Android Studio. A phone's `127.0.0.1` 
 
 - **250 mL pricing is inconsistent** between the app/Cloud Function and the active Pi worker, as documented in the price table.
 - **GCash verification is manual.** Owners check received payments themselves before approving the point transfer.
-- **ESP32 firmware needs hardware validation.** The [included controller](firmware/README.md) has host regression tests, but has not been validated on the physical machine. Full hardware schematics and measured dispensing calibration are not included. The Pi sorting sender does not yet handle firmware `BUSY` responses.
+- **GPIO control needs machine calibration.** The [Pi controller and wiring guide](ecorefill-pi/DIRECT_GPIO.md) include diagnostics and simulated-hardware regression tests. Servo travel, container detection, relay operation, and measured dispensing volumes still need validation on the machine.
 - **Cleanliness and size checks are optional.** They require real training data or calibration before enforcement. Camera appearance checks do not measure weight or establish water quality.
 - **Monitoring depends on supplied data.** Water level, water-quality status, tamper status, and alerts need an appropriate source writing those records; the dashboard alone does not produce sensor readings.
 - **Firebase setup is external.** Authentication, credentials, access rules, and machine records must be configured for the installation. Internet access is needed for the described cloud account, reward, and refill workflows.

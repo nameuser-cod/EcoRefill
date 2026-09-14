@@ -80,7 +80,7 @@ python3 check_buttons.py
 ```
 
 This uses the controller's button configuration and prints press/release events
-without starting Firebase, the camera, the ESP32, or any machine workers.
+without starting Firebase, the camera, the GPIO controller, or any machine workers.
 Ctrl+C releases the GPIO inputs and exits; restart the controller afterward.
 
 The diagnostic also polls raw `PIN LEVELS` independently of press callbacks.
@@ -136,7 +136,7 @@ which the kiosk must read to open the water screen.
 | Machine ID, GPIO pins, timeouts, prices, confidence thresholds | [`machine/config.py`](machine/config.py) | `MACHINE_ID`, `WATER_OPTIONS`, `ACCEPT_CONFIDENCE_LIMIT` |
 | Startup, shutdown, resource ownership | [`machine/runtime.py`](machine/runtime.py) | `MachineRuntime.start`, `run`, `close` |
 | Session totals, phases, green/blue button behavior | [`machine/state.py`](machine/state.py) | `update_state`, `reset_state`, `rearm_for_next_item`, `request_water_refill` |
-| ESP32 missing, sorter commands, water acknowledgements | [`machine/serial_controller.py`](machine/serial_controller.py) | `get_esp32_connection`, `send_to_esp32`, `run_water_command` |
+| GPIO controller startup, sorter commands, water results | [`machine/controller.py`](machine/controller.py) | `send_command`, `run_water_command` |
 | Camera failures, motion detection, repeated scans | [`machine/camera.py`](machine/camera.py) | `restart_camera`, `wait_for_item_motion`, `frame_has_motion` |
 | Material accepted or rejected incorrectly | [`machine/detection.py`](machine/detection.py) | `verify_item`, `sort_item` |
 | Size or cleanliness inspection | [`visual_inspection.py`](visual_inspection.py) | `VisualInspector`; see [inspection setup](INSPECTION.md) |
@@ -154,14 +154,14 @@ which the kiosk must read to open the water screen.
 ## How the modules fit together
 
 `MachineRuntime` combines the workflow classes and owns the shared resources:
-`self.db`, `self.picam2`, `self.esp32`, the model, state dictionary, locks, and
+`self.db`, `self.picam2`, `self.gpio_controller`, the model, state dictionary, locks, and
 events. A call such as `self.run_water_command(...)` goes to the method in
-`serial_controller.py` on that same runtime instance. There is one runtime per
+`controller.py` on that same runtime instance. There is one runtime per
 controller process. The workflow classes are mixins, not separate controllers
 to instantiate independently.
 
 Importing `machine_flow` or constructing `MachineRuntime()` does not initialize
-Firebase, open the camera/serial port, start a server, or spawn worker threads.
+Firebase, open the camera or claim GPIO, start a server, or spawn worker threads.
 `start()` performs initialization and starts workers; `run()` also serves the
 local API and calls `close()` on exit. `create_apps(runtime)` registers routes
 without starting a server or hardware, which lets tests use Flask's test client.
@@ -173,10 +173,10 @@ The real service still needs the dependencies described in the main README.
 The principal flows are:
 
 ```text
-Camera motion -> material/visual inspection -> ESP32 sort -> saved item + totals
+Camera motion -> material/visual inspection -> Pi GPIO sort -> saved item + totals
 Green button -> finish event -> recycling worker -> batch reward QR
 Blue button -> paused recycling + water_refill_requested -> kiosk water screen
-Phone request in Firestore -> water worker -> point transaction -> ESP32 -> result
+Phone request in Firestore -> water worker -> point transaction -> Pi GPIO -> result
 Reward QR claim -> rewards API -> Firebase transaction -> reset matching session
 ```
 
@@ -285,9 +285,9 @@ extracting functions from source text.
 To step through a focused test from `ecorefill-pi`:
 
 ```sh
-python3 -m pdb -m unittest test_machine_runtime.SerialTests.test_disconnect_after_dispensing_never_resends
+python3 -m pdb -m unittest test_machine_runtime.ControllerCommandTests.test_failed_water_is_not_retried
 ```
 
-These checks do not validate physical camera timing, GPIO wiring, the ESP32
-firmware, real dispensing, or live Firebase/tunnel connectivity. Verify those
+These checks do not validate physical camera timing, GPIO wiring, PWM output,
+real dispensing, or live Firebase/tunnel connectivity. Verify those
 on the Pi after transferring the refactor.

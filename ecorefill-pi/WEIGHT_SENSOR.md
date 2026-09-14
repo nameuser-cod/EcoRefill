@@ -81,7 +81,7 @@ detection finishes, so the GPIO sampling loop does not compete with inference.
 
 Other material, confidence, and visual rules still apply. When enabled, the weight
 check is required even when visual inspection is `off` or `observe`. Rejected items send
-`REJECT` to the ESP32 and earn zero points; existing session totals are retained.
+`REJECT` to the Pi GPIO controller and earn zero points; existing session totals are retained.
 The kiosk displays the weight-limit rejection reason. Local logs and Firestore
 recycling records include `inspection.weight` with grams, limit, status, spread,
 and measurement time when a reading is available.

@@ -92,12 +92,12 @@ class ScanRegionTests(unittest.TestCase):
         machine = MaterialDetection()
         machine.weight_scale = SimpleNamespace(read_weight=lambda: {"grams": 20.0})
         machine.model = SimpleNamespace(predict=Mock(return_value=[]))
-        machine.send_to_esp32 = Mock()
+        machine.send_command = Mock()
         with patch("cv2.imwrite", return_value=True) as write:
             result = machine.verify_item(self.frame)
         self.assertFalse(result["accepted"])
         machine.sort_item(result)
-        machine.send_to_esp32.assert_called_once_with("REJECT")
+        machine.send_command.assert_called_once_with("REJECT")
         self.assertEqual(write.call_args.args[0], "detection_result.jpg")
         self.assertTrue(np.array_equal(write.call_args.args[1], self.frame))
 

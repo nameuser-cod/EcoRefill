@@ -5,5 +5,4 @@ ultralytics
 opencv-python
 gpiozero
 lgpio; sys_platform == "linux"
-pyserial
 picamera2

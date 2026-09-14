@@ -283,17 +283,34 @@ class HardwareTests(unittest.TestCase):
 class RoutingTests(unittest.TestCase):
     def setUp(self):
         self.machine = MachineRuntime()
-        self.machine.controller_backend = "gpio"
         self.machine.gpio_controller = Mock()
         self.machine.gpio_controller.execute.return_value = (True, None)
 
-    def test_gpio_commands_do_not_open_serial(self):
-        with patch.object(self.machine, "get_esp32_connection") as serial:
-            self.assertTrue(self.machine.send_to_esp32("can"))
+    def test_gpio_commands_work_without_serial_installed(self):
+        with patch.dict("sys.modules", {"serial": None}):
+            self.assertTrue(self.machine.send_command("can"))
             callback = Mock()
             self.assertEqual(self.machine.run_water_command("water_500", callback), (True, None))
-            serial.assert_not_called()
             self.machine.gpio_controller.execute.assert_called_with("WATER_500", on_dispensing=callback)
+
+    def test_startup_uses_gpio_without_backend_environment_setting(self):
+        with patch.dict("os.environ", {}, clear=True), \
+             patch("machine.gpio_hardware.PiGPIOHardware") as hardware:
+            machine = MachineRuntime()
+            machine.initialize_controller()
+        hardware.return_value.open.assert_called_once()
+        hardware.return_value.servo.assert_any_call("gate", 1500)
+        hardware.return_value.servo.assert_any_call("sort", 1500)
+        machine.close()
+        hardware.return_value.close.assert_called_once()
+
+    def test_obsolete_backend_setting_cannot_enable_serial(self):
+        with patch.dict("os.environ", {"ECOREFILL_CONTROLLER": "serial"}), \
+             patch("machine.gpio_hardware.PiGPIOHardware") as hardware:
+            machine = MachineRuntime()
+            machine.initialize_controller()
+        hardware.return_value.open.assert_called_once()
+        machine.close()
 
     def test_failure_is_returned_without_retry(self):
         self.machine.gpio_controller.execute.return_value = (False, "ERROR WATER_250 SENSOR_LOST")
@@ -307,7 +324,7 @@ class RoutingTests(unittest.TestCase):
         self.machine.picam2.stop.side_effect = lambda: order.append("camera")
         self.machine.close()
         self.assertEqual(order, ["gpio", "camera"])
-        self.assertFalse(self.machine.send_to_esp32("BOTTLE"))
+        self.assertFalse(self.machine.send_command("BOTTLE"))
         self.assertEqual(self.machine.run_water_command("WATER_250"), (False, "GPIO_CONTROLLER_UNAVAILABLE"))
         self.machine.gpio_controller.execute.assert_not_called()
 

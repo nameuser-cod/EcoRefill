@@ -1,5 +1,10 @@
 # EcoRefill ESP32 controller
 
+Historical firmware reference. The current machine app uses Raspberry Pi GPIO
+directly and no longer connects to the ESP32. Use the
+[Pi wiring and launch guide](../ecorefill-pi/DIRECT_GPIO.md) for the active setup.
+The serial protocol and integration notes below describe the former setup.
+
 Open `ecorefill_controller/ecorefill_controller.ino` in Arduino IDE, select the
 actual ESP32 board and serial port, install the ESP32 board package and the
 **ESP32Servo** library, and upload. The sketch retains the supplied pin assignments

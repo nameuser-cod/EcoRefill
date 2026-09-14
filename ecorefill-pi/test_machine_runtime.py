@@ -257,7 +257,7 @@ class ButtonTests(unittest.TestCase):
         blue.close.assert_called_once_with()
         self.assertIsNone(machine.db)
         self.assertIsNone(machine.picam2)
-        self.assertIsNone(machine.esp32)
+        self.assertIsNone(machine.gpio_controller)
 
     def test_diagnostic_reads_changes_even_when_callbacks_do_not_fire(self):
         import check_buttons
@@ -294,64 +294,43 @@ class ButtonTests(unittest.TestCase):
         )
 
 
-class SerialTests(unittest.TestCase):
+class ControllerCommandTests(unittest.TestCase):
     def setUp(self):
         self.machine = MachineRuntime()
-        self.serial_patch = patch.dict(
-            sys.modules, {"serial": SimpleNamespace(SerialException=OSError)},
-        )
-        self.serial_patch.start()
-        self.addCleanup(self.serial_patch.stop)
-
-    def connection(self, responses):
-        connection = Mock(is_open=True)
-        connection.readline.side_effect = responses
-        return connection
+        self.machine.gpio_controller = Mock()
+        self.machine.gpio_controller.execute.return_value = (True, None)
 
     def test_sorting_normalizes_commands_and_blocks_unknown_commands(self):
-        connection = self.connection([])
-        self.machine.esp32 = connection
-        self.assertFalse(self.machine.send_to_esp32("open_valve"))
-        connection.write.assert_not_called()
-        self.assertTrue(self.machine.send_to_esp32(" bottle "))
-        connection.write.assert_called_once_with(b"BOTTLE\n")
-        connection.readline.assert_not_called()
+        self.assertFalse(self.machine.send_command("open_valve"))
+        self.machine.gpio_controller.execute.assert_not_called()
+        self.assertTrue(self.machine.send_command(" bottle "))
+        self.machine.gpio_controller.execute.assert_called_once_with("BOTTLE")
 
-    def test_water_completion_notifies_dispensing_once(self):
-        self.machine.esp32 = self.connection([
-            b"DISPENSING WATER_500\n", b"DISPENSING WATER_500\n", b"OK WATER_500\n",
-        ])
-        on_dispensing = Mock()
-        self.assertEqual(self.machine.run_water_command("water_500", on_dispensing), (True, None))
-        on_dispensing.assert_called_once_with()
-        self.machine.esp32.write.assert_called_once_with(b"WATER_500\n")
+    def test_water_forwards_dispensing_callback(self):
+        callback = Mock()
+        self.assertEqual(self.machine.run_water_command("water_500", callback), (True, None))
+        self.machine.gpio_controller.execute.assert_called_once_with("WATER_500", on_dispensing=callback)
 
-    def test_disconnect_after_dispensing_never_resends(self):
-        connection = self.connection([b"DISPENSING WATER_500\n", OSError("USB lost")])
-        self.machine.esp32 = connection
-        with self.assertLogs("ecorefill.machine", level="ERROR"):
-            result = self.machine.run_water_command("WATER_500")
-        self.assertEqual(result, (False, "ESP32_DISCONNECTED_DURING_DISPENSING"))
-        connection.write.assert_called_once_with(b"WATER_500\n")
-        connection.close.assert_called_once_with()
-        self.assertIsNone(self.machine.esp32)
+    def test_failed_water_is_not_retried(self):
+        self.machine.gpio_controller.execute.return_value = (False, "ERROR WATER_500 SENSOR_LOST")
+        self.assertEqual(self.machine.run_water_command("WATER_500"),
+                         (False, "ERROR WATER_500 SENSOR_LOST"))
+        self.machine.gpio_controller.execute.assert_called_once()
 
-    def test_disconnect_before_dispensing_reconnects_once(self):
-        broken = self.connection([OSError("USB lost")])
-        recovered = self.connection([b"OK WATER_250\n"])
-        self.machine.get_esp32_connection = Mock(side_effect=[broken, recovered, recovered])
-        with patch("machine.serial_controller.time.sleep"), self.assertLogs("ecorefill.machine", level="ERROR"):
-            result = self.machine.run_water_command("WATER_250")
-        self.assertEqual(result, (True, None))
-        broken.write.assert_called_once_with(b"WATER_250\n")
-        recovered.write.assert_called_once_with(b"WATER_250\n")
+    def test_unavailable_controller_rejects_sorting_and_water(self):
+        self.machine.gpio_controller = None
+        self.assertFalse(self.machine.send_command("BOTTLE"))
+        self.assertEqual(self.machine.run_water_command("WATER_250"),
+                         (False, "GPIO_CONTROLLER_UNAVAILABLE"))
 
-    def test_firmware_error_and_invalid_water_command_are_preserved(self):
-        connection = self.connection([b"ERROR WATER_1000 NO_BOTTLE\n"])
-        self.machine.esp32 = connection
-        self.assertEqual(self.machine.run_water_command("BOTTLE"), (False, "INVALID_COMMAND: BOTTLE"))
-        connection.write.assert_not_called()
-        self.assertEqual(self.machine.run_water_command("WATER_1000"), (False, "ERROR WATER_1000 NO_BOTTLE"))
+    def test_invalid_water_command_does_not_move_hardware(self):
+        self.assertEqual(self.machine.run_water_command("BOTTLE"),
+                         (False, "INVALID_COMMAND: BOTTLE"))
+        self.machine.gpio_controller.execute.assert_not_called()
+
+    def test_reset_is_routed_directly(self):
+        self.assertTrue(self.machine.send_command("RESET"))
+        self.machine.gpio_controller.execute.assert_called_once_with("RESET")
 
 
 class APITests(unittest.TestCase):
@@ -520,8 +499,8 @@ class LifecycleTests(unittest.TestCase):
              patch("machine.runtime.os.path.exists", return_value=True), \
              patch.object(machine, "initialize_firebase", return_value=None), \
              patch.object(machine, "initialize_camera", return_value=camera), \
-             patch.object(machine, "connect_to_esp32", side_effect=RuntimeError("USB setup failed")):
-            with self.assertRaisesRegex(RuntimeError, "USB setup failed"):
+             patch.object(machine, "initialize_controller", side_effect=RuntimeError("GPIO setup failed")):
+            with self.assertRaisesRegex(RuntimeError, "GPIO setup failed"):
                 machine.start()
         camera.stop.assert_called_once_with()
         camera.close.assert_called_once_with()
@@ -536,7 +515,7 @@ class LifecycleTests(unittest.TestCase):
              patch("machine.runtime.os.path.exists", return_value=True), \
              patch.object(machine, "initialize_firebase", return_value=None), \
              patch.object(machine, "initialize_camera", return_value=Mock()), \
-             patch.object(machine, "connect_to_esp32", return_value=None), \
+             patch.object(machine, "initialize_controller", return_value=None), \
              patch.object(machine, "initialize_weight_sensor") as weight, \
              patch.object(machine, "initialize_buttons") as buttons, \
              patch.object(machine, "start_redemption_tunnel") as tunnel, \
@@ -590,7 +569,7 @@ class RecyclingWeightTests(unittest.TestCase):
                 machine.wait_for_item_motion = Mock(return_value=object())
                 machine.verify_item = Mock(return_value=result)
                 machine.frame_to_base64_data_url = Mock(return_value="test-image")
-                machine.send_to_esp32 = Mock()
+                machine.send_command = Mock()
                 machine.save_local_session = Mock()
 
                 def save(*args):
@@ -611,7 +590,7 @@ class RecyclingWeightTests(unittest.TestCase):
                 self.assertEqual((state["bottleCount"], state["canCount"]), (1, 1))
                 self.assertEqual(state["batchSessionId"], "existing-batch")
                 self.assertIn("weight limit", state["message"])
-                machine.send_to_esp32.assert_called_once_with("REJECT")
+                machine.send_command.assert_called_once_with("REJECT")
                 saved = machine.queue_recycling_upload.call_args.args[1]
                 self.assertEqual(saved["inspection"]["weight"]["grams"], grams)
                 self.assertEqual(saved["points"], 0)

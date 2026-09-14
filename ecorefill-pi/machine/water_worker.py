@@ -22,7 +22,7 @@ class WaterRequestWorker:
         2. Verify water session
         3. Verify user points
         4. Deduct points using Firestore transaction
-        5. Send command to ESP32
+        5. Send command to GPIO controller
         6. Update Firestore
         """
         from firebase_admin import firestore
@@ -512,7 +512,7 @@ class WaterRequestWorker:
             return
 
         # =====================================================
-        # SEND COMMAND TO ESP32
+        # SEND COMMAND TO GPIO CONTROLLER
         # =====================================================
 
         command = (
@@ -527,7 +527,7 @@ class WaterRequestWorker:
         )
 
         log(
-            f"Sending to ESP32: "
+            f"Sending to GPIO controller: "
             f"{command}"
         )
 
@@ -570,31 +570,21 @@ class WaterRequestWorker:
         )
 
         # =====================================================
-        # ESP32 ERROR -> REFUND POINTS
+        # GPIO CONTROLLER ERROR -> REFUND POINTS
         # =====================================================
 
         if not command_completed:
 
             log(
-                "ESP32 water command failed. "
+                "GPIO controller water command failed. "
                 "Refunding points..."
             )
 
-            # Convert machine/serial errors to short stable codes that the
-            # React kiosk can translate into friendly messages.
+            # Preserve controller reasons for the kiosk's error messages.
             failure_message = (
                 command_error
                 or "WATER_DISPENSER_FAILED"
             )
-
-            if "device reports readiness to read but returned no data" in failure_message.lower():
-                failure_message = "ESP32_DISCONNECTED"
-
-            elif "could not open port" in failure_message.lower():
-                failure_message = "ESP32_DISCONNECTED"
-
-            elif "timed out" in failure_message.lower():
-                failure_message = "WATER_TIMEOUT"
 
             try:
                 refund_transaction = (
@@ -729,7 +719,7 @@ class WaterRequestWorker:
 
             settle(self.db.transaction())
         except Exception as completion_error:
-            # The ESP32 already confirmed the physical refill. A Firestore write
+            # The GPIO controller already confirmed the physical refill. A Firestore write
             # failure must not leave the kiosk permanently stuck in water mode.
             log("Water completed, but Firestore completion update failed:", completion_error)
         finally:
@@ -740,7 +730,7 @@ class WaterRequestWorker:
             self.reset_state()
 
         log(
-            "ESP32 confirmed that water "
+            "GPIO controller confirmed that water "
             "dispensing completed."
         )
 
