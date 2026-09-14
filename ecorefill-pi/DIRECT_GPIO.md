@@ -225,6 +225,42 @@ python3 direct_gpio.py --config gpio.local.json --command BOTTLE
 For the first sorting tests, detach the mechanical linkage. For the first relay
 tests, disconnect the pump and observe the relay indicators/clicks.
 
+## If the servos do not move
+
+Stop the full machine app. With the linkages detached, run this diagnostic from
+the Pi's `ecorefill-pi` directory:
+
+```sh
+python3 check_servos.py --diagnose-only
+sudo python3 direct_gpio.py --prepare-pwm
+python3 check_servos.py --servo gate
+python3 check_servos.py --servo sort
+```
+
+The diagnostic checks live pin routing using `pinctrl get`. GPIO18 must report
+`PWM0_CHAN2`; GPIO19 must report `PWM0_CHAN3`. It does not move servos if routing
+cannot be verified. If either pin reports input, output, SPI, or I2S, check that
+`dtoverlay=pwm-2chan` applies under `[all]`, reboot, and stop conflicting programs
+or overlays. Exporting PWM channels alone does not set the header pin routing.
+
+Each motion test sends only the selected servo 1500, 1300, 1700, then 1500 µs,
+holding each setting for one second. These fixed diagnostic positions are
+independent of `gpio.local.json`. Both relays stay OFF, the sensor is not sampled,
+and the camera/model/Firebase are not loaded. A missing sensor need not be wired
+for this test. All controller resources must nevertheless be available; stop any
+other process claiming their GPIOs before running it.
+
+During movement, the printed PWM settings should include `enable=1`,
+`period=20000000`, and `duty_cycle=1500000`, `1300000`, or `1700000`. Those are
+software settings, not a measured waveform. The test disables PWM afterward.
+
+If those settings and pin routing are correct but a servo remains still, check
+its signal lead against the **physical** pin number (gate 12, sort 35), common
+ground, and voltage at the servo's power connector while motion is requested.
+Where available, an oscilloscope/logic analyzer can confirm actual 50 Hz pulses.
+Report the diagnostic output and whether the motor is silent, buzzing, or moving
+to narrow down power, wiring, signal-level compatibility, or mechanical issues.
+
 ## Run with the existing EcoRefill app
 
 From the same directory, using the Python environment already configured for
