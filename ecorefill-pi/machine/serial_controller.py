@@ -1,4 +1,4 @@
-"""ESP32 discovery, sorting commands, and water acknowledgements."""
+"""Controller command routing, ESP32 discovery, and water acknowledgements."""
 
 import time
 from .config import (
@@ -103,8 +103,6 @@ class SerialController:
                 self.esp32 = None
 
     def send_to_esp32(self, command):
-        import serial
-
         command = command.upper().strip()
 
         allowed_commands = {
@@ -120,6 +118,18 @@ class SerialController:
         if command not in allowed_commands:
             log(f"Blocked unknown ESP32 command: {command}")
             return False
+
+        # Keep the existing caller API; direct GPIO waits for physical sorting
+        # to finish so the camera cannot rearm while the mechanism is moving.
+        if self.controller_backend == "gpio":
+            if self.gpio_controller is None or self.shutdown_event.is_set():
+                return False
+            ok, error = self.gpio_controller.execute(command)
+            if error:
+                log("GPIO command failed:", error)
+            return ok
+
+        import serial
 
         connection = self.get_esp32_connection()
         if connection is None:
@@ -153,12 +163,18 @@ class SerialController:
         - Never retries a water command after DISPENSING has started, because doing
           so could dispense water twice.
         """
-        import serial
-
         command = command.upper().strip()
 
         if command not in set(WATER_COMMANDS.values()):
             return False, f"INVALID_COMMAND: {command}"
+
+        if self.controller_backend == "gpio":
+            if self.gpio_controller is None or self.shutdown_event.is_set():
+                return False, "GPIO_CONTROLLER_UNAVAILABLE"
+            # Never automatically retry a physical refill.
+            return self.gpio_controller.execute(command, on_dispensing=on_dispensing)
+
+        import serial
 
         dispensing_response = f"DISPENSING {command}"
         completed_response = f"OK {command}"

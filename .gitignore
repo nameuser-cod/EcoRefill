@@ -32,6 +32,7 @@ __pycache__/
 inspection_samples/
 cleanliness_dataset/
 ecorefill-pi/inspection.local.json
+ecorefill-pi/gpio.local.json
 ecorefill-pi/data/
 
 # EcoRefill datasets

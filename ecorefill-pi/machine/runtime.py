@@ -54,6 +54,10 @@ class MachineRuntime(
         self.weight_scale = None
         self.picam2 = None
         self.esp32 = None
+        self.controller_backend = os.getenv("ECOREFILL_CONTROLLER", "serial").strip().lower()
+        if self.controller_backend not in {"serial", "gpio"}:
+            raise ValueError("ECOREFILL_CONTROLLER must be serial or gpio.")
+        self.gpio_controller = None
         self.green_button = None
         self.blue_button = None
         self.redemption_tunnel_url = None
@@ -171,6 +175,20 @@ class MachineRuntime(
             # until the sensor is available. Never fall back to material only.
             log("Weight sensor unavailable; recycling items will be rejected:", error)
 
+    def initialize_controller(self):
+        if self.controller_backend == "serial":
+            self.esp32 = self.connect_to_esp32()
+            return
+        from .gpio_controller import ControllerSettings, GPIOController
+        from .gpio_hardware import CONTROL_PINS, PiGPIOHardware
+
+        if CONTROL_PINS & {GREEN_BUTTON_GPIO, BLUE_BUTTON_GPIO}:
+            raise ValueError("A button GPIO conflicts with the direct controller. See DIRECT_GPIO.md.")
+        settings = ControllerSettings.from_file(os.getenv("ECOREFILL_GPIO_CONFIG"))
+        self.gpio_controller = GPIOController(PiGPIOHardware(), settings, emit=log)
+        self.gpio_controller.open()
+        log("Direct Pi GPIO controller ready; hardware PWM servos and NPN relay interfaces.")
+
     def start(self):
         """Initialize resources, register APIs, then start background workers."""
         if self._closed:
@@ -192,7 +210,7 @@ class MachineRuntime(
             )
             log("Visual inspection mode:", self.visual_inspector.mode)
             self.picam2 = self.initialize_camera()
-            self.esp32 = self.connect_to_esp32()
+            self.initialize_controller()
             self.initialize_weight_sensor()
             self.initialize_buttons()
             create_apps(self)
@@ -239,6 +257,12 @@ class MachineRuntime(
             return
         self._closed = True
         self.shutdown_event.set()
+        # Stop the pump before any network, camera, or worker cleanup.
+        if self.gpio_controller is not None:
+            try:
+                self.gpio_controller.close()
+            except Exception as error:
+                log("Could not close GPIO controller:", error)
         if self.recycling_upload_thread is not None:
             # Unsent records stay on disk; do not wait on a slow network call.
             if self.recycling_upload_thread.is_alive():

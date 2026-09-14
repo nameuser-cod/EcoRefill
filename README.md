@@ -153,6 +153,7 @@ flowchart LR
 
 - **The Raspberry Pi** runs the camera, material model, inspection module, machine state, reward redemption API, and refill request worker.
 - **The ESP32** receives physical sorting and dispensing commands over USB serial at **115200 baud**. The [controller firmware and upload notes](firmware/README.md) are included; hardware calibration is required.
+- **Optional direct Pi 5 control** replaces the ESP32 with hardware PWM servos, HC-SR04 input, and relay drivers. See the [complete wiring, calibration, and launch guide](ecorefill-pi/DIRECT_GPIO.md); select it with `ECOREFILL_CONTROLLER=gpio`.
 - **The kiosk** reads the Pi's local API on port **5000**. Its home screen polls machine state every **500 ms**.
 - **The user app** uses Firebase Authentication, reads Firestore records, submits refill requests, and calls the Pi's authenticated reward redemption endpoint.
 - **The owner dashboard** subscribes to Firestore records for the owner's assigned machine.

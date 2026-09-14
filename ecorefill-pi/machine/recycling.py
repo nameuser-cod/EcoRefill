@@ -492,7 +492,8 @@ Created At: {time.time()}
                     phase="sorting",
                     message="Sorting the item...",
                 )
-                self.sort_item(result)
+                if self.sort_item(result) is False:
+                    raise RuntimeError("Sorting controller did not complete the command.")
 
                 if result["accepted"]:
                     current = self.get_state()

@@ -1,0 +1,16 @@
+{
+  "gate_center_us": 1500,
+  "gate_accept_us": 1000,
+  "gate_reject_us": 2000,
+  "sort_center_us": 1500,
+  "sort_bottle_us": 1000,
+  "sort_can_us": 2000,
+  "move_seconds": 0.7,
+  "drop_seconds": 1.5,
+  "water_250_seconds": 25,
+  "water_500_seconds": 30,
+  "water_1000_seconds": 45,
+  "bottle_wait_seconds": 30,
+  "trigger_distance_cm": 10,
+  "remove_distance_cm": 14
+}
