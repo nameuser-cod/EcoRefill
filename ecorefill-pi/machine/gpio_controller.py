@@ -15,7 +15,7 @@ class ControllerSettings:
     gate_accept_us: int = 500
     gate_reject_us: int = 2400
     sort_center_us: int = 1450
-    sort_bottle_us: int = 606  # 10 degrees, rounded to the nearest microsecond.
+    sort_bottle_us: int = 975  # 45 degrees.
     sort_can_us: int = 2400
     move_seconds: float = 0.7
     drop_seconds: float = 1.5

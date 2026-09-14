@@ -245,7 +245,7 @@ or overlays. Exporting PWM channels alone does not set the header pin routing.
 
 Each motion test sends only the selected servo to nominal **90°, 180°, then its
 accept/bottle position, then 90°**, holding each setting for one second. The gate
-accept position is 0° (500 µs); the sorter bottle position is 10° (606 µs).
+accept position is 0° (500 µs); the sorter bottle position is 45° (975 µs).
 The 90° and 180° defaults are 1450 and 2400 µs, using the original sketch's
 500–2400 µs range. Use
 `--config gpio.local.json` to test your saved positions. Both relays stay OFF, the sensor is not sampled,
@@ -255,7 +255,7 @@ other process claiming their GPIOs before running it.
 
 During movement, the printed PWM settings should include `enable=1`,
 `period=20000000`, and `duty_cycle=1450000`, `2400000`, `500000` (gate accept),
-or `606000` (sorter bottle) with the defaults. Those are
+or `975000` (sorter bottle) with the defaults. Those are
 software settings, not a measured waveform. The test disables PWM afterward.
 
 If those settings and pin routing are correct but a servo remains still, check
@@ -320,7 +320,7 @@ Edit `gpio.local.json` for both the console and the app:
 - Servo positions are **pulse widths in microseconds**, not degrees. Defaults
   are **500/1450/2400 µs at 50 Hz** for nominal **0°/90°/180°**, matching the
   pasted sketch's pulse range. Gate accept uses 0°; sorter bottle uses
-  **10° (606 µs)**. Gate reject
+  **45° (975 µs)**. Gate reject
   and sorter can use 180°; startup/reset use 90°. Physical travel varies by servo:
   stop the test if a motor presses against a mechanical stop or stalls.
   Adjust each saved position for the actual mechanism rather than forcing a
@@ -349,7 +349,7 @@ from pathlib import Path
 path = Path('gpio.local.json')
 data = json.loads(path.read_text()) if path.exists() else {}
 data.update(gate_center_us=1450, gate_accept_us=500, gate_reject_us=2400,
-            sort_center_us=1450, sort_bottle_us=606, sort_can_us=2400)
+            sort_center_us=1450, sort_bottle_us=975, sort_can_us=2400)
 path.write_text(json.dumps(data, indent=2) + '\n')
 PY
 ```
