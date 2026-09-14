@@ -256,6 +256,29 @@ class HardwareTests(unittest.TestCase):
         servo.close.assert_called_once()
         hardware.gpio.gpiochip_close.assert_called_once_with(9)
 
+    def test_cleanup_does_not_send_zero_length_trigger_pulse(self):
+        # The Pi's lgpio rejects tx_pulse(..., 0, 0) with "bad PWM micros".
+        # Trigger pulses are one-shot; gpiochip_close stops any pending output.
+        hardware = PiGPIOHardware()
+        hardware.gpio = Mock()
+        hardware.gpio.tx_pulse.side_effect = RuntimeError("bad PWM micros")
+        hardware.handle = 9
+        hardware.outputs = [22, 26, 23]
+        servo = Mock()
+        hardware.servos = {"gate": servo}
+        callback = hardware.callback = Mock()
+
+        hardware.close()
+
+        hardware.gpio.tx_pulse.assert_not_called()
+        self.assertEqual([call.args for call in hardware.gpio.gpio_write.call_args_list],
+                         [(9, 22, 0), (9, 26, 0), (9, 23, 0)])
+        servo.close.assert_called_once()
+        callback.cancel.assert_called_once()
+        hardware.gpio.gpiochip_close.assert_called_once_with(9)
+        hardware.close()  # Repeated cleanup remains harmless.
+        hardware.gpio.gpiochip_close.assert_called_once()
+
 
 class RoutingTests(unittest.TestCase):
     def setUp(self):

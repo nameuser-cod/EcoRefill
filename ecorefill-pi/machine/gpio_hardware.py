@@ -180,8 +180,9 @@ class PiGPIOHardware:
         with self.io_lock:
             for pin in self.outputs:
                 try:
-                    if pin == TRIG_GPIO:
-                        self.gpio.tx_pulse(self.handle, pin, 0, 0)
+                    # TRIG uses one-shot pulses. Do not send a zero-length
+                    # pulse here: some lgpio builds reject it as bad PWM micros.
+                    # gpiochip_close below stops any pending transmission.
                     self.gpio.gpio_write(self.handle, pin, 0)
                 except Exception as error:
                     errors.append(error)
