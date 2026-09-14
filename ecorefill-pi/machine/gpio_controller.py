@@ -9,13 +9,14 @@ import time
 
 @dataclass(frozen=True)
 class ControllerSettings:
-    # Start conservatively; calibrate each position with the linkage detached.
-    gate_center_us: int = 1500
-    gate_accept_us: int = 1000
-    gate_reject_us: int = 2000
-    sort_center_us: int = 1500
-    sort_bottle_us: int = 1000
-    sort_can_us: int = 2000
+    # Nominal 0/90/180 degrees, matching the original 500-2400 us range.
+    # Physical angles depend on the servo; calibrate with the linkage detached.
+    gate_center_us: int = 1450
+    gate_accept_us: int = 500
+    gate_reject_us: int = 2400
+    sort_center_us: int = 1450
+    sort_bottle_us: int = 500
+    sort_can_us: int = 2400
     move_seconds: float = 0.7
     drop_seconds: float = 1.5
     water_250_seconds: float = 25.0

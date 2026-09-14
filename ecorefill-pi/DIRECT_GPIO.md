@@ -243,15 +243,16 @@ cannot be verified. If either pin reports input, output, SPI, or I2S, check that
 `dtoverlay=pwm-2chan` applies under `[all]`, reboot, and stop conflicting programs
 or overlays. Exporting PWM channels alone does not set the header pin routing.
 
-Each motion test sends only the selected servo 1500, 1300, 1700, then 1500 µs,
-holding each setting for one second. These fixed diagnostic positions are
-independent of `gpio.local.json`. Both relays stay OFF, the sensor is not sampled,
+Each motion test sends only the selected servo to nominal **90°, 180°, 0°, then
+90°**, holding each setting for one second. Defaults are 1450, 2400, 500, then
+1450 µs, matching the original sketch's 500–2400 µs range. Use
+`--config gpio.local.json` to test your saved positions. Both relays stay OFF, the sensor is not sampled,
 and the camera/model/Firebase are not loaded. A missing sensor need not be wired
 for this test. All controller resources must nevertheless be available; stop any
 other process claiming their GPIOs before running it.
 
 During movement, the printed PWM settings should include `enable=1`,
-`period=20000000`, and `duty_cycle=1500000`, `1300000`, or `1700000`. Those are
+`period=20000000`, and `duty_cycle=1450000`, `2400000`, or `500000` with the defaults. Those are
 software settings, not a measured waveform. The test disables PWM afterward.
 
 If those settings and pin routing are correct but a servo remains still, check
@@ -314,9 +315,12 @@ format. There is no automatic retry of a GPIO refill or fallback to the ESP32.
 Edit `gpio.local.json` for both the console and the app:
 
 - Servo positions are **pulse widths in microseconds**, not degrees. Defaults
-  are 1000/1500/2000 µs at 50 Hz. These intentionally use a narrower range than
-  the pasted sketch's 500–2400 µs. Adjust each position for the actual mechanism;
-  the labels accept/reject/bottle/can do not guarantee physical angles.
+  are **500/1450/2400 µs at 50 Hz** for nominal **0°/90°/180°**, matching the
+  pasted sketch's pulse range. Gate accept and sorter bottle use 0°; gate reject
+  and sorter can use 180°; startup/reset use 90°. Physical travel varies by servo:
+  stop the test if a motor presses against a mechanical stop or stalls.
+  Adjust each saved position for the actual mechanism rather than forcing a
+  servo beyond its physical travel.
 - `water_250_seconds`, `water_500_seconds`, and `water_1000_seconds` retain the
   supplied **25/30/45 seconds**. These are timers, not measured volumes. Collect
   and measure water for each selection before treating the labels as mL.
@@ -329,6 +333,22 @@ Edit `gpio.local.json` for both the console and the app:
   Samples are separated by 100 ms, with up to 60 ms waiting for echo delivery;
   those limits deliberately tolerate short dropouts and do not stop instantly.
 - The spare relay stays OFF. No command directly energizes it.
+
+An existing `gpio.local.json` overrides the new defaults. To update just its six
+servo positions while retaining your pump timers and sensor thresholds, run from
+the Pi's `ecorefill-pi` directory with the machine stopped:
+
+```sh
+python3 - <<'PY'
+import json
+from pathlib import Path
+path = Path('gpio.local.json')
+data = json.loads(path.read_text()) if path.exists() else {}
+data.update(gate_center_us=1450, gate_accept_us=500, gate_reject_us=2400,
+            sort_center_us=1450, sort_bottle_us=500, sort_can_us=2400)
+path.write_text(json.dumps(data, indent=2) + '\n')
+PY
+```
 
 The controller checks deadlines and shuts the pump off in cleanup, but it is
 not an independent hardware cutoff. A frozen Pi, SIGKILL, or welded relay can

@@ -101,15 +101,15 @@ class ControllerTests(unittest.TestCase):
     def test_sort_sequence_and_final_settle(self):
         self.assertEqual(self.controller.execute(" bottle "), (True, None))
         self.assertEqual([c.args for c in self.hardware.servo.call_args_list], [
-            ("sort", 1000), ("gate", 1000), ("gate", 1500), ("sort", 1500),
+            ("sort", 500), ("gate", 500), ("gate", 1450), ("sort", 1450),
         ])
         self.assertAlmostEqual(self.now, 3.6)
         self.hardware.pump.assert_not_called()
 
     def test_can_and_reject_paths(self):
         for command, expected in (
-            ("CAN", [("sort", 2000), ("gate", 1000), ("gate", 1500), ("sort", 1500)]),
-            ("REJECT", [("gate", 2000), ("gate", 1500), ("sort", 1500)]),
+            ("CAN", [("sort", 2400), ("gate", 500), ("gate", 1450), ("sort", 1450)]),
+            ("REJECT", [("gate", 2400), ("gate", 1450), ("sort", 1450)]),
         ):
             self.hardware.reset_mock()
             self.assertEqual(self.controller.execute(command), (True, None))
@@ -299,8 +299,8 @@ class RoutingTests(unittest.TestCase):
             machine = MachineRuntime()
             machine.initialize_controller()
         hardware.return_value.open.assert_called_once()
-        hardware.return_value.servo.assert_any_call("gate", 1500)
-        hardware.return_value.servo.assert_any_call("sort", 1500)
+        hardware.return_value.servo.assert_any_call("gate", 1450)
+        hardware.return_value.servo.assert_any_call("sort", 1450)
         machine.close()
         hardware.return_value.close.assert_called_once()
 

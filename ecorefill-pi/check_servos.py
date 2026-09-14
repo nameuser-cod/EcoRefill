@@ -6,6 +6,7 @@ import subprocess
 import time
 
 from machine.gpio_hardware import PiGPIOHardware, find_pwm_chip
+from machine.gpio_controller import ControllerSettings
 
 
 SERVO_PINS = {"gate": (18, 12, 2), "sort": (19, 35, 3)}
@@ -51,11 +52,16 @@ def show_pwm_state(chip, name):
     print(f"{name} {path}: {values}", flush=True)
 
 
-def exercise_servo(hardware, name, report):
+def exercise_servo(hardware, name, report, settings=None):
+    settings = settings or ControllerSettings()
+    if name == "gate":
+        center, low, high = settings.gate_center_us, settings.gate_accept_us, settings.gate_reject_us
+    else:
+        center, low, high = settings.sort_center_us, settings.sort_bottle_us, settings.sort_can_us
     try:
-        for pulse in (1500, 1300, 1700, 1500):
+        for angle, pulse in ((90, center), (180, high), (0, low), (90, center)):
             hardware.servo(name, pulse)
-            print(f"{name}: requested {pulse} us at 50 Hz; observe movement now.", flush=True)
+            print(f"{name}: nominal {angle} degrees ({pulse} us at 50 Hz); observe movement now.", flush=True)
             report(name)
             time.sleep(1)
     finally:
@@ -66,6 +72,7 @@ def exercise_servo(hardware, name, report):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--servo", choices=("gate", "sort", "both"), default="both")
+    parser.add_argument("--config", help="Use the same servo calibration JSON as the machine app")
     parser.add_argument("--diagnose-only", action="store_true", help="Read pin routing and PWM state without moving servos")
     args = parser.parse_args()
     names = ("gate", "sort") if args.servo == "both" else (args.servo,)
@@ -86,12 +93,13 @@ def main():
         if not routing_ok:
             print("No motion test performed: resolve pin routing first.", flush=True)
             return 1
+        settings = ControllerSettings.from_file(args.config)
         print("Stop the machine app and detach servo linkages before this test. Relays stay OFF.", flush=True)
         hardware = PiGPIOHardware()
         hardware.open()
         hardware.all_off()
         for name in names:
-            exercise_servo(hardware, name, lambda selected: show_pwm_state(chip, selected))
+            exercise_servo(hardware, name, lambda selected: show_pwm_state(chip, selected), settings)
         print(
             "Test finished. The reported values are software settings, not proof of an "
             "electrical waveform or motor movement.", flush=True,
