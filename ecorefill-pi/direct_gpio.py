@@ -6,7 +6,7 @@ import threading
 import time
 
 from machine.gpio_controller import ControllerSettings, GPIOController
-from machine.gpio_hardware import PiGPIOHardware, prepare_pwm
+from machine.gpio_hardware import create_hardware, prepare_pwm
 
 
 def main():
@@ -25,7 +25,7 @@ def main():
         raise KeyboardInterrupt
 
     signal.signal(signal.SIGTERM, terminated)
-    hardware = PiGPIOHardware()
+    hardware = create_hardware()
     controller = GPIOController(
         hardware, ControllerSettings.from_file(args.config),
         emit=lambda message: print(message, flush=True),

@@ -171,14 +171,14 @@ class MachineRuntime(
 
     def initialize_controller(self):
         from .gpio_controller import ControllerSettings, GPIOController
-        from .gpio_hardware import CONTROL_PINS, PiGPIOHardware
+        from .gpio_hardware import CONTROL_PINS, create_hardware
 
         if CONTROL_PINS & {GREEN_BUTTON_GPIO, BLUE_BUTTON_GPIO}:
             raise ValueError("A button GPIO conflicts with the direct controller. See DIRECT_GPIO.md.")
         settings = ControllerSettings.from_file(os.getenv("ECOREFILL_GPIO_CONFIG"))
-        self.gpio_controller = GPIOController(PiGPIOHardware(), settings, emit=log)
+        self.gpio_controller = GPIOController(create_hardware(), settings, emit=log)
         self.gpio_controller.open()
-        log("Direct Pi GPIO controller ready; hardware PWM servos and NPN relay interfaces.")
+        log("Direct Pi GPIO controller ready; hardware PWM servos and active-low pump relay on GPIO22.")
 
     def start(self):
         """Initialize resources, register APIs, then start background workers."""

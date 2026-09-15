@@ -158,7 +158,7 @@ flowchart LR
 ```
 
 - **The Raspberry Pi** runs the camera, material model, inspection module, machine state, reward redemption API, and refill request worker.
-- **Direct Pi 5 control** drives the servos with hardware PWM, reads the HC-SR04, and switches the relay drivers. See the [complete wiring, calibration, and launch guide](ecorefill-pi/DIRECT_GPIO.md). No ESP32 connection or controller-selection variable is needed.
+- **Direct Pi 5 control** drives the servos with hardware PWM, reads the HC-SR04, and controls one active-low pump relay directly on GPIO22 (physical pin 15). See the [complete wiring, calibration, and launch guide](ecorefill-pi/DIRECT_GPIO.md). No ESP32 connection or controller-selection variable is needed.
 - **The kiosk** reads the Pi's local API on port **5000**. Its home screen polls machine state every **500 ms**.
 - **The user app** uses Firebase Authentication, reads Firestore records, submits refill requests, and calls the Pi's authenticated reward redemption endpoint.
 - **The owner dashboard** subscribes to Firestore records for the owner's assigned machine.

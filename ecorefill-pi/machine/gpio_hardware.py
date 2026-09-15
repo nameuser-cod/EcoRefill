@@ -1,6 +1,6 @@
-"""Pi 5 hardware PWM servos and lgpio relay/ultrasonic access.
+"""Pi 5 servos, ultrasonic sensor, and one direct active-low pump relay.
 
-Importing this module does not claim pins. See DIRECT_GPIO.md for wiring/setup.
+Importing this module does not claim pins. See DIRECT_GPIO.md.
 """
 
 import grp
@@ -15,10 +15,11 @@ from weight_sensor import open_header
 GATE_GPIO = 18  # Physical 12, RP1 PWM0 channel 2
 SORT_GPIO = 19  # Physical 35, RP1 PWM0 channel 3
 RELAY1_GPIO = 22  # Physical 15; GPIO17 is already the green button
-RELAY2_GPIO = 26  # Physical 37; GPIO27 is already the blue button
+RELAY_ON = 0  # Direct module input: LOW energizes channel 1.
+RELAY_OFF = 1
 TRIG_GPIO = 23  # Physical 16
 ECHO_GPIO = 24  # Physical 18, AFTER the 330/470 ohm divider
-CONTROL_PINS = {GATE_GPIO, SORT_GPIO, RELAY1_GPIO, RELAY2_GPIO, TRIG_GPIO, ECHO_GPIO}
+CONTROL_PINS = {GATE_GPIO, SORT_GPIO, RELAY1_GPIO, TRIG_GPIO, ECHO_GPIO}
 
 
 def find_pwm_chip(root=Path("/sys/class/pwm")):
@@ -101,10 +102,10 @@ class PiGPIOHardware:
         self.gpio = lgpio
         try:
             self.handle = open_header(lgpio)
-            # NPN interfaces invert the active-low relay inputs: Pi LOW = OFF.
-            # Claim relays first, with the OFF value in the output request.
-            for pin in (RELAY1_GPIO, RELAY2_GPIO, TRIG_GPIO):
-                lgpio.gpio_claim_output(self.handle, pin, 0)
+            # Request the relay OFF atomically; a LOW startup value runs the pump.
+            # Channel 2 is unused and has no Pi GPIO connection.
+            for pin, initial in ((RELAY1_GPIO, RELAY_OFF), (TRIG_GPIO, 0)):
+                lgpio.gpio_claim_output(self.handle, pin, initial)
                 self.outputs.append(pin)
             chip = find_pwm_chip()
             for name, channel in (("gate", 2), ("sort", 3)):
@@ -127,20 +128,12 @@ class PiGPIOHardware:
                 if enabled:
                     raise RuntimeError("GPIO hardware is closed.")
                 return
-            self.gpio.gpio_write(self.handle, RELAY1_GPIO, int(enabled))
+            self.gpio.gpio_write(self.handle, RELAY1_GPIO, RELAY_ON if enabled else RELAY_OFF)
 
     def all_off(self):
-        errors = []
         with self.io_lock:
-            if self.handle is not None:
-                for pin in (RELAY1_GPIO, RELAY2_GPIO):
-                    if pin in self.outputs:
-                        try:
-                            self.gpio.gpio_write(self.handle, pin, 0)
-                        except Exception as error:
-                            errors.append(error)
-        if errors:
-            raise RuntimeError(f"Could not switch relays off: {errors}")
+            if self.handle is not None and RELAY1_GPIO in self.outputs:
+                self.gpio.gpio_write(self.handle, RELAY1_GPIO, RELAY_OFF)
 
     def _echo_edge(self, chip, gpio, level, timestamp):
         # lgpio supplies kernel edge timestamps in monotonic nanoseconds.
@@ -155,6 +148,9 @@ class PiGPIOHardware:
                 self.echo_done.set()
 
     def distance_cm(self):
+        return self._measure_distance_cm()
+
+    def _measure_distance_cm(self):
         # A pre-existing HIGH or timed-out echo is invalid, never a cached distance.
         if self.gpio.gpio_read(self.handle, ECHO_GPIO):
             return None
@@ -183,7 +179,7 @@ class PiGPIOHardware:
                     # TRIG uses one-shot pulses. Do not send a zero-length
                     # pulse here: some lgpio builds reject it as bad PWM micros.
                     # gpiochip_close below stops any pending transmission.
-                    self.gpio.gpio_write(self.handle, pin, 0)
+                    self.gpio.gpio_write(self.handle, pin, RELAY_OFF if pin == RELAY1_GPIO else 0)
                 except Exception as error:
                     errors.append(error)
             self.outputs.clear()
@@ -207,3 +203,8 @@ class PiGPIOHardware:
                 self.handle = None
         if errors:
             raise RuntimeError(f"GPIO cleanup failed: {errors}")
+
+
+def create_hardware():
+    """Create the direct Pi controller, including when old serial settings remain."""
+    return PiGPIOHardware()

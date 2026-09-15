@@ -1,8 +1,9 @@
 # Raspberry Pi 5: direct sorter and dispenser
 
-The machine app uses the Pi 5's GPIO directly for both sorting and dispensing.
-Start it with `python3 machine_flow.py`; no controller-selection variable is
-needed. The ESP32 serial connection path has been removed.
+The machine app uses the Pi 5's GPIO directly for sorting and dispensing.
+Start it with `python3 machine_flow.py`. The pump uses channel 1 of the
+user-confirmed 3.3 V-compatible, 5 V relay module, without an extra transistor.
+The ESP32 integration and firmware have been removed.
 
 ## Wiring
 
@@ -16,8 +17,8 @@ relay controls to GPIO17/27: those pins already serve the machine's buttons.
 | MG996R bottle/can sorter signal | 19 | 35 |
 | HC-SR04 TRIG | 23 | 16 |
 | HC-SR04 ECHO, through divider below | 24 | 18 |
-| Relay 1 transistor base, through 1 kΩ | 22 | 15 |
-| Relay 2 transistor base, through 1 kΩ | 26 | 37 |
+| Relay IN1, direct connection | 22 | 15 |
+| Relay VCC (with VCC–JD-VCC jumper) | 5 V power | 2 or 4 |
 | Common signal ground | GND | 6 (or another GND pin) |
 | Existing green button | 17 | 11 |
 | Existing blue button | 27 | 13 |
@@ -26,8 +27,7 @@ relay controls to GPIO17/27: those pins already serve the machine's buttons.
 | HX711 VCC | 3.3 V power | 1 |
 | HX711 GND | GND | 6 (or another GND pin) |
 
-The optional HX711 uses GPIO5/6. Do not also connect the ESP32 to these
-control signals. Do not enable another overlay using GPIO18/19, such as I2S or
+The optional HX711 uses GPIO5/6. Do not enable another overlay using GPIO18/19, such as I2S or
 an SPI chip select on these pins.
 
 ### Buttons and weight sensor
@@ -66,10 +66,11 @@ on gram readings. Stop the weight diagnostic before starting the full app.
                                     +-> gate servo red
                                     +-> sorter servo red
                                     +-> HC-SR04 VCC
-                                    +-> relay VCC and JD-VCC
 
-Buck OUT- -> servo brown/black wires, HC-SR04 GND, relay GND,
-             both transistor emitters, Pi GND
+Buck OUT- -> servo brown/black wires, HC-SR04 GND, Pi GND
+
+Pi 5 V / pin 2 or 4 -> relay VCC (VCC–JD-VCC jumper fitted)
+Pi GND / pin 6 -> relay GND
 
 Pi 5 -> its own suitable USB-C supply
 Pump -> its own rated supply, switched through the relay contacts
@@ -93,37 +94,43 @@ HC-SR04 ECHO -- 330 Ω --+-- GPIO24 / physical pin 18
 This gives approximately 2.94 V for a 5 V echo. TRIG connects directly to
 GPIO23. A resistor in series alone is not this divider.
 
-### CW-021 relay inputs: two NPN interfaces
+### Direct relay input: channel 1 only
 
-The photographed board has 5 V Songle SRD-05VDC-SL-C relays. The supplied
-sketch identifies it as active low; this implementation uses that behavior.
-Use **two 2N3904 NPN transistors, two 1 kΩ resistors, and two 10 kΩ resistors**.
-Wire each channel as follows, using the transistor manufacturer's lead pinout:
+Use the actual board with **Songle SRD-05VDC-SL-C (5 V)** relays and the
+user-confirmed 3.3 V-compatible inputs. The seller image showing 12 V relays
+is not the voltage specification for this board. No extra transistor is used.
 
 ```text
-Pi GPIO22 or GPIO26 -- 1 kΩ -- Base
-                                |
-                              10 kΩ
-                                |
-Common GND ---------------------+-- Emitter
+Pi GPIO22 / physical pin 15 -> IN1
+Pi GND    / physical pin 6  -> GND
+Pi 5 V    / physical pin 2  -> VCC
 
-Relay IN1 or IN2 ------------------- Collector
+IN2: disconnected
+NC1 and all channel 2 screw terminals: disconnected
 ```
 
-GPIO22 controls IN1; GPIO26 controls IN2. The 10 kΩ resistor is from base to
-emitter. **Pi HIGH turns the relay ON; Pi LOW turns it OFF** through this
-interface. Do not copy the sketch's active-low Pi output logic or connect IN1/2
-straight to the Pi. The second relay is initialized OFF and remains OFF.
+Keep the jumper between the labeled **VCC and JD-VCC** pins; never bridge
+power to GND. GPIO17 / pin 11 remains the green button. GPIO26 is unused and
+is no longer claimed by the controller. Supply the relay board from Pi 5 V
+only with adequate power headroom; servo and pump power use separate supplies.
+Do not connect external supply +5 V to the Pi's 5 V rail.
 
-Power relay VCC and JD-VCC from external 5 V. If a jumper links those two
-labeled pins, retain that link; never bridge either one to GND. Identify the
-labels before wiring: the jumper header is partly obscured in the photo.
-This common-ground arrangement does not retain galvanic isolation at the
-control inputs.
+**Polarity: GPIO LOW = pump ON; GPIO HIGH = pump OFF.** This follows the
+previous ESP32 sketch's active-low setting. Startup requests channel 1 HIGH
+in the GPIO output claim; reset, errors, and normal shutdown command HIGH.
+This differs from the previous external-transistor wiring, which inverted
+these levels.
 
-With the pump and Pi disconnected, confirm the powered board activates a relay
-when its IN pin is connected to module GND, and releases when disconnected.
-This verifies the active-low assumption without exposing Pi GPIO to the input.
+Before connecting pump power, verify channel 1 stays released when the
+controller starts and exits. During a `WATER_250` command with a container
+detected, verify channel 1 engages only while dispensing and releases on
+completion or container removal. If it behaves oppositely, stop and correct
+the polarity before connecting the pump.
+
+Software cannot guarantee the relay state before GPIO initialization, after
+GPIO release, or if the Pi/process hangs. Check startup/shutdown with pump
+power disconnected; use an independent cutoff if a stuck-on pump must be
+prevented. The removed ESP32's lease timer no longer provides that cutoff.
 
 ### Pump contacts
 
@@ -142,6 +149,31 @@ rating is not a motor-starting rating. Use suppression appropriate to the pump;
 for a simple brushed DC motor, a suitably rated flyback diode goes across the
 motor, cathode/stripe to + and anode to -. The pump circuit can remain isolated
 from Pi ground when it connects only through the relay contacts.
+
+## Test only the relay
+
+Stop `machine_flow.py`, the command console, and any service running them.
+Keep the pump supply disconnected for the first test. With the latest project
+files on the Pi, run:
+
+```sh
+cd ~/ecorefill-app/ecorefill-pi
+python3 check_relay.py
+```
+
+The test uses only GPIO22 and `lgpio`; it does not require PWM preparation,
+servos, a sensor, the camera, or Firebase. It requests OFF (HIGH), waits two
+seconds, then repeats ON (LOW) for one second and OFF for two seconds, three
+times. Confirm the channel 1 indicator and relay clicks match the printed
+states; channel 2 is not controlled. A click does not verify pump power or
+contact wiring. Ctrl+C requests OFF and closes the GPIO handle. Cleanup also
+runs on errors and SIGTERM; SIGKILL/power loss cannot run software cleanup.
+
+If `lgpio` is missing, use the Raspberry Pi OS package (`sudo apt install
+python3-lgpio`) and a Python environment that can access system packages.
+If GPIO is busy, stop the process using GPIO22 before retrying. If the relay
+engages during OFF or after the test exits, keep the pump disconnected and
+resolve the polarity or idle-state behavior before using it.
 
 ## Enable Pi 5 hardware PWM
 
@@ -186,7 +218,7 @@ it must have access to `lgpio` (for example, create it with
 ## Run the standalone controller
 
 Stop the full machine app before running the console. Opening either controller
-initializes both relay outputs OFF and centers both servos.
+initializes the pump relay OFF and centers both servos.
 
 ```sh
 cd ~/ecorefill-app/ecorefill-pi
@@ -214,9 +246,9 @@ WATER_1000
 QUIT
 ```
 
-`RESET` interrupts a running operation, turns relays off, and centers the servos.
+`RESET` interrupts a running operation, turns the pump relay off, and centers the servos.
 Other commands while busy are rejected. `QUIT`, Ctrl+C, EOF, and SIGTERM cancel
-work, turn relays off, and disable servo PWM. You can also run a single command:
+work, turn the pump relay off, and disable servo PWM. You can also run a single command:
 
 ```sh
 python3 direct_gpio.py --config gpio.local.json --command BOTTLE
@@ -248,7 +280,7 @@ accept/bottle position, then center**, holding each setting for one second. The 
 accept position is 0° (500 µs); the sorter bottle position is 45° (975 µs).
 Center is 90° (1450 µs), gate reject is 179° (2389 µs), and sorter can is
 180° (2400 µs), using the original sketch's 500–2400 µs range. Use
-`--config gpio.local.json` to test your saved positions. Both relays stay OFF, the sensor is not sampled,
+`--config gpio.local.json` to test your saved positions. The pump relay stays OFF, the sensor is not sampled,
 and the camera/model/Firebase are not loaded. A missing sensor need not be wired
 for this test. All controller resources must nevertheless be available; stop any
 other process claiming their GPIOs before running it.
@@ -305,8 +337,8 @@ ECOREFILL_GPIO_CONFIG=./gpio.local.json python3 machine_flow.py
 Set `ECOREFILL_GPIO_CONFIG` in your existing service configuration to load your
 calibration file, and run PWM preparation before the service starts after each
 boot. Without a calibration file, `python3 machine_flow.py` uses the defaults in
-`gpio.example.json`. The obsolete `ECOREFILL_CONTROLLER` variable is ignored and
-can be removed. Relative calibration paths resolve from the working directory;
+`gpio.example.json`. The obsolete `ECOREFILL_CONTROLLER` and `ECOREFILL_ESP32_PORT` variables
+are ignored and can be removed. Relative calibration paths resolve from the working directory;
 use an absolute path in a service if needed.
 
 The existing sorting and water APIs route to the direct controller. Sorting
@@ -337,7 +369,8 @@ Edit `gpio.local.json` for both the console and the app:
   stop with `SENSOR_LOST`. A valid reading within 14 cm clears both counters.
   Samples are separated by 100 ms, with up to 60 ms waiting for echo delivery;
   those limits deliberately tolerate short dropouts and do not stop instantly.
-- The spare relay stays OFF. No command directly energizes it.
+- Channel 2 is unused: IN2 and its screw terminals are disconnected, and the
+  app does not control it.
 
 An existing `gpio.local.json` overrides the new defaults. To update just its six
 servo positions while retaining your pump timers and sensor thresholds, run from

@@ -172,6 +172,33 @@ class CancellationTests(unittest.TestCase):
 
 
 class HardwareTests(unittest.TestCase):
+    def test_direct_relay_starts_off_and_stops_on_every_shutdown_path(self):
+        hardware = PiGPIOHardware()
+        gpio = Mock()
+        with patch.dict("sys.modules", {"lgpio": gpio}), \
+             patch("machine.gpio_hardware.open_header", return_value=9), \
+             patch("machine.gpio_hardware.find_pwm_chip"), \
+             patch("machine.gpio_hardware.HardwareServo"):
+            hardware.open()
+        self.assertEqual([c.args for c in gpio.gpio_claim_output.call_args_list],
+                         [(9, 22, 1), (9, 23, 0)])
+        hardware.pump(True)
+        gpio.gpio_write.assert_called_with(9, 22, 0)
+        hardware.pump(False)
+        gpio.gpio_write.assert_called_with(9, 22, 1)
+        hardware.pump(True)
+        hardware.all_off()
+        gpio.gpio_write.assert_called_with(9, 22, 1)
+        hardware.pump(True)
+        gpio.reset_mock()
+        hardware.close()
+        self.assertEqual([c.args for c in gpio.gpio_write.call_args_list],
+                         [(9, 22, 1), (9, 23, 0)])
+        gpio.gpiochip_close.assert_called_once_with(9)
+        hardware.pump(False)
+        with self.assertRaisesRegex(RuntimeError, "hardware is closed"):
+            hardware.pump(True)
+
     def test_pwm_selection_ignores_fan_and_gpiochip_number(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -236,7 +263,7 @@ class HardwareTests(unittest.TestCase):
              patch("machine.gpio_hardware.open_header", return_value=9):
             with self.assertRaisesRegex(OSError, "second pin busy"):
                 hardware.open()
-        gpio.gpio_write.assert_called_with(9, 22, 0)
+        gpio.gpio_write.assert_called_with(9, 22, 1)
         gpio.gpiochip_close.assert_called_once_with(9)
         self.assertIsNone(hardware.handle)
 
@@ -244,7 +271,7 @@ class HardwareTests(unittest.TestCase):
         hardware = PiGPIOHardware()
         hardware.gpio = Mock()
         hardware.handle = 9
-        hardware.outputs = [22, 26]
+        hardware.outputs = [22, 23]
         hardware.gpio.gpio_write.side_effect = [OSError("write failure"), None]
         hardware.callback = Mock()
         hardware.callback.cancel.side_effect = OSError("callback failure")
@@ -263,7 +290,7 @@ class HardwareTests(unittest.TestCase):
         hardware.gpio = Mock()
         hardware.gpio.tx_pulse.side_effect = RuntimeError("bad PWM micros")
         hardware.handle = 9
-        hardware.outputs = [22, 26, 23]
+        hardware.outputs = [22, 23]
         servo = Mock()
         hardware.servos = {"gate": servo}
         callback = hardware.callback = Mock()
@@ -272,7 +299,7 @@ class HardwareTests(unittest.TestCase):
 
         hardware.gpio.tx_pulse.assert_not_called()
         self.assertEqual([call.args for call in hardware.gpio.gpio_write.call_args_list],
-                         [(9, 22, 0), (9, 26, 0), (9, 23, 0)])
+                         [(9, 22, 1), (9, 23, 0)])
         servo.close.assert_called_once()
         callback.cancel.assert_called_once()
         hardware.gpio.gpiochip_close.assert_called_once_with(9)
@@ -305,7 +332,7 @@ class RoutingTests(unittest.TestCase):
         hardware.return_value.close.assert_called_once()
 
     def test_obsolete_backend_setting_cannot_enable_serial(self):
-        with patch.dict("os.environ", {"ECOREFILL_CONTROLLER": "serial"}), \
+        with patch.dict("os.environ", {"ECOREFILL_CONTROLLER": "serial", "ECOREFILL_ESP32_PORT": "/dev/fake"}), \
              patch("machine.gpio_hardware.PiGPIOHardware") as hardware:
             machine = MachineRuntime()
             machine.initialize_controller()
