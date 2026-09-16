@@ -112,8 +112,9 @@ CAN_ITEMS = {
 }
 
 POINTS = {
-    "plastic_bottle": 1,
-    "pet_bottle": 1,
+    # Two accepted plastic bottles earn one point; cans retain their rate.
+    "plastic_bottle": 0.5,
+    "pet_bottle": 0.5,
     "aluminum_can": 1,
     "aluminium_can": 1,
 }

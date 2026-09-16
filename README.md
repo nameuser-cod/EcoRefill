@@ -53,18 +53,18 @@ flowchart TD
 2. **Automatic detection starts.** The Pi uses camera motion detection to notice an item and waits for a stable view before capturing it. No start button is needed.
 3. **The model checks the item.** YOLO predicts its class. The machine accepts configured material classes only when the prediction passes its confidence and object-area thresholds. Optional visual inspection can add further checks.
 4. **The machine sorts or rejects it.** The Pi runs `BOTTLE`, `CAN`, or `REJECT` directly through its GPIO controller. Rejected items earn no points.
-5. **Accepted items build one session total.** Each accepted bottle or can adds **1 EcoPoint**. The screen shows the item count and points. The user can continue inserting items.
+5. **Accepted items build one session total.** Each accepted plastic bottle adds **0.5 EcoPoints** (2 bottles = 1 point), and each accepted aluminum can adds **1 EcoPoint**. The screen shows the item count and points. The user can continue inserting items.
 6. **The user presses the green button.** The machine creates one reward for the entire batch and displays a QR code. Account points are credited when that code is successfully claimed.
 7. **The user claims the reward.** A signed-in user opens the app's scanner and scans the QR. The redemption service verifies the Firebase login token and reward availability, then updates the balance and records a transaction.
 8. **The session ends.** A claimed reward cannot be claimed again. Unclaimed reward codes have a **60-second** validity period, after which the machine prepares for another customer.
 
-For example, three accepted plastic bottles and two accepted aluminum cans produce one reward QR worth **5 EcoPoints**.
+For example, three accepted plastic bottles and two accepted aluminum cans produce one reward QR worth **3.5 EcoPoints**. Half-points are preserved when claiming rewards, buying points, spending on refills, and refunding failed refills.
 
 ### Accepted materials and inspection
 
 | Detected class | Category | Points per accepted item |
 | --- | --- | --- |
-| `plastic_bottle` or `pet_bottle` | Plastic bottle | 1 |
+| `plastic_bottle` or `pet_bottle` | Plastic bottle | 0.5 |
 | `aluminum_can` or `aluminium_can` | Aluminum can | 1 |
 | Unsupported, unknown, or insufficiently confident detection | Rejected | 0 |
 

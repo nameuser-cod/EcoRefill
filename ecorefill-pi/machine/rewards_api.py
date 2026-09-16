@@ -3,6 +3,7 @@
 from datetime import datetime, timezone
 from .config import MACHINE_ID
 from .diagnostics import log
+from .points import read_points
 
 
 class RewardsAPI:
@@ -181,7 +182,7 @@ class RewardsAPI:
             # Get server-controlled reward points
             # -------------------------------------------------
             try:
-                points_earned = int(
+                points_earned = read_points(
                     reward_data.get("pointsEarned", 0)
                 )
             except (TypeError, ValueError):
@@ -195,14 +196,9 @@ class RewardsAPI:
             # -------------------------------------------------
             # Current user points
             # -------------------------------------------------
-            try:
-                current_points = int(
-                    user_data.get("points", 0)
-                )
-            except (TypeError, ValueError):
-                current_points = 0
+            current_points = read_points(user_data.get("points", 0))
 
-            new_points = current_points + points_earned
+            new_points = read_points(current_points + points_earned)
 
             # -------------------------------------------------
             # Update user's points

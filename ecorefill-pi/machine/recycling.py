@@ -11,6 +11,7 @@ from .config import (
     REWARD_READY_TIMEOUT_SECONDS,
 )
 from .diagnostics import log
+from .points import read_points
 
 
 class RecyclingWorker:
@@ -114,7 +115,7 @@ Created At: {time.time()}
         accepted = bool(result.get("accepted"))
         category = str(result.get("category") or "reject")
         material_type = str(result.get("item") or "unknown")
-        points_earned = int(result.get("points") or 0)
+        points_earned = read_points(result.get("points") or 0)
         confidence = round(float(result.get("confidence") or 0), 4)
 
         record_ref = (
@@ -191,7 +192,7 @@ Created At: {time.time()}
         current = self.get_state()
 
         item_count = int(current.get("itemCount") or 0)
-        total_points = int(current.get("pointsEarned") or 0)
+        total_points = read_points(current.get("pointsEarned") or 0)
         bottle_count = int(current.get("bottleCount") or 0)
         can_count = int(current.get("canCount") or 0)
         batch_session_id = current.get("batchSessionId")
@@ -505,8 +506,8 @@ Created At: {time.time()}
 
                     new_item_count = int(current.get("itemCount") or 0) + 1
                     new_total_points = (
-                        int(current.get("pointsEarned") or 0)
-                        + int(result.get("points") or 0)
+                        read_points(current.get("pointsEarned") or 0)
+                        + read_points(result.get("points") or 0)
                     )
                     new_bottle_count = int(current.get("bottleCount") or 0)
                     new_can_count = int(current.get("canCount") or 0)

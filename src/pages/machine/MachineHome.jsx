@@ -397,8 +397,9 @@ function MachineHome() {
 
                 <div className="machine-choice-text">
                   <h3>Recycle</h3>
-                  <p>Insert clean, empty plastic bottles or aluminum cans, one at a time.</p>
-                  <strong className="machine-choice-action">Insert item to start</strong>
+                  <p>Clean, empty plastic bottles and aluminum cans only.</p>
+                  <p className="machine-choice-rate">2 plastic bottles = 1 point · 1 can = 1 point</p>
+                  <strong className="machine-choice-action">Insert one item to start</strong>
                 </div>
               </div>
 

@@ -3,7 +3,7 @@ import hashlib
 import re
 from owner_refill_history import sync_owner_refills
 
-MAX_POINTS = 9007199254740991
+from machine.points import MAX_POINTS, valid_points
 
 
 class PaymentError(Exception):
@@ -221,8 +221,8 @@ class PointPayments:
                 buyer = buyer_ref.get(transaction=tx).to_dict()
                 balance = buyer.get("points", 0) if buyer else None
                 points = purchase.get("points")
-                if (type(balance) is not int or type(points) is not int or balance < 0 or points <= 0
-                        or balance + points > MAX_POINTS):
+                if (not valid_points(balance) or type(points) is not int or points <= 0
+                        or not valid_points(balance + points)):
                     fail("failed-precondition", "The buyer's point balance or purchase is invalid.")
                 owner_ref = self.ref("users", user["id"])
                 owner = owner_ref.get(transaction=tx).to_dict() or {}

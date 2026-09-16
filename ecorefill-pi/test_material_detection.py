@@ -26,7 +26,7 @@ class MaterialDetectionTests(unittest.TestCase):
                     machine, result = self.verify_and_sort(
                         label, confidence, weight_error=RuntimeError("Disconnected sensor"))
                     self.assertEqual(result["accepted"], accepted)
-                    self.assertEqual(result["points"], 1 if accepted else 0)
+                    self.assertEqual(result["points"], (0.5 if label == "plastic_bottle" else 1) if accepted else 0)
                     machine.weight_scale.read_weight.assert_not_called()
                     machine.send_command.assert_called_once_with(command)
                     if accepted:
@@ -138,6 +138,7 @@ class MaterialDetectionTests(unittest.TestCase):
                 with self.subTest(label=label, confidence=confidence):
                     machine, result = self.verify_and_sort(label, confidence)
                     self.assertEqual(result["accepted"], accepted)
+                    self.assertEqual(result["points"], 0.5 if accepted else 0)
                     machine.send_command.assert_called_once_with(
                         "BOTTLE" if accepted else "REJECT",
                     )
@@ -148,6 +149,7 @@ class MaterialDetectionTests(unittest.TestCase):
                 with self.subTest(label=label, confidence=confidence):
                     machine, result = self.verify_and_sort(label, confidence)
                     self.assertEqual(result["accepted"], accepted)
+                    self.assertEqual(result["points"], 1 if accepted else 0)
                     machine.send_command.assert_called_once_with(
                         "CAN" if accepted else "REJECT",
                     )
@@ -162,7 +164,7 @@ class MaterialDetectionTests(unittest.TestCase):
                     machine, result = self.verify_and_sort(label, 0.95, grams)
                     allowed = grams <= limit
                     self.assertEqual(result["accepted"], allowed)
-                    self.assertEqual(result["points"], int(allowed))
+                    self.assertEqual(result["points"], (0.5 if label in {"plastic_bottle", "pet_bottle"} else 1) if allowed else 0)
                     machine.send_command.assert_called_once_with(command if allowed else "REJECT")
                     self.assertEqual(result["inspection"]["weight"]["grams"], grams)
                     self.assertEqual(result["inspection"]["weight"]["limit_g"], limit)

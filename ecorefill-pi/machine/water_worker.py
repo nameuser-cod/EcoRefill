@@ -8,6 +8,7 @@ from .config import (
 )
 from .diagnostics import log
 from .owner_points import complete_refill
+from .points import read_points
 
 
 class WaterRequestWorker:
@@ -297,7 +298,7 @@ class WaterRequestWorker:
                 or {}
             )
 
-            current_points = int(
+            current_points = read_points(
                 user_data.get(
                     "points",
                     0
@@ -615,7 +616,7 @@ class WaterRequestWorker:
                         or {}
                     )
 
-                    current_points = int(
+                    current_points = read_points(
                         user_data.get(
                             "points",
                             0

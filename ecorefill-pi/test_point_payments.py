@@ -272,6 +272,14 @@ class PaymentTests(unittest.TestCase):
             self.assertEqual(self.db.records['pointPurchases/order1']['status'], 'pending')
             self.assertNotIn('transactions/gcash_order1', self.db.records)
 
+    def test_purchase_preserves_recycling_half_point_balance(self):
+        self.db.records['users/buyer']['points'] = 0.5
+        self.create()
+        self.submit()
+        self.review()
+        self.assertEqual(self.db.records['users/buyer']['points'], 100.5)
+        self.assertEqual(self.db.records['transactions/gcash_order1']['pointsAfter'], 100.5)
+
     def test_disabled_seller_and_frozen_recipient(self):
         self.create()
         self.call('saveGcashAccount', 'owner', accountName='New GCash', mobileNumber='+639876543210', enabled=False)

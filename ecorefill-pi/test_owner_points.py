@@ -134,6 +134,19 @@ class WorkerPointsTests(unittest.TestCase):
         self.assertEqual(self.db.records['users/owner']['points'], 2000)
         self.assertEqual(self.db.records['water_refill_sessions/refill']['status'], 'failed')
 
+    def test_refill_preserves_half_point_remainder(self):
+        self.db.records['users/buyer']['points'] = 5.5
+        self.process(True)
+        self.assertEqual(self.db.records['users/buyer']['points'], 0.5)
+        transaction = next(value for key, value in self.db.records.items() if key.startswith('transactions/'))
+        self.assertEqual(transaction['pointsAfter'], 0.5)
+
+    def test_failed_refill_refunds_half_point_balance_exactly(self):
+        self.db.records['users/buyer']['points'] = 5.5
+        self.process(False)
+        self.assertEqual(self.db.records['users/buyer']['points'], 5.5)
+        self.assertEqual(self.db.records['water_refill_sessions/refill']['status'], 'failed')
+
     def test_insufficient_buyer_balance_never_dispenses_or_credits_owner(self):
         self.db.records['users/buyer']['points'] = 0
         self.process(True)

@@ -18,7 +18,7 @@ def payload(item_id="item-1"):
     return {
         "item_id": item_id,
         "result": {"accepted": True, "category": "bottle", "item": "plastic_bottle",
-                   "confidence": 0.95, "points": 1,
+                   "confidence": 0.95, "points": 0.5,
                    "inspection": {"weight": {"grams": 20, "status": "pass"}}},
         "image_data_url": "data:image/jpeg;base64,test",
         "batch_session_id": "batch-1",
@@ -109,7 +109,10 @@ class UploadTests(unittest.TestCase):
 
         def stop_after_enqueue(*args):
             enqueue(*args)
-            machine.shutdown_event.set()
+            if machine.get_state()["itemCount"] == 2:
+                self.assertEqual(machine.get_state()["pointsEarned"], 1)
+                # Enqueue happens before this third item's state is published.
+                machine.shutdown_event.set()
 
         machine.queue_recycling_upload = stop_after_enqueue
         with patch.dict(sys.modules, {"firebase_admin": SimpleNamespace(firestore=Mock())}), \
@@ -117,7 +120,7 @@ class UploadTests(unittest.TestCase):
             machine.machine_worker()
         state = machine.get_state()
         self.assertEqual(state["phase"], "item_accepted")
-        self.assertEqual((state["itemCount"], state["pointsEarned"]), (1, 1))
+        self.assertEqual((state["itemCount"], state["pointsEarned"]), (3, 1.5))
         self.assertFalse(state["firebaseSaved"])
         queued = machine.recycling_upload_queue.peek()
         self.assertEqual(queued["batch_session_id"], state["batchSessionId"])
@@ -211,6 +214,7 @@ class UploadTransactionTests(unittest.TestCase):
             self.assertTrue(machine.save_recycling_to_firestore(**payload()))
             self.assertEqual(db.records, original)
             self.assertTrue(machine.save_recycling_to_firestore(**payload("item-2")))
+        self.assertEqual(db.records["recycling_records/item-1"]["pointsEarned"], 0.5)
         self.assertEqual(db.records["machines/machine_001"]["totalItems"], 2)
         self.assertEqual(db.records["machines/machine_001"]["bottleCount"], 2)
         self.assertEqual(db.records["recycling_records/item-1"]["createdAt"],

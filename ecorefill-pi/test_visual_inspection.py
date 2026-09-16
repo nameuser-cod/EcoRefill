@@ -137,7 +137,7 @@ class InspectionTests(unittest.TestCase):
                 result = machine.verify_item(self.frame)
             machine.sort_item(result)
             self.assertEqual(commands[-1], command)
-            self.assertEqual(result["points"], 0 if mode == "enforce" else 1)
+            self.assertEqual(result["points"], 0 if mode == "enforce" else 0.5)
 
         # Even a clean visual pass cannot bypass the weight limit, in any mode.
         machine.weight_scale = SimpleNamespace(read_weight=lambda: {"grams": 301.0})
