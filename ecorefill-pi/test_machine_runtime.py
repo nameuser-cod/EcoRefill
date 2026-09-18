@@ -165,7 +165,7 @@ class WaterPollingTests(unittest.TestCase):
 
     def test_reset_during_read_prevents_processing(self):
         self.machine.start_water_request_polling("refill-1", self.expires_at)
-        def reset_during_read():
+        def reset_during_read(**kwargs):
             self.machine.reset_state()
             return self.request
         self.machine.db.collection.return_value.document.return_value.get.side_effect = reset_during_read
@@ -355,8 +355,44 @@ class APITests(unittest.TestCase):
         self.assertTrue(response.json["finishRequested"])
         self.assertTrue(self.machine.finish_session_event.is_set())
         response = self.local.post("/api/machine/reset")
-        self.assertEqual(response.json["state"]["itemCount"], 0)
-        self.assertFalse(self.machine.finish_session_event.is_set())
+        self.assertEqual(response.json["state"]["itemCount"], 2)
+        self.assertTrue(self.machine.finish_session_event.is_set())
+
+    def test_retry_after_rejection_or_error_preserves_earned_points(self):
+        for phase in ("rejected", "error", "idle"):
+            with self.subTest(phase=phase):
+                self.machine.update_state(
+                    phase=phase, itemCount=3, pointsEarned=1.5,
+                    bottleCount=2, canCount=1, batchSessionId="customer-batch",
+                )
+                response = self.local.post("/api/machine/reset")
+                self.assertEqual(response.status_code, 200)
+                state = response.json["state"]
+                self.assertEqual(state["phase"], "idle")
+                self.assertEqual(state["itemCount"], 3)
+                self.assertEqual(state["pointsEarned"], 1.5)
+                self.assertEqual(state["bottleCount"], 2)
+                self.assertEqual(state["canCount"], 1)
+                self.assertEqual(state["batchSessionId"], "customer-batch")
+
+    def test_delayed_touch_cannot_reset_or_pause_an_item_in_progress(self):
+        for phase in ("motion_detected", "capturing", "verifying", "sorting", "item_accepted", "reward_ready"):
+            for action in ("reset", "pause-recycling"):
+                with self.subTest(phase=phase, action=action):
+                    self.machine.update_state(phase=phase)
+                    before = self.machine.get_state()
+                    response = self.local.post(f"/api/machine/{action}")
+                    self.assertEqual(response.status_code, 409)
+                    self.assertEqual(self.machine.get_state(), before)
+                    self.assertFalse(self.machine.recycling_paused.is_set())
+
+    def test_touchscreen_water_choice_preserves_an_existing_batch(self):
+        self.machine.update_state(phase="idle", itemCount=2, pointsEarned=1)
+        before = self.machine.get_state()
+        response = self.local.post("/api/machine/pause-recycling")
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(self.machine.get_state(), before)
+        self.assertFalse(self.machine.recycling_paused.is_set())
 
     def test_public_server_exposes_only_rewards_and_payments(self):
         public_routes = {rule.rule for rule in self.machine.public_redeem_app.url_map.iter_rules()
@@ -520,6 +556,8 @@ class LifecycleTests(unittest.TestCase):
              patch.object(machine, "initialize_buttons") as buttons, \
              patch.object(machine, "start_redemption_tunnel") as tunnel, \
              patch("machine.upload_queue.RecyclingUploadQueue"), \
+             patch("machine.journal.MachineJournal"), \
+             patch.object(machine, "restore_pending_reward"), \
              patch("machine.runtime.create_apps") as apps, \
              patch("machine.runtime.threading.Thread") as thread:
             def check_ready():
@@ -530,8 +568,8 @@ class LifecycleTests(unittest.TestCase):
             thread.return_value.start.side_effect = check_ready
             machine.start()
             machine.start()
-            self.assertEqual(thread.call_count, 3)
-            self.assertEqual(thread.return_value.start.call_count, 3)
+            self.assertEqual(thread.call_count, 4)
+            self.assertEqual(thread.return_value.start.call_count, 4)
             tunnel.assert_called_once_with()
             machine.close()
 

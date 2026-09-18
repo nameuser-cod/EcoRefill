@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:kiosk": "vite build --mode kiosk",
     "lint": "eslint .",
     "test:dashboard": "node --test tests/owner-dashboard.test.mjs",
     "test:rules": "firebase emulators:exec --project demo-ecorefill-rules --only firestore \"node --test tests/firestore.rules.test.mjs\"",

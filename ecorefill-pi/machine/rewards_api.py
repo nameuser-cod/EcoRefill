@@ -1,6 +1,6 @@
 """Authenticated recycling reward redemption and point crediting."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from .config import MACHINE_ID
 from .diagnostics import log
 from .points import read_points
@@ -161,6 +161,8 @@ class RewardsAPI:
             # Validate expiry
             # -------------------------------------------------
             expires_at = reward_data.get("expiresAt")
+            if reward_data.get("claimWindowSeconds") is not None:
+                expires_at = reward_data["createdAt"] + timedelta(seconds=reward_data["claimWindowSeconds"])
 
             if (
                 expires_at

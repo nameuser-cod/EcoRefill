@@ -27,13 +27,14 @@ from .rewards_api import RewardsAPI
 from .routes import create_apps
 from .controller import ControllerCommands
 from .state import MachineState
+from .sync import JournalSync
 from .tunnel import RedemptionTunnel
 from .water_api import WaterAPI
 from .water_worker import WaterRequestWorker
 
 
 class MachineRuntime(
-    MachineState, FirebaseSupport, ControllerCommands, CameraSupport,
+    MachineState, JournalSync, FirebaseSupport, ControllerCommands, CameraSupport,
     MaterialDetection, RecyclingWorker, WaterRequestWorker,
     MachineAPI, WaterAPI, RewardsAPI, RedemptionTunnel,
 ):
@@ -62,6 +63,9 @@ class MachineRuntime(
         self.water_request_thread = None
         self.recycling_upload_thread = None
         self.recycling_upload_queue = None
+        self.journal = None
+        self.sync_thread = None
+        self.reward_sync_lock = threading.Lock()
         self._started = False
         self._closed = False
         self.machine_state = {
@@ -210,6 +214,14 @@ class MachineRuntime(
                 "ECOREFILL_UPLOAD_QUEUE_PATH",
                 str(Path(__file__).resolve().parent.parent / "data" / "recycling_uploads.sqlite3"),
             ))
+            from .journal import MachineJournal
+            self.journal = MachineJournal(self.recycling_upload_queue.path)
+            self.journal.recover_refills()
+            self.restore_pending_reward()
+            self.sync_thread = threading.Thread(
+                target=self.journal_sync_worker, name="reward-refill-sync", daemon=True,
+            )
+            self.sync_thread.start()
             self.recycling_upload_thread = threading.Thread(
                 target=self.recycling_upload_worker, name="recycling-uploads", daemon=True,
             )

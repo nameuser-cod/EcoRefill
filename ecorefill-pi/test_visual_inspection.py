@@ -115,6 +115,7 @@ class InspectionTests(unittest.TestCase):
             metadata = json.loads(next(Path(directory).glob("*.json")).read_text())
             self.assertIsNone(metadata["human_label"])
 
+    @patch("machine.detection.WEIGHT_SENSOR_ENABLED", True)
     def test_machine_verification_routes_dirty_container_to_reject(self):
         # Exercise the actual acceptance and sorting functions without starting
         # GPIO, Firebase, camera, serial, or the machine's background threads.

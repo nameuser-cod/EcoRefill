@@ -92,10 +92,10 @@ CAN_MAX_WEIGHT_G = 300.0
 
 # Scan photos are stored directly in Firestore as compressed Base64 data URLs.
 # Keep them small because a Firestore document has a size limit.
-RECYCLING_IMAGE_WIDTH = int(os.getenv("RECYCLING_IMAGE_WIDTH", "640"))
-RECYCLING_IMAGE_HEIGHT = int(os.getenv("RECYCLING_IMAGE_HEIGHT", "480"))
+RECYCLING_IMAGE_WIDTH = int(os.getenv("RECYCLING_IMAGE_WIDTH", "320"))
+RECYCLING_IMAGE_HEIGHT = int(os.getenv("RECYCLING_IMAGE_HEIGHT", "240"))
 RECYCLING_IMAGE_JPEG_QUALITY = int(
-    os.getenv("RECYCLING_IMAGE_JPEG_QUALITY", "80")
+    os.getenv("RECYCLING_IMAGE_JPEG_QUALITY", "50")
 )
 
 # IMPORTANT: only these exact material-specific YOLO classes are accepted.

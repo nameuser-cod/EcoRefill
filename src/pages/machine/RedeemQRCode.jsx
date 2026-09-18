@@ -3,7 +3,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import {
   CheckCircle2,
@@ -12,16 +12,14 @@ import {
 } from "lucide-react";
 import "../../styles/machine.css";
 
-const API_BASE_URL =
-  import.meta.env.VITE_MACHINE_API_URL ||
-  "http://127.0.0.1:5000";
+import { pollMachine, requestMachine } from "./utils/machineApi";
 
 function RedeemQRCode() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const machineResult =
-    location.state;
+  const [machineResult, setMachineResult] = useState(location.state);
+  const [now, setNow] = useState(() => Date.now() / 1000);
 
   // Note: the reward doc in `redeem_qr_codes` is written server-side
   // (Admin SDK) when the customer finishes their recycling session —
@@ -38,56 +36,30 @@ function RedeemQRCode() {
       return undefined;
     }
 
-    let active = true;
-
-    const checkMachineState = async () => {
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/machine/state`
-        );
-
-        if (!response.ok) return;
-
-        const data = await response.json();
-
-        if (!active) return;
-
-        // machine_flow.py resets the machine immediately after this
-        // exact reward is successfully claimed. Once that happens,
-        // return the kiosk to Machine Home automatically.
-        if (
-          data.phase !== "reward_ready" ||
-          data.sessionId !== machineResult.sessionId
-        ) {
-          navigate("/machine", {
-            replace: true,
-          });
-        }
-      } catch (error) {
-        console.error(
-          "Unable to check reward status:",
-          error
-        );
+    return pollMachine(async (signal) => {
+      const data = await requestMachine("/api/machine/state", { signal, timeout: 5000 });
+      if (signal.aborted) return;
+      // Return home only after the machine confirms that this reward is finished.
+      if (data.phase !== "reward_ready" || data.sessionId !== machineResult.sessionId) {
+        navigate("/machine", { replace: true });
+        return;
       }
-    };
-
-    checkMachineState();
-
-    const interval = window.setInterval(
-      checkMachineState,
-      500
-    );
-
-    return () => {
-      active = false;
-      window.clearInterval(interval);
-    };
+      setMachineResult(data);
+    });
   }, [
     machineResult?.accepted,
     machineResult?.qrCode,
     machineResult?.sessionId,
     navigate,
   ]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now() / 1000), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const expiresAt = Number(machineResult?.rewardExpiresAt || 0);
+  const rewardExpired = expiresAt > 0 && now >= expiresAt;
 
   if (
     !machineResult?.accepted ||
@@ -174,13 +146,13 @@ function RedeemQRCode() {
                 </span>
 
                 <h3>
-                  Scan this QR code
+                  {machineResult.firebaseSaved ? "Scan this QR code" : "Your points are saved"}
                 </h3>
               </div>
             </div>
 
             <div className="reward-qr-frame">
-              <QRCodeCanvas
+              {machineResult.firebaseSaved && !rewardExpired ? <QRCodeCanvas
                 value={String(
                   machineResult.qrCode
                 ).trim()}
@@ -189,13 +161,19 @@ function RedeemQRCode() {
                 fgColor="#10281d"
                 level="H"
                 includeMargin
-              />
+              /> : <p role="status">{rewardExpired
+                ? "This QR code has expired. Waiting for the machine to return to recycling."
+                : "Waiting for connection. Your QR code will appear here when ready."}</p>}
             </div>
 
             <div className="reward-expiry">
               <Timer size={20} />
 
-              QR expires in 1 minute
+              {machineResult.firebaseSaved
+                ? expiresAt > 0
+                  ? `QR expires in ${Math.max(0, Math.ceil(expiresAt - now))} seconds`
+                  : "Scan to collect your points."
+                : "Your claim timer starts when the reward is published."}
             </div>
 
             {machineResult.error && <p role="alert">{machineResult.error}</p>}

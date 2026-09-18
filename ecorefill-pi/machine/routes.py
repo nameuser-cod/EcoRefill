@@ -2,11 +2,24 @@
 
 
 def create_apps(runtime):
-    from flask import Flask
+    import os
+    from pathlib import Path
+    from flask import Flask, send_from_directory
     from flask_cors import CORS
     from point_payments import register_payment_routes
 
     runtime.app = Flask("ecorefill.machine")
+    kiosk_dir = Path(os.getenv("ECOREFILL_KIOSK_DIR", str(
+        Path(__file__).resolve().parents[1] / "kiosk-dist"
+    )))
+
+    def kiosk_page(path=""):
+        return send_from_directory(kiosk_dir, "kiosk.html")
+
+    runtime.app.add_url_rule('/machine', 'kiosk_home', kiosk_page)
+    runtime.app.add_url_rule('/machine/<path:path>', 'kiosk_page', kiosk_page)
+    runtime.app.add_url_rule('/assets/<path:path>', 'kiosk_asset',
+                             lambda path: send_from_directory(kiosk_dir / 'assets', path))
     CORS(runtime.app)
     # Only redemption and payment routes are exposed by the public server.
     runtime.public_redeem_app = Flask("ecorefill.machine.public_redeem")

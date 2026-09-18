@@ -42,18 +42,25 @@ class RecyclingWorker:
         while not self.shutdown_event.is_set():
             try:
                 payload = self.recycling_upload_queue.peek()
-                if payload is None:
-                    self.shutdown_event.wait(0.5)
-                    continue
                 if self.db is None:
                     self.db = self.initialize_firebase()
+                if payload is None:
+                    photo = self.recycling_upload_queue.peek_photo()
+                    if photo is not None:
+                        item_id, image = photo
+                        self.db.collection("recycling_records").document(item_id).update(
+                            {"imageDataUrl": image}, timeout=5, retry=None,
+                        )
+                        self.recycling_upload_queue.remove_photo(item_id)
+                    self.shutdown_event.wait(0.5)
+                    continue
                 started = time.monotonic()
-                saved = self.save_recycling_to_firestore(**payload)
+                saved = self.save_recycling_to_firestore(**{**payload, "image_data_url": None})
                 log(f"Scan timing: Firebase upload={time.monotonic() - started:.3f}s",
                     f"item={payload['item_id']} saved={saved}")
                 if saved:
                     item_id = payload["item_id"]
-                    self.recycling_upload_queue.remove(item_id)
+                    self.recycling_upload_queue.acknowledge(payload)
                     with self.state_lock:
                         current = self.get_state()
                         if (current.get("recyclingRecordId") == item_id
@@ -187,8 +194,6 @@ Created At: {time.time()}
         Create exactly ONE redeemable reward for every accepted item collected
         in the current customer session.
         """
-        from firebase_admin import firestore
-
         current = self.get_state()
 
         item_count = int(current.get("itemCount") or 0)
@@ -204,89 +209,104 @@ Created At: {time.time()}
             )
             return False
 
-        qr_code = f"ecorefill://claim/{batch_session_id}"
-        redemption_api_url = self.get_redemption_tunnel_url()
-        firebase_saved = False
-
-        if self.db is not None:
-            reward_ref = (
-                self.db.collection("redeem_qr_codes")
-                .document(batch_session_id)
-            )
-            machine_ref = (
-                self.db.collection("machines")
-                .document(MACHINE_ID)
-            )
-
-            reward_data = {
-                "code": batch_session_id,
-                "sessionId": batch_session_id,
-                "machineId": MACHINE_ID,
-                "materialType": "multiple_items",
-                "category": "recycling_batch",
-                "pointsEarned": total_points,
-                "itemCount": item_count,
-                "bottleCount": bottle_count,
-                "canCount": can_count,
-                "status": "unclaimed",
-                "claimedBy": None,
-                "qrCode": qr_code,
-                "redemptionApiUrl": redemption_api_url,
-                "createdAt": firestore.SERVER_TIMESTAMP,
-                "updatedAt": firestore.SERVER_TIMESTAMP,
-                "expiresAt": datetime.now(timezone.utc) + timedelta(seconds=REWARD_READY_TIMEOUT_SECONDS),
-            }
-
-            try:
-                batch = self.db.batch()
-                batch.set(reward_ref, reward_data, merge=False)
-                batch.set(
-                    machine_ref,
-                    {
-                        "machineId": MACHINE_ID,
-                        "lastCompletedBatchSessionId": batch_session_id,
-                        "lastBatchItemCount": item_count,
-                        "lastBatchPoints": total_points,
-                        "lastSeenAt": firestore.SERVER_TIMESTAMP,
-                    },
-                    merge=True,
-                )
-                batch.commit()
-                firebase_saved = True
-                log(
-                    "Final recycling reward created:",
-                    batch_session_id,
-                    f"items={item_count}",
-                    f"points={total_points}",
-                )
-            except Exception as error:
-                log("Could not create final recycling reward:", error)
-
+        # Each finalization has a new ID. A withdrawn QR can never be revived.
+        session_id = str(uuid.uuid4())
+        reward = {
+            "phase": "reward_ready", "accepted": True,
+            "materialType": "multiple_items", "category": "recycling_batch",
+            "pointsEarned": total_points, "itemCount": item_count,
+            "bottleCount": bottle_count, "canCount": can_count,
+            "batchSessionId": batch_session_id, "sessionId": session_id,
+            "qrCode": f"ecorefill://claim/{session_id}",
+            "firebaseSaved": False, "rewardExpiresAt": None,
+            "message": "Points saved on this machine. Waiting for connection...",
+            "error": None,
+        }
+        # Do not announce a saved reward unless the durable write succeeded.
+        self.journal.save("reward", session_id, reward)
         self.finish_session_event.clear()
+        self.update_state(**reward)
+        return True
 
-        self.update_state(
-            phase="reward_ready",
-            message="Scan the QR code to collect all your EcoPoints.",
-            accepted=True,
-            materialType="multiple_items",
-            category="recycling_batch",
-            pointsEarned=total_points,
-            itemCount=item_count,
-            bottleCount=bottle_count,
-            canCount=can_count,
-            sessionId=batch_session_id,
-            qrCode=qr_code,
-            firebaseSaved=firebase_saved,
-            error=(
-                None
-                if firebase_saved
-                else "Reward was not saved to Firebase."
-            ),
-        )
+    def restore_pending_reward(self):
+        rewards = self.journal.entries("reward")
+        if rewards:
+            self.update_state(**rewards[0][1])
 
-        return firebase_saved
+    def sync_pending_reward(self):
+        from firebase_admin import firestore
+
+        # Serialize publication with GREEN withdrawing a QR.
+        with self.reward_sync_lock:
+            current = self.get_state()
+            if current.get("phase") != "reward_ready" or current.get("firebaseSaved"):
+                return
+            session_id = current["sessionId"]
+            reward_ref = self.db.collection("redeem_qr_codes").document(session_id)
+
+            @firestore.transactional
+            def publish_once(transaction):
+                snapshot = reward_ref.get(transaction=transaction, timeout=5, retry=None)
+                if snapshot.exists:
+                    existing = snapshot.to_dict() or {}
+                    created = existing.get("createdAt")
+                    window = existing.get("claimWindowSeconds", REWARD_READY_TIMEOUT_SECONDS)
+                    if (existing.get("status") == "unclaimed" and created
+                            and created + timedelta(seconds=window) <= datetime.now(timezone.utc)):
+                        # This QR has never been revealed locally. A lost response
+                        # must not consume the entire claim window while offline.
+                        # Compete with claims on the same document before renewal.
+                        transaction.update(reward_ref, {
+                            "createdAt": firestore.SERVER_TIMESTAMP, "expiresAt": None,
+                            "updatedAt": firestore.SERVER_TIMESTAMP,
+                        })
+                    return
+                transaction.set(reward_ref, {
+                    "code": session_id, "sessionId": session_id,
+                    "batchSessionId": current["batchSessionId"], "machineId": MACHINE_ID,
+                    "materialType": "multiple_items", "category": "recycling_batch",
+                    "pointsEarned": current["pointsEarned"], "itemCount": current["itemCount"],
+                    "bottleCount": current["bottleCount"], "canCount": current["canCount"],
+                    "status": "unclaimed", "claimedBy": None, "qrCode": current["qrCode"],
+                    "redemptionApiUrl": self.get_redemption_tunnel_url(),
+                    "createdAt": firestore.SERVER_TIMESTAMP,
+                    "updatedAt": firestore.SERVER_TIMESTAMP,
+                    # The cloud commit time starts the window, not the local scan.
+                    "claimWindowSeconds": REWARD_READY_TIMEOUT_SECONDS,
+                })
+                transaction.set(self.db.collection("machines").document(MACHINE_ID), {
+                    "machineId": MACHINE_ID,
+                    "lastCompletedBatchSessionId": current["batchSessionId"],
+                    "lastBatchItemCount": current["itemCount"],
+                    "lastBatchPoints": current["pointsEarned"],
+                    "lastSeenAt": firestore.SERVER_TIMESTAMP,
+                }, merge=True)
+
+            publish_once(self.db.transaction())
+            saved = reward_ref.get(timeout=5, retry=None).to_dict() or {}
+            if saved.get("status") != "unclaimed":
+                self.journal.delete("reward", session_id)
+                with self.state_lock:
+                    if self.get_state().get("sessionId") == session_id:
+                        self.reset_state()
+                return
+            expires_at = saved["createdAt"] + timedelta(seconds=saved["claimWindowSeconds"])
+            # Keep the explicit deadline for older deployed claim services too.
+            if saved.get("expiresAt") is None:
+                reward_ref.update({"expiresAt": expires_at}, timeout=5, retry=None)
+            with self.state_lock:
+                if self.get_state().get("sessionId") != session_id:
+                    return
+                current.update(firebaseSaved=True, rewardExpiresAt=expires_at.timestamp(),
+                               message="Scan the QR code to collect your EcoPoints.", error=None)
+                self.journal.save("reward", session_id, current)
+                self.update_state(**current)
 
     def resume_recycling_session(self):
+        with self.reward_sync_lock:
+            return self._resume_recycling_session()
+
+    def _resume_recycling_session(self):
         """Withdraw the unclaimed QR before allowing more items in this batch."""
         from firebase_admin import firestore
 
@@ -299,14 +319,13 @@ Created At: {time.time()}
         claimed = False
         try:
             if self.db is None:
-                if current.get("firebaseSaved"):
-                    raise RuntimeError("Firebase is unavailable; cannot withdraw the reward.")
+                raise RuntimeError("Reconnect before withdrawing this reward.")
             else:
                 reward_ref = self.db.collection("redeem_qr_codes").document(session_id)
 
                 @firestore.transactional
                 def withdraw_reward(transaction):
-                    snapshot = reward_ref.get(transaction=transaction)
+                    snapshot = reward_ref.get(transaction=transaction, timeout=5, retry=None)
                     reward = snapshot.to_dict() or {} if snapshot.exists else {}
                     if reward.get("status") == "claimed":
                         return True
@@ -336,8 +355,9 @@ Created At: {time.time()}
             if claimed:
                 self.reset_state()
                 return False
+            self.journal.delete("reward", session_id)
             self.rearm_for_next_item()
-            self.update_state(firebaseSaved=False)
+            self.update_state(firebaseSaved=False, rewardExpiresAt=None)
         return True
 
     def machine_worker(self):
@@ -378,32 +398,10 @@ Created At: {time.time()}
                     self.resume_recycling_session()
                     continue
 
-                reward_age = time.time() - float(current_state.get("updatedAt") or 0)
-
-                if reward_age >= REWARD_READY_TIMEOUT_SECONDS:
-                    abandoned_session_id = current_state.get("sessionId")
-                    log(
-                        "Reward QR abandoned for 60 seconds. Resetting machine:",
-                        abandoned_session_id,
-                    )
-
-                    if self.db is not None and abandoned_session_id:
-                        try:
-                            reward_ref = (
-                                self.db.collection("redeem_qr_codes")
-                                .document(abandoned_session_id)
-                            )
-                            reward_snapshot = reward_ref.get()
-                            if reward_snapshot.exists:
-                                reward_data = reward_snapshot.to_dict() or {}
-                                if reward_data.get("status") == "unclaimed":
-                                    reward_ref.update({
-                                        "status": "expired",
-                                        "updatedAt": firestore.SERVER_TIMESTAMP,
-                                    })
-                        except Exception as error:
-                            log("Could not expire abandoned reward in Firestore:", error)
-
+                expires_at = current_state.get("rewardExpiresAt")
+                if current_state.get("firebaseSaved") and expires_at and time.time() >= expires_at:
+                    # Redemption enforces the same cloud-derived deadline. No network
+                    # call belongs in the camera loop just to retire the display.
                     self.recycling_paused.clear()
                     self.finish_session_event.clear()
                     self.reset_state()
@@ -414,7 +412,13 @@ Created At: {time.time()}
 
             # If the finish button was pressed, create the aggregate reward.
             if self.finish_session_event.is_set():
-                self.finalize_recycling_session()
+                try:
+                    self.finalize_recycling_session()
+                except Exception as error:
+                    self.finish_session_event.clear()
+                    log("Could not save reward locally:", error)
+                    self.update_state(phase="error", error=str(error),
+                                      message="Could not save your reward. Ask for assistance; your session total is still shown.")
                 time.sleep(0.1)
                 continue
 

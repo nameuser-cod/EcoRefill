@@ -285,8 +285,10 @@ record was queued. Queued records consume disk space until they upload.
 Owner scan history may appear slightly after the machine's result. For item
 results, `firebaseSaved` becomes true after upload acknowledgment; background
 acknowledgments never change a final reward QR's state or expiry clock. Pressing
-GREEN still creates the final reward in Firebase before it can be redeemed;
-background item uploads do not create or credit rewards.
+GREEN now saves the final reward to the local journal, and a separate worker
+publishes it before the kiosk reveals its QR. The claim clock starts at cloud
+publication. See [weak-connection operation](LOW_CONNECTIVITY.md) for deployment,
+refill recovery, and restart behavior.
 
 ## Run checks without hardware
 

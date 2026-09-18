@@ -53,7 +53,7 @@ class UploadTests(unittest.TestCase):
         outcomes = [False, RuntimeError("offline"), True]
 
         def upload(**record):
-            self.assertEqual(record, payload())
+            self.assertEqual(record, {**payload(), "image_data_url": None})
             self.assertTrue(RecyclingUploadQueue(self.path).contains("item-1"))
             outcome = outcomes.pop(0)
             if isinstance(outcome, Exception):

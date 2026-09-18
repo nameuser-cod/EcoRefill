@@ -29,11 +29,21 @@ class MachineAPI:
         })
 
     def api_machine_reset(self):
-        """Clear the current result and immediately re-arm auto detection."""
+        """Recover the camera without discarding earned customer points."""
         from flask import jsonify
 
-        self.recycling_paused.clear()
-        self.reset_state()
+        with self.state_lock:
+            current = self.get_state()
+            if current.get("phase") == "reward_ready":
+                return jsonify({"ok": False, "message": "Finish or withdraw the saved reward first."}), 409
+            if current.get("phase") not in {"idle", "rejected", "error"}:
+                return jsonify({"ok": False, "message": "Please wait for the current item to finish."}), 409
+
+            self.recycling_paused.clear()
+            if current.get("phase") in {"rejected", "error"} or current.get("itemCount", 0) > 0:
+                self.rearm_for_next_item()
+            else:
+                self.reset_state()
 
         return jsonify({
             "ok": True,
@@ -60,9 +70,14 @@ class MachineAPI:
         """Optional helper for screens such as water refill/maintenance."""
         from flask import jsonify
 
-        self.recycling_paused.set()
+        with self.state_lock:
+            current = self.get_state()
+            if current.get("itemCount", 0) > 0 or current.get("phase") == "reward_ready":
+                return jsonify({"ok": False, "message": "Finish your recycling reward before starting a refill."}), 409
+            if current.get("phase") not in {"idle", "rejected", "error", "paused", "water_refill_requested"}:
+                return jsonify({"ok": False, "message": "Please wait for the current item to finish."}), 409
 
-        if self.get_state()["phase"] not in {"accepted", "sorting"}:
+            self.recycling_paused.set()
             self.reset_state()
 
         return jsonify({
@@ -74,6 +89,10 @@ class MachineAPI:
 
     def api_machine_resume_recycling(self):
         from flask import jsonify
+
+        if self.get_state().get("phase") == "reward_ready":
+            return jsonify({"ok": False, "message": "Finish or withdraw the saved reward first."}), 409
+
 
         self.recycling_paused.clear()
 

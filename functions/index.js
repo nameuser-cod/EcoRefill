@@ -420,10 +420,10 @@ exports.redeemRecyclingReward = onCall(
           );
         }
 
-        if (
-          reward.expiresAt?.toMillis &&
-          reward.expiresAt.toMillis() < Date.now()
-        ) {
+        const rewardDeadline = reward.claimWindowSeconds != null
+          ? reward.createdAt.toMillis() + reward.claimWindowSeconds * 1000
+          : reward.expiresAt?.toMillis?.();
+        if (rewardDeadline != null && rewardDeadline < Date.now()) {
           throw new HttpsError(
             "deadline-exceeded",
             "This recycling QR code has expired."

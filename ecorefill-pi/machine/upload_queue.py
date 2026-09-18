@@ -17,6 +17,8 @@ class RecyclingUploadQueue:
                 item_id TEXT NOT NULL UNIQUE,
                 payload TEXT NOT NULL
             )""")
+            db.execute("""CREATE TABLE IF NOT EXISTS photos (
+                item_id TEXT PRIMARY KEY, image TEXT NOT NULL)""")
 
     def connect(self):
         db = sqlite3.connect(self.path, timeout=5)
@@ -41,3 +43,19 @@ class RecyclingUploadQueue:
     def contains(self, item_id):
         with closing(self.connect()) as db:
             return db.execute("SELECT 1 FROM uploads WHERE item_id = ?", (item_id,)).fetchone() is not None
+
+    def acknowledge(self, payload):
+        """Move its photo to low priority atomically with removing the record."""
+        with closing(self.connect()) as db, db:
+            if payload.get("image_data_url"):
+                db.execute("INSERT OR IGNORE INTO photos VALUES (?, ?)",
+                           (payload["item_id"], payload["image_data_url"]))
+            db.execute("DELETE FROM uploads WHERE item_id = ?", (payload["item_id"],))
+
+    def peek_photo(self):
+        with closing(self.connect()) as db:
+            return db.execute("SELECT item_id, image FROM photos ORDER BY rowid LIMIT 1").fetchone()
+
+    def remove_photo(self, item_id):
+        with closing(self.connect()) as db, db:
+            db.execute("DELETE FROM photos WHERE item_id = ?", (item_id,))

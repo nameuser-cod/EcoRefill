@@ -7,7 +7,10 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from machine.owner_points import complete_refill, MAX_POINTS
-from machine.water_worker import WaterRequestWorker
+from machine.runtime import MachineRuntime
+from machine.journal import MachineJournal
+from tempfile import TemporaryDirectory
+from pathlib import Path
 from test_point_payments import Database
 
 
@@ -103,7 +106,10 @@ class WorkerPointsTests(unittest.TestCase):
             'machineId': 'machine_001', 'sessionId': 'refill', 'userId': 'buyer',
             'waterAmountMl': 500, 'status': 'pending',
         }
-        self.machine = WaterRequestWorker()
+        directory = TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.machine = MachineRuntime()
+        self.machine.journal = MachineJournal(Path(directory.name) / "journal.sqlite3")
         self.machine.db = self.db
         self.machine.recycling_paused = Event()
         self.machine.finish_session_event = Event()
@@ -118,6 +124,8 @@ class WorkerPointsTests(unittest.TestCase):
         request = self.db.collection('water_refill_requests').document('request').get()
         with patch.dict('sys.modules', {'firebase_admin': SimpleNamespace(firestore=self.firestore)}):
             self.machine.process_water_refill_request(request)
+            for key, record in self.machine.journal.entries("refill"):
+                self.machine.sync_refill_record(key, record)
 
     def test_success_transfers_spent_refill_points_to_owner_once(self):
         self.process(True)

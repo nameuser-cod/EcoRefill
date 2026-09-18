@@ -18,9 +18,9 @@ import {
 } from "lucide-react";
 import "../../styles/machine.css";
 
-const API_BASE_URL =
-  import.meta.env.VITE_MACHINE_API_URL ||
-  "http://127.0.0.1:5000";
+import { pollMachine, requestMachine } from "./utils/machineApi";
+
+const TERMINAL_STATUSES = ["completed", "cancelled", "failed", "expired"];
 
 function MachineWaterRefill() {
   const navigate = useNavigate();
@@ -34,6 +34,9 @@ function MachineWaterRefill() {
   const [error, setError] =
     useState("");
 
+  const [pollError, setPollError] = useState("");
+  const mountedRef = useRef(false);
+  const creatingRef = useRef(false);
   const [backError, setBackError] = useState("");
   const [leaving, setLeaving] = useState(false);
   const leavingRef = useRef(false);
@@ -42,225 +45,58 @@ function MachineWaterRefill() {
   const sessionStatus = session?.status;
   const refillBusy = ["processing", "dispensing"].includes(sessionStatus);
 
-  const sessionCreatedRef =
-    useRef(false);
-
-  const redirectTimerRef =
-    useRef(null);
-
-  const createRefillSession =
-    async () => {
-      try {
-        setCreating(true);
-        setError("");
-        setSession(null);
-
-        const response =
-          await fetch(
-            `${API_BASE_URL}/api/water-refill/session`,
-            {
-              method: "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
-            }
-          );
-
-        const data =
-          await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.message ||
-              "Could not create refill session."
-          );
-        }
-
-        if (!data.session) {
-          throw new Error(
-            "The server did not return a refill session."
-          );
-        }
-
-        if (
-          !data.session.sessionId
-        ) {
-          throw new Error(
-            "The refill session has no session ID."
-          );
-        }
-
-        if (
-          !data.session.qrPayload
-        ) {
-          throw new Error(
-            "The server did not return a QR payload."
-          );
-        }
-
-        setSession(data.session);
-      } catch (err) {
-        console.error(
-          "Create refill session error:",
-          err
-        );
-
-        setError(
-          err.message ||
-            "Unable to connect to the refill server."
-        );
-      } finally {
-        setCreating(false);
+  const createRefillSession = useCallback(async () => {
+    if (creatingRef.current || leavingRef.current) return;
+    creatingRef.current = true;
+    setCreating(true);
+    setError("");
+    setBackError("");
+    setPollError("");
+    setSession(null);
+    try {
+      const data = await requestMachine("/api/water-refill/session", { method: "POST" });
+      if (!data.session?.sessionId || !data.session?.qrPayload) {
+        throw new Error("The machine could not prepare a refill code. Please try again.");
       }
-    };
-
-  useEffect(() => {
-    if (
-      sessionCreatedRef.current
-    ) {
-      return;
+      if (mountedRef.current) setSession(data.session);
+    } catch (err) {
+      if (mountedRef.current) setError(err.message || "Unable to connect to the refill server.");
+    } finally {
+      creatingRef.current = false;
+      if (mountedRef.current) setCreating(false);
     }
-
-    sessionCreatedRef.current =
-      true;
-
-    createRefillSession();
-
-    return () => {
-      if (
-        redirectTimerRef.current
-      ) {
-        window.clearTimeout(
-          redirectTimerRef.current
-        );
-      }
-    };
   }, []);
 
   useEffect(() => {
-    if (!session?.sessionId) {
-      return;
-    }
-
-    if (
-      session.status ===
-        "completed" ||
-      session.status ===
-        "cancelled" ||
-      session.status ===
-        "failed"
-    ) {
-      return;
-    }
-
-    let active = true;
-    let intervalId = null;
-
-    const checkSession =
-      async () => {
-        try {
-          const response =
-            await fetch(
-              `${API_BASE_URL}/api/water-refill/session/${session.sessionId}`
-            );
-
-          const data =
-            await response.json();
-
-          if (!response.ok) {
-            throw new Error(
-              data.message ||
-                "Could not read refill session."
-            );
-          }
-
-          if (
-            !active ||
-            !data.session
-          ) {
-            return;
-          }
-
-          setSession(data.session);
-
-          if (
-            data.session.status ===
-            "completed"
-          ) {
-            if (intervalId) {
-              window.clearInterval(
-                intervalId
-              );
-            }
-
-            redirectTimerRef.current =
-              window.setTimeout(
-                async () => {
-                  // Resume automatic recycling detection, which
-                  // was paused on entering the water refill flow.
-                  try {
-                    await fetch(
-                      `${API_BASE_URL}/api/machine/resume-recycling`,
-                      {
-                        method: "POST",
-                      }
-                    );
-                  } catch (resumeErr) {
-                    console.error(
-                      "Resume recycling error:",
-                      resumeErr
-                    );
-                  }
-
-                  navigate(
-                    "/machine",
-                    {
-                      replace: true,
-                    }
-                  );
-                },
-                4000
-              );
-          }
-        } catch (err) {
-          if (!active) {
-            return;
-          }
-
-          console.error(
-            "Session polling error:",
-            err
-          );
-        }
-      };
-
-    checkSession();
-
-    intervalId =
-      window.setInterval(
-        checkSession,
-        1000
-      );
-
+    mountedRef.current = true;
+    // Defer creation until mount settles; cleanup cancels Strict Mode's first pass.
+    const timer = window.setTimeout(() => { void createRefillSession(); }, 0);
     return () => {
-      active = false;
-
-      if (intervalId) {
-        window.clearInterval(
-          intervalId
-        );
-      }
+      mountedRef.current = false;
+      window.clearTimeout(timer);
     };
-  }, [
-    session?.sessionId,
-    session?.status,
-    navigate,
-  ]);
+  }, [createRefillSession]);
+
+  useEffect(() => {
+    if (!sessionId || TERMINAL_STATUSES.includes(sessionStatus)) return;
+    return pollMachine(async (signal) => {
+      const data = await requestMachine(`/api/water-refill/session/${sessionId}`, { signal });
+      if (!data.session || data.session.sessionId !== sessionId) {
+        throw new Error("Unable to read your refill status.");
+      }
+      if (signal.aborted) return;
+      setSession(data.session);
+      setPollError("");
+    }, {
+      delay: 1000,
+      onError: () => setPollError(
+        "Reconnecting to the machine. If filling has started, keep your container in place."
+      ),
+    });
+  }, [sessionId, sessionStatus]);
 
   const cancelSession = useCallback(async () => {
-    if (creating || leavingRef.current) return;
+    if (creating || creatingRef.current || leavingRef.current) return;
     if (["processing", "dispensing"].includes(sessionStatus)) {
       setBackError("Please wait for your refill to finish before returning to recycling.");
       return;
@@ -270,86 +106,41 @@ function MachineWaterRefill() {
     setLeaving(true);
     setBackError("");
     try {
-      if (
-        sessionId &&
-        sessionStatus !==
-          "completed" &&
-        sessionStatus !==
-          "failed"
-      ) {
-        const response = await fetch(
-          `${API_BASE_URL}/api/water-refill/session/${sessionId}/cancel`,
-          {
-            method: "POST",
-          }
-        );
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.message || "Unable to cancel this refill. Please try again.");
-        }
+      if (sessionId && !TERMINAL_STATUSES.includes(sessionStatus)) {
+        await requestMachine(`/api/water-refill/session/${sessionId}/cancel`, { method: "POST" });
       }
-      // Resume only after cancellation succeeds; a refill may have started
-      // since the screen last polled its status.
-      const response = await fetch(
-        `${API_BASE_URL}/api/machine/resume-recycling`,
-        {
-          method: "POST",
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Unable to resume recycling. Please press Back again.");
-      }
-      window.clearTimeout(redirectTimerRef.current);
-      navigate("/machine", {
-        replace: true,
-      });
+      // Cancellation must succeed before we resume recycling.
+      await requestMachine("/api/machine/resume-recycling", { method: "POST" });
+      if (mountedRef.current) navigate("/machine", { replace: true });
     } catch (err) {
       console.error("Return to recycling error:", err);
-      setBackError(err.message || "Unable to return to recycling. Please try again.");
+      if (mountedRef.current) setBackError(err.message || "Unable to return to recycling. Please try again.");
     } finally {
       leavingRef.current = false;
-      setLeaving(false);
+      if (mountedRef.current) setLeaving(false);
     }
   }, [creating, sessionId, sessionStatus, navigate]);
 
   useEffect(() => {
-    // Keep a press made while the QR is being created pending until its
-    // session exists, so that QR can be cancelled before leaving.
+    if (sessionStatus !== "completed") return;
+    const timer = window.setTimeout(() => { void cancelSession(); }, 4000);
+    return () => window.clearTimeout(timer);
+  }, [sessionStatus, cancelSession]);
+
+  useEffect(() => {
+    // A physical Back press stays pending until the QR exists and can be cancelled.
     if (creating) return;
-    let active = true;
-    let polling = false;
-    const checkBlueButton = async () => {
-      if (polling) return;
-      polling = true;
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/machine/state`);
-        if (!response.ok) return;
-        const state = await response.json();
-        const requestedAt = state.waterReturnRequestedAt;
-        if (active && requestedAt && requestedAt !== lastReturnRequestRef.current) {
-          lastReturnRequestRef.current = requestedAt;
-          await cancelSession();
-        }
-      } catch (err) {
-        console.error("Blue button polling error:", err);
-      } finally {
-        polling = false;
+    return pollMachine(async (signal) => {
+      const state = await requestMachine("/api/machine/state", { signal, timeout: 5000 });
+      const requestedAt = state.waterReturnRequestedAt;
+      if (!signal.aborted && requestedAt && requestedAt !== lastReturnRequestRef.current) {
+        lastReturnRequestRef.current = requestedAt;
+        await cancelSession();
       }
-    };
-    checkBlueButton();
-    const interval = window.setInterval(checkBlueButton, 500);
-    return () => {
-      active = false;
-      window.clearInterval(interval);
-    };
+    });
   }, [creating, cancelSession]);
 
-  const retrySession = () => {
-    sessionCreatedRef.current =
-      true;
-
-    createRefillSession();
-  };
+  const retrySession = () => { void createRefillSession(); };
 
   const getFriendlyRefillError = () => {
     const rawError = String(
@@ -497,6 +288,14 @@ function MachineWaterRefill() {
         };
       }
 
+      case "expired":
+        return {
+          eyebrow: "QR expired",
+          title: "Get a new refill code",
+          message: "Tap Try Again to continue, or Back to return to recycling.",
+          icon: <RefreshCw size={58} />,
+        };
+
       case "cancelled":
         return {
           eyebrow: "Cancelled",
@@ -591,13 +390,14 @@ function MachineWaterRefill() {
                   Couldn't start refill
                 </h2>
 
-                <p>Please try again or ask for help.</p>
+                <p role="alert">{error}</p>
 
                 <button
                   className="machine-kiosk-primary"
                   onClick={
                     retrySession
                   }
+                  disabled={leaving}
                 >
                   <RefreshCw
                     size={24}
@@ -634,7 +434,7 @@ function MachineWaterRefill() {
 
                     <p>
                       {
-                        statusContent.message
+                        pollError || statusContent.message
                       }
                     </p>
                   </div>
@@ -746,12 +546,16 @@ function MachineWaterRefill() {
                   </div>
                 )}
 
-                {session.status ===
-                  "failed" && (
+                {session.syncPending && ["completed", "failed"].includes(session.status) && (
+                  <p role="status">Result saved on this machine. Your account will update when connected.</p>
+                )}
+
+                {["failed", "expired"].includes(session.status) && (
                   <div className="water-center-state error">
                     <button
                       className="machine-kiosk-primary"
                       onClick={retrySession}
+                      disabled={leaving}
                     >
                       <RefreshCw
                         size={24}

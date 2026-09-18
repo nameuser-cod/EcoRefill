@@ -40,17 +40,17 @@ class Database:
                 self.key, self.id = f'{name}/{key}', key
                 self.parent = SimpleNamespace(id=name)
 
-            def get(self, transaction=None):
+            def get(self, transaction=None, **kwargs):
                 if transaction and transaction.writes:
                     raise AssertionError('Reads must precede writes')
                 snapshot = Snapshot(self.key, database.records.get(self.key))
                 snapshot.reference = self
                 return snapshot
 
-            def set(self, data):
+            def set(self, data, **kwargs):
                 database.records[self.key] = copy.deepcopy(data)
 
-            def update(self, data):
+            def update(self, data, **kwargs):
                 database.records[self.key].update(copy.deepcopy(data))
 
         class Collection:
@@ -73,8 +73,8 @@ class Database:
             def __init__(self):
                 self.writes = []
 
-            def set(self, ref, data):
-                self.writes.append((ref.key, data, False))
+            def set(self, ref, data, merge=False):
+                self.writes.append((ref.key, data, merge))
 
             def update(self, ref, data):
                 self.writes.append((ref.key, data, True))

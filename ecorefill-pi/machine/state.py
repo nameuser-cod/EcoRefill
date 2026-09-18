@@ -41,6 +41,9 @@ class MachineState:
 
     def reset_state(self):
         """Start a completely new customer recycling session."""
+        current = self.get_state()
+        if self.journal is not None and current.get("phase") == "reward_ready":
+            self.journal.delete("reward", current["sessionId"])
         self.stop_water_request_polling()
         self.finish_session_event.clear()
         self.resume_session_event.clear()
@@ -61,6 +64,7 @@ class MachineState:
             imageUrl=None,
             firebaseSaved=False,
             recyclingRecordId=None,
+            rewardExpiresAt=None,
             error=None,
             waterReturnRequestedAt=None,
         )

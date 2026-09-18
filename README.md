@@ -234,6 +234,10 @@ ecorefill-app/
 
 ## Running the project
 
+For weak connections, use the [local kiosk and recovery setup](ecorefill-pi/LOW_CONNECTIVITY.md).
+Finished rewards and refill outcomes are journaled on the Pi and synced in the
+background. New point-funded refills and reward claims still require Firebase.
+
 ### Web app
 
 Use Node.js **22.12 or later** and npm for the frontend; the optional Firebase Functions package specifies Node.js **24**.

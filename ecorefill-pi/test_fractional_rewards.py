@@ -1,6 +1,9 @@
 """Half-point batch rewards must survive finalization and authenticated claims."""
 
 from datetime import datetime, timezone
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from machine.journal import MachineJournal
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
@@ -13,10 +16,13 @@ from test_point_payments import Database
 
 class FractionalRewardTests(unittest.TestCase):
     def setUp(self):
+        directory = TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
         self.db = Database()
         self.db.transaction = lambda: None
         self.db.records['users/buyer']['points'] = 0.5
         self.machine = MachineRuntime()
+        self.machine.journal = MachineJournal(Path(directory.name) / "journal.sqlite3")
         self.addCleanup(self.machine.close)
         self.machine.db = self.db
         self.machine.get_redemption_tunnel_url = Mock(return_value='https://example.test')
@@ -51,6 +57,9 @@ class FractionalRewardTests(unittest.TestCase):
                         bottleCount=bottles, canCount=cans, pointsEarned=points,
                     )
                     self.assertTrue(self.machine.finalize_recycling_session())
+                    self.assertFalse(self.machine.get_state()["firebaseSaved"])
+                    self.machine.sync_pending_reward()
+                    session_id = self.machine.get_state()["sessionId"]
                     self.assertEqual(self.db.records[f'redeem_qr_codes/{session_id}']['pointsEarned'], points)
                     response = self.claim(session_id)
                     balance += points

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -10,24 +10,27 @@ import {
   LoaderCircle,
   Recycle,
   RotateCcw,
+  Sparkles,
   Wifi,
   WifiOff,
 } from "lucide-react";
 import "../../styles/machine.css";
 
-const API_BASE_URL =
-  import.meta.env.VITE_MACHINE_API_URL ||
-  "http://127.0.0.1:5000";
+import { pollMachine, requestMachine } from "./utils/machineApi";
 
 function MachineHome() {
   const navigate = useNavigate();
 
   const [machineState, setMachineState] = useState({
-    phase: "idle",
+    phase: "connecting",
     message: "Connecting to the machine...",
   });
 
   const [connectionError, setConnectionError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const actionRef = useRef(false);
+  const revisionRef = useRef(0);
+  const phaseRef = useRef("connecting");
   const [resetting, setResetting] = useState(false);
   const [openingWater, setOpeningWater] = useState(false);
 
@@ -40,130 +43,57 @@ function MachineHome() {
 
   const isBusy = busyPhases.includes(machineState.phase);
 
-  useEffect(() => {
-    let active = true;
+  useEffect(() => pollMachine(async (signal) => {
+    if (actionRef.current) return;
+    const revision = revisionRef.current;
+    const data = await requestMachine("/api/machine/state", { signal, timeout: 5000 });
+    if (signal.aborted || revision !== revisionRef.current) return;
+    if (phaseRef.current !== data.phase) setActionError("");
+    phaseRef.current = data.phase;
+    setMachineState(data);
+    setConnectionError("");
 
-    const loadMachineState = async () => {
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/machine/state`
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.message || "Unable to read machine status."
-          );
-        }
-
-        if (!active) return;
-
-        setMachineState(data);
-        setConnectionError("");
-
-        if (data.phase === "water_refill_requested") {
-          navigate("/machine/water-refill");
-          return;
-        }
-
-        if (
-          data.phase === "reward_ready" &&
-          data.sessionId &&
-          data.qrCode
-        ) {
-          navigate("/machine/redeem-qr", {
-            state: data,
-          });
-        }
-      } catch (error) {
-        if (!active) return;
-
-        console.error("Machine status error:", error);
-
-        setConnectionError(
-          error.message || "Unable to connect to the machine."
-        );
-      }
-    };
-
-    loadMachineState();
-
-    const interval = window.setInterval(
-      loadMachineState,
-      500
-    );
-
-    return () => {
-      active = false;
-      window.clearInterval(interval);
-    };
-  }, [navigate]);
+    if (data.phase === "water_refill_requested") {
+      navigate("/machine/water-refill", { replace: true });
+    } else if (data.phase === "reward_ready" && data.sessionId && data.qrCode) {
+      navigate("/machine/redeem-qr", { state: data, replace: true });
+    }
+  }, {
+    onError: (error) => {
+      if (!actionRef.current) setConnectionError(error.message || "Unable to connect to the machine.");
+    },
+  }), [navigate]);
 
   const resetMachine = async () => {
+    if (actionRef.current) return;
+    actionRef.current = true;
+    revisionRef.current += 1;
+    setResetting(true);
+    setActionError("");
     try {
-      setResetting(true);
-      setConnectionError("");
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/machine/reset`,
-        {
-          method: "POST",
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Unable to reset the machine."
-        );
-      }
-
-      if (data.state) {
-        setMachineState(data.state);
-      }
+      const data = await requestMachine("/api/machine/reset", { method: "POST" });
+      if (data.state) setMachineState(data.state);
     } catch (error) {
-      console.error("Reset machine error:", error);
-
-      setConnectionError(
-        error.message || "Unable to reset the machine."
-      );
+      setActionError(error.message || "Unable to reset the machine.");
     } finally {
+      actionRef.current = false;
       setResetting(false);
     }
   };
 
   const openWaterRefill = async () => {
+    if (actionRef.current) return;
+    actionRef.current = true;
+    revisionRef.current += 1;
+    setOpeningWater(true);
+    setActionError("");
     try {
-      setOpeningWater(true);
-      setConnectionError("");
-
-      // Pause automatic recycling detection while the
-      // customer is using the water refill flow.
-      const response = await fetch(
-        `${API_BASE_URL}/api/machine/pause-recycling`,
-        {
-          method: "POST",
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Unable to pause recycling camera."
-        );
-      }
-
-      navigate("/machine/water-refill");
+      await requestMachine("/api/machine/pause-recycling", { method: "POST" });
+      navigate("/machine/water-refill", { replace: true });
     } catch (error) {
-      console.error("Water refill navigation error:", error);
-
-      setConnectionError(
-        error.message || "Unable to open water refill."
-      );
+      setActionError(error.message || "Unable to open water refill.");
     } finally {
+      actionRef.current = false;
       setOpeningWater(false);
     }
   };
@@ -180,18 +110,36 @@ function MachineHome() {
       };
     }
 
+    if (actionError) {
+      return {
+        eyebrow: "Please try again",
+        title: "Action could not be completed",
+        message: actionError,
+        icon: <AlertTriangle size={62} />,
+        tone: "error",
+      };
+    }
+
     switch (machineState.phase) {
+      case "connecting":
+        return {
+          eyebrow: "Connecting",
+          title: "Getting the machine ready",
+          message: "Please wait while we check the machine.",
+          icon: <LoaderCircle size={62} className="machine-spin" />,
+          tone: "active",
+        };
       case "idle":
         return {
-          eyebrow: "Ready to recycle",
+          eyebrow: "Camera ready",
           title:
             Number(machineState.itemCount || 0) > 0
               ? "Add another item"
               : "Insert a bottle or can",
           message:
             Number(machineState.itemCount || 0) > 0
-              ? "Insert one more clean, empty bottle or can."
-              : "Clean, empty plastic bottles and aluminum cans only.",
+              ? `${machineState.itemCount} item(s) accepted · ${machineState.pointsEarned} EcoPoint(s). Insert another, or press the GREEN button when finished.`
+              : "Insert clean, empty bottles or cans one at a time. When you are finished, press the GREEN button to show one QR code for all your points.",
           icon: <Eye size={62} />,
           tone: "idle",
         };
@@ -201,7 +149,7 @@ function MachineHome() {
           eyebrow: "Item detected",
           title: "Hold it still...",
           message:
-            "Keep your item still in the opening.",
+            "EcoRefill sees something in the opening. Keep the item still while the camera prepares to scan it.",
           icon: <PackageOpen size={62} />,
           tone: "active",
         };
@@ -209,9 +157,9 @@ function MachineHome() {
       case "capturing":
         return {
           eyebrow: "Scanning",
-          title: "Scanning your item",
+          title: "Taking a quick look 📸",
           message:
-            "Please wait before inserting another item.",
+            "The camera is capturing your item.",
           icon: (
             <LoaderCircle
               size={62}
@@ -224,9 +172,9 @@ function MachineHome() {
       case "verifying":
         return {
           eyebrow: "Checking item",
-          title: "Checking your item",
+          title: "Bottle or can?",
           message:
-            "Please wait before inserting another item.",
+            "EcoRefill is identifying the recyclable material.",
           icon: (
             <LoaderCircle
               size={62}
@@ -241,7 +189,7 @@ function MachineHome() {
           eyebrow: "Almost finished",
           title: "Sorting it now!",
           message:
-            "Please wait before inserting another item.",
+            "Your item is being placed into the correct collection bin.",
           icon: (
             <LoaderCircle
               size={62}
@@ -269,14 +217,16 @@ function MachineHome() {
             Number(machineState.itemCount || 0) === 1 ? "" : "s"
           } accepted`,
           message:
-            "You can insert another clean, empty bottle or can.",
+            `${machineState.pointsEarned || 0} EcoPoint${
+              Number(machineState.pointsEarned || 0) === 1 ? "" : "s"
+            } so far. Insert another bottle/can, or press the GREEN button when finished.`,
           icon: <CheckCircle2 size={62} />,
           tone: "success",
         };
 
       case "reward_ready":
         return {
-          eyebrow: "Recycling finished",
+          eyebrow: "Recycling finished 🎉",
           title: "Preparing your reward",
           message:
             "Your total reward QR code is ready.",
@@ -308,14 +258,16 @@ function MachineHome() {
           eyebrow: "Machine error",
           title: "Something went wrong",
           message:
-            "Tap Try again. If the problem continues, ask for help.",
+            machineState.error ||
+            machineState.message ||
+            "Please reset the machine and try again.",
           icon: <AlertTriangle size={62} />,
           tone: "error",
         };
 
       default:
         return {
-          eyebrow: "Ready to recycle",
+          eyebrow: "Camera ready",
           title: "Insert a bottle or can",
           message:
             machineState.message ||
@@ -324,7 +276,7 @@ function MachineHome() {
           tone: "idle",
         };
     }
-  }, [machineState, connectionError]);
+  }, [machineState, connectionError, actionError]);
 
   const showWaterChoice =
     machineState.phase === "idle" &&
@@ -343,7 +295,7 @@ function MachineHome() {
 
             <div>
               <h1>EcoRefill</h1>
-              <p>Recycle & refill</p>
+              <p>Small action. Big impact. 🌱</p>
             </div>
           </div>
 
@@ -362,30 +314,31 @@ function MachineHome() {
 
             {connectionError
               ? "Offline"
+              : machineState.phase === "connecting"
+              ? "Connecting"
               : isBusy
               ? "Scanning"
               : Number(machineState.itemCount || 0) > 0
               ? `${machineState.itemCount} accepted`
-              : "Ready"}
+              : "Camera Active"}
           </div>
         </header>
 
         <main
-          className={`machine-kiosk-card tone-${screen.tone} ${showWaterChoice ? "machine-home-choices" : ""}`}
+          className={`machine-kiosk-card tone-${screen.tone}`}
         >
-          <div className="machine-home-heading" role="status" aria-live="polite">
-            {!showWaterChoice && (
-              <div className="machine-kiosk-hero-icon" aria-hidden="true">
-                {screen.icon}
-              </div>
-            )}
-            <div className="machine-kiosk-copy">
-              {!showWaterChoice && (
-                <span className="machine-kiosk-eyebrow">{screen.eyebrow}</span>
-              )}
-              <h2>{showWaterChoice ? "What would you like to do?" : screen.title}</h2>
-              {!showWaterChoice && <p>{screen.message}</p>}
-            </div>
+          <div className="machine-kiosk-hero-icon">
+            {screen.icon}
+          </div>
+
+          <div className="machine-kiosk-copy" role="status" aria-live="polite" aria-atomic="true">
+            <span className="machine-kiosk-eyebrow">
+              {screen.eyebrow}
+            </span>
+
+            <h2>{screen.title}</h2>
+
+            <p>{screen.message}</p>
           </div>
 
           {showWaterChoice && (
@@ -396,10 +349,16 @@ function MachineHome() {
                 </div>
 
                 <div className="machine-choice-text">
-                  <h3>Recycle</h3>
-                  <p>Clean, empty plastic bottles and aluminum cans only.</p>
-                  <p className="machine-choice-rate">2 plastic bottles = 1 point · 1 can = 1 point</p>
-                  <strong className="machine-choice-action">Insert one item to start</strong>
+                  <span className="machine-choice-tag">
+                    <Sparkles size={16} />
+                    Automatic
+                  </span>
+
+                  <h3>Recycle an Item</h3>
+
+                  <p>
+                    Insert a bottle or can — no button needed
+                  </p>
                 </div>
               </div>
 
@@ -420,9 +379,19 @@ function MachineHome() {
                 </div>
 
                 <div className="machine-choice-text">
-                  <h3>{openingWater ? "Opening…" : "Refill water"}</h3>
-                  <p>Use your EcoPoints. Have the EcoRefill app ready.</p>
-                  <strong className="machine-choice-action">Tap here or press BLUE →</strong>
+                  <span className="machine-choice-tag">
+                    Use your points
+                  </span>
+
+                  <h3>
+                    {openingWater
+                      ? "Opening..."
+                      : "Refill Water"}
+                  </h3>
+
+                  <p>
+                    Scan, choose amount, then refill
+                  </p>
                 </div>
               </button>
             </div>
@@ -480,22 +449,39 @@ function MachineHome() {
 
           {Number(machineState.itemCount || 0) > 0 &&
             machineState.phase !== "reward_ready" && (
-              <div className="machine-session-total">
-                <span><strong>{machineState.itemCount}</strong> items accepted</span>
-                <span><strong>{machineState.pointsEarned || 0}</strong> EcoPoints</span>
+              <div className="machine-detection-pill">
+                Session total: {machineState.itemCount} item(s) ·{" "}
+                {machineState.pointsEarned} EcoPoint(s)
+                {Number(machineState.bottleCount || 0) > 0
+                  ? ` · ${machineState.bottleCount} bottle(s)`
+                  : ""}
+                {Number(machineState.canCount || 0) > 0
+                  ? ` · ${machineState.canCount} can(s)`
+                  : ""}
               </div>
             )}
 
           {Number(machineState.itemCount || 0) > 0 &&
             ["idle", "item_accepted"].includes(machineState.phase) && (
-              <div className="machine-button-guide green-button-guide">
-                <span className="machine-physical-button" aria-hidden="true" />
-                <span>Finished? Press <strong>GREEN</strong> on the machine to collect your points.</span>
+              <div className="machine-detection-pill">
+                🟢 Press the GREEN physical button when you are finished
               </div>
             )}
 
           {machineState.phase === "rejected" && (
             <>
+              {(machineState.materialType ||
+                machineState.confidence) && (
+                <div className="machine-detection-pill">
+                  Detected:{" "}
+                  {machineState.materialType || "Unknown"} ·{" "}
+                  {Math.round(
+                    (machineState.confidence || 0) * 100
+                  )}
+                  %
+                </div>
+              )}
+
               <button
                 className="machine-kiosk-primary"
                 onClick={resetMachine}
@@ -524,7 +510,7 @@ function MachineHome() {
                 disabled={resetting}
               >
                 <RotateCcw size={28} />
-                Try again
+                Reset Machine
               </button>
             )}
 
@@ -540,9 +526,21 @@ function MachineHome() {
         </main>
 
         <footer className="machine-kiosk-footer">
-          <span>{showWaterChoice
-            ? "Recycle → earn EcoPoints → refill water"
-            : "Clean, empty plastic bottles and aluminum cans only"}</span>
+          <span>
+            👁 Insert bottles/cans one at a time
+          </span>
+
+          <span>
+            🟢 Green button = finish & show reward QR
+          </span>
+
+          <span>
+            ♻ Clean & empty bottles or cans only
+          </span>
+
+          <span>
+            🔵 Blue button = buy / refill water
+          </span>
         </footer>
       </div>
     </div>

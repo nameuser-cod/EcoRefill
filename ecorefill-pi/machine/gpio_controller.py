@@ -124,8 +124,8 @@ class GPIOController:
         if close_readings < 2 or time.monotonic() >= deadline:
             raise OperationError("NO_BOTTLE")
 
-        # The callback may perform network work. Run it before energizing the
-        # pump, then recheck the sensor so a slow callback cannot hide removal.
+        # Persist the local dispensing boundary before energizing the pump.
+        # Recheck the sensor afterward so storage latency cannot hide removal.
         self._check_cancel()
         if on_dispensing is not None:
             on_dispensing()

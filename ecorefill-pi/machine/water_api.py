@@ -15,6 +15,9 @@ class WaterAPI:
         from firebase_admin import firestore
         from flask import jsonify
 
+        if self.get_state().get("itemCount", 0) > 0:
+            return jsonify({"ok": False, "message": "Finish your recycling reward before starting a refill."}), 409
+
         if self.db is None:
             return jsonify({
                 "ok": False,
@@ -104,7 +107,7 @@ class WaterAPI:
             )
 
             session_ref.set(
-                session_data
+                session_data, timeout=5, retry=None
             )
             self.start_water_request_polling(session_id, expires_at)
 
@@ -169,6 +172,21 @@ class WaterAPI:
         from firebase_admin import firestore
         from flask import jsonify
 
+        if self.journal is not None:
+            for _, record in self.journal.entries("refill"):
+                if record["sessionId"] != session_id:
+                    continue
+                outcome = record["outcome"]
+                status = {"preparing": "processing", "reserved": "processing", "executing": "dispensing",
+                          "completed": "completed"}.get(outcome, "failed")
+                return jsonify({"ok": True, "session": {
+                    "sessionId": session_id, "machineId": MACHINE_ID,
+                    "status": status, "waterAmountMl": record["waterAmountMl"],
+                    "pointsUsed": record.get("pointsUsed"),
+                    "error": record.get("error"), "syncPending": outcome != "review_required",
+                    "message": "Saved on this machine. Account update will sync when connected.",
+                }})
+
         if self.db is None:
             return jsonify({
                 "ok":
@@ -189,7 +207,7 @@ class WaterAPI:
             )
 
             snapshot = (
-                session_ref.get()
+                session_ref.get(timeout=5, retry=None)
             )
 
             if not snapshot.exists:
@@ -417,7 +435,7 @@ class WaterAPI:
             )
 
             snapshot = (
-                session_ref.get()
+                session_ref.get(timeout=5, retry=None)
             )
 
             if not snapshot.exists:

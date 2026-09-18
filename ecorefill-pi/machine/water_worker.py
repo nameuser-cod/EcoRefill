@@ -7,7 +7,6 @@ from .config import (
     WATER_OPTIONS,
 )
 from .diagnostics import log
-from .owner_points import complete_refill
 from .points import read_points
 
 
@@ -165,12 +164,21 @@ class WaterRequestWorker:
             self.db.collection(
                 "transactions"
             )
-            .document()
+            .document(f"water-{MACHINE_ID}-{request_id}")
         )
 
         transaction_id = (
             transaction_ref.id
         )
+
+        if any(key == request_id for key, _ in self.journal.entries("refill")):
+            return
+        journal_record = {
+            "sessionId": session_id, "userId": user_id, "transactionId": transaction_id,
+            "waterAmountMl": water_amount_ml, "pointsUsed": points_required,
+            "outcome": "preparing",
+        }
+        self.journal.save("refill", request_id, journal_record)
 
         firestore_transaction = (
             self.db.transaction()
@@ -458,9 +466,10 @@ class WaterRequestWorker:
             )
 
             if result is None:
+                self.journal.delete("refill", request_id)
                 return
 
-        except Exception as error:
+        except ValueError as error:
             log(
                 "Water request validation failed:",
                 error,
@@ -510,236 +519,47 @@ class WaterRequestWorker:
                     update_error,
                 )
 
+            self.journal.delete("refill", request_id)
             return
 
-        # =====================================================
-        # SEND COMMAND TO GPIO CONTROLLER
-        # =====================================================
+        except Exception as error:
+            # A timed-out commit may have charged points. Reconcile it later;
+            # never mark it failed blindly or attempt another physical command.
+            self.journal.save("refill", request_id, {
+                **journal_record, "outcome": "reservation_unknown", "error": str(error),
+            })
+            self.recycling_paused.clear()
+            self.reset_state()
+            return
 
-        command = (
-            WATER_COMMANDS[
-                water_amount_ml
-            ]
-        )
-
-        log(
-            f"Water purchase accepted: "
-            f"{water_amount_ml} ml"
-        )
-
-        log(
-            f"Sending to GPIO controller: "
-            f"{command}"
-        )
+        # Persist this boundary before GPIO. Recovery never replays a command.
+        journal_record["outcome"] = "reserved"
+        self.journal.save("refill", request_id, journal_record)
 
         def mark_refill_dispensing():
-            dispensing_batch = self.db.batch()
-
-            dispensing_batch.update(
-                session_ref,
-                {
-                    "status": "dispensing",
-                    "message": (
-                        f"Dispensing {water_amount_ml} ml "
-                        "of water."
-                    ),
-                    "updatedAt": firestore.SERVER_TIMESTAMP,
-                },
-            )
-
-            dispensing_batch.update(
-                request_ref,
-                {
-                    "status": "dispensing",
-                    "updatedAt": firestore.SERVER_TIMESTAMP,
-                },
-            )
-
-            dispensing_batch.update(
-                transaction_ref,
-                {
-                    "status": "dispensing",
-                    "updatedAt": firestore.SERVER_TIMESTAMP,
-                },
-            )
-
-            dispensing_batch.commit()
-
-        command_completed, command_error = self.run_water_command(
-            command,
-            on_dispensing=mark_refill_dispensing,
-        )
-
-        # =====================================================
-        # GPIO CONTROLLER ERROR -> REFUND POINTS
-        # =====================================================
-
-        if not command_completed:
-
-            log(
-                "GPIO controller water command failed. "
-                "Refunding points..."
-            )
-
-            # Preserve controller reasons for the kiosk's error messages.
-            failure_message = (
-                command_error
-                or "WATER_DISPENSER_FAILED"
-            )
-
-            try:
-                refund_transaction = (
-                    self.db.transaction()
-                )
-
-                @firestore.transactional
-                def refund_points(
-                    transaction
-                ):
-
-                    user_snapshot = (
-                        user_ref.get(
-                            transaction=
-                                transaction
-                        )
-                    )
-
-                    if (
-                        not
-                        user_snapshot.exists
-                    ):
-                        return
-
-                    user_data = (
-                        user_snapshot
-                        .to_dict()
-                        or {}
-                    )
-
-                    current_points = read_points(
-                        user_data.get(
-                            "points",
-                            0
-                        )
-                    )
-
-                    refunded_points = (
-                        current_points
-                        + points_required
-                    )
-
-                    transaction.update(
-                        user_ref,
-                        {
-                            "points":
-                                refunded_points,
-
-                            "updatedAt":
-                                firestore
-                                .SERVER_TIMESTAMP,
-                        },
-                    )
-
-                    transaction.update(
-                        session_ref,
-                        {
-                            "status":
-                                "failed",
-
-                            "remainingPoints":
-                                refunded_points,
-
-                            "message":
-                                "Water dispenser "
-                                "could not complete "
-                                "the refill.",
-
-                            "error":
-                                failure_message,
-
-                            "updatedAt":
-                                firestore
-                                .SERVER_TIMESTAMP,
-                        },
-                    )
-
-                    transaction.update(
-                        request_ref,
-                        {
-                            "status":
-                                "failed",
-
-                            "error":
-                                failure_message,
-
-                            "updatedAt":
-                                firestore
-                                .SERVER_TIMESTAMP,
-                        },
-                    )
-
-                    transaction.update(
-                        transaction_ref,
-                        {
-                            "status":
-                                "failed",
-
-                            "failureReason":
-                                failure_message,
-
-                            "updatedAt":
-                                firestore
-                                .SERVER_TIMESTAMP,
-                        },
-                    )
-
-                refund_points(
-                    refund_transaction
-                )
-
-            except Exception as refund_error:
-                log(
-                    "CRITICAL: point "
-                    "refund failed:",
-                    refund_error,
-                )
-
-            # Whether dispensing failed or timed out, do not leave the kiosk
-            # permanently paused in water-refill mode.
-            self.recycling_paused.clear()
-            self.finish_session_event.clear()
-            self.reset_state()
-
-            return
+            # This durable boundary is immediately before the pump starts.
+            journal_record["outcome"] = "executing"
+            self.journal.save("refill", request_id, journal_record)
 
         try:
-            @firestore.transactional
-            def settle(transaction):
-                complete_refill(self.db, transaction, firestore.SERVER_TIMESTAMP,
-                                session_ref, request_ref, transaction_ref, MACHINE_ID)
-
-            settle(self.db.transaction())
-        except Exception as completion_error:
-            # The GPIO controller already confirmed the physical refill. A Firestore write
-            # failure must not leave the kiosk permanently stuck in water mode.
-            log("Water completed, but Firestore completion update failed:", completion_error)
+            completed, error = self.run_water_command(
+                WATER_COMMANDS[water_amount_ml], on_dispensing=mark_refill_dispensing,
+            )
+        except Exception as error:
+            # An unexpected driver exception cannot prove delivery or failure.
+            self.journal.save("refill", request_id, {
+                **journal_record, "outcome": "uncertain", "error": str(error),
+            })
+        else:
+            self.journal.save("refill", request_id, {
+                **journal_record, "outcome": "completed" if completed else "failed",
+                "error": error,
+            })
         finally:
-            # Water mode pauses recycling when the BLUE button is pressed. Always
-            # restore the machine after the physical dispense has ended.
             self.recycling_paused.clear()
             self.finish_session_event.clear()
             self.reset_state()
-
-        log(
-            "GPIO controller confirmed that water "
-            "dispensing completed."
-        )
-
-        log(
-            f"Water refill session "
-            f"{session_id} is completed."
-        )
-        log("Water mode ended. Recycling automatically resumed.")
+        log("Refill result saved locally; cloud accounting will sync:", session_id)
 
     def water_request_worker(self):
         """Poll only the request belonging to the current, unexpired QR session."""
@@ -771,7 +591,7 @@ class WaterRequestWorker:
                 # The phone uses sessionId as the request document ID.
                 request_doc = self.db.collection("water_refill_requests").document(
                     session_id
-                ).get()
+                ).get(timeout=5, retry=None)
                 data = (request_doc.to_dict() or {}) if request_doc.exists else {}
 
                 # A cancellation, reset, or new QR may happen during the read.
