@@ -7,8 +7,8 @@ import { auth, db } from "../../firebase/firebase";
 import UserBottomNav from "./components/UserBottomNav";
 import MachineFinderMap from "./components/MachineFinderMap";
 import { directionsUrl, findMachines, getLocatedMachines } from "./utils/machineFinder";
-import "../../styles/user.css";
-import "../../styles/machine-finder.css";
+import "../../styles/user/user.css";
+import "../../styles/user/machine-finder.css";
 
 export default function FindMachines() {
   const navigate = useNavigate();
@@ -97,7 +97,7 @@ export default function FindMachines() {
             <input id="machine-search" type="search" placeholder="Machine name, ID, or location" value={search}
               onChange={(event) => { setSearch(event.target.value); setSelectedId(null); }} />
           </div>
-          <button type="button" onClick={locate} disabled={locating}>
+          <button className="finder-locate-button" type="button" onClick={locate} disabled={locating}>
             <LocateFixed size={18} aria-hidden="true" />{locating ? "Finding your location…" : "Use my location"}
           </button>
           <p className="finder-note" role="status">
@@ -109,7 +109,7 @@ export default function FindMachines() {
         </section>
 
         {loading ? <p className="loading-text" role="status">Loading machine locations…</p>
-          : error ? <div className="empty-card" role="alert"><p>{error}</p><button type="button" onClick={() => setRetry((value) => value + 1)}>Try again</button></div>
+          : error ? <div className="empty-card" role="alert"><p>{error}</p><button className="finder-retry-button" type="button" onClick={() => setRetry((value) => value + 1)}>Try again</button></div>
           : machines.length === 0 ? <div className="empty-card"><MapPin size={28} /><p>No machine locations yet.</p><span>Machines will appear here once their owners save a map location.</span></div>
           : <>
             <MachineFinderMap machines={results} selectedId={selected?.id} onSelect={setSelectedId} position={position} />
@@ -133,7 +133,7 @@ export default function FindMachines() {
 
             <section className="finder-results" aria-label="Machine results">
               <h2 aria-live="polite">{results.length} {results.length === 1 ? "machine" : "machines"}{position ? " · Nearest first" : " on the map"}</h2>
-              {results.length === 0 ? <div className="empty-card"><p>No matching machines.</p><span>Try a different name, ID, or location.</span><button type="button" onClick={() => setSearch("")}>Clear search</button></div>
+              {results.length === 0 ? <div className="empty-card"><p>No matching machines.</p><span>Try a different name, ID, or location.</span><button className="finder-clear-button" type="button" onClick={() => setSearch("")}>Clear search</button></div>
                 : <ul>{results.map((machine) => <li key={machine.id}>
                   <button type="button" className={`finder-result${selected?.id === machine.id ? " selected" : ""}`}
                     aria-pressed={selected?.id === machine.id} onClick={() => setSelectedId(machine.id)}>

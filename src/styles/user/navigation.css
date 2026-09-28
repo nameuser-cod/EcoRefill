@@ -1,0 +1,81 @@
+/*
+ * UserBottomNav.jsx and shared user loading animation.
+ * Entry: user/user.css
+ */
+
+/* ---------- USER BOTTOM NAVIGATION ---------- */
+
+.user-bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 900;
+  width: min(calc(100% - 24px), 540px);
+  padding: 8px;
+  border: var(--border);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 7px 7px 0 var(--ink);
+  backdrop-filter: blur(12px);
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.user-bottom-nav .user-bottom-nav-item {
+  min-width: 0;
+  min-height: 61px;
+  padding: 7px 3px !important;
+  border: 2px solid transparent !important;
+  border-radius: 13px !important;
+  background: transparent !important;
+  color: var(--dark-green) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.user-bottom-nav .user-bottom-nav-item:hover {
+  background: var(--mint-green) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.user-bottom-nav .user-bottom-nav-item.active {
+  border-color: var(--ink) !important;
+  background: var(--lime-green) !important;
+  color: var(--ink) !important;
+  box-shadow: 2px 2px 0 var(--ink) !important;
+}
+
+.user-bottom-nav-item svg {
+  flex: 0 0 auto;
+  stroke-width: 2.7;
+}
+
+.user-bottom-nav-item span {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- USER LOADING SPINNER ---------- */
+
+.user-spin {
+  animation: user-spin 0.9s linear infinite;
+}
+
+@keyframes user-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

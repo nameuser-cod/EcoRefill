@@ -1,3 +1,5 @@
+/* FindMachines.jsx and MachineFinderMap.jsx: search, map markers, and selection. */
+
 .finder-controls,
 .finder-selection {
   margin-bottom: 22px;
@@ -39,8 +41,15 @@
   outline-offset: 2px;
 }
 
-.finder-search input:focus { outline: none; }
-.finder-controls button { display: flex; align-items: center; gap: 8px; }
+.finder-search input:focus {
+  outline: none;
+}
+
+.finder-controls button:where(.finder-locate-button) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
 .finder-note {
   margin: 12px 0 0;
@@ -58,7 +67,11 @@
   z-index: 0;
 }
 
-.finder-marker { background: transparent; border: 0; }
+.finder-marker {
+  background: transparent;
+  border: 0;
+}
+
 .finder-pin {
   display: block;
   width: 30px;
@@ -69,6 +82,7 @@
   box-shadow: 2px 2px 0 #08110b;
   transform: rotate(-45deg);
 }
+
 .finder-pin::after {
   content: "";
   position: absolute;
@@ -79,10 +93,22 @@
   border-radius: 50%;
   background: #08110b;
 }
-.finder-pin.selected { background: #ffd43b; outline: 3px solid white; }
 
-.finder-selection { background: var(--mint-green); overflow-wrap: anywhere; scroll-margin-bottom: 110px; }
-.finder-selection h2 { margin: 8px 0; }
+.finder-pin.selected {
+  background: #ffd43b;
+  outline: 3px solid white;
+}
+
+.finder-selection {
+  background: var(--mint-green);
+  overflow-wrap: anywhere;
+  scroll-margin-bottom: 110px;
+}
+
+.finder-selection h2 {
+  margin: 8px 0;
+}
+
 .finder-selection select {
   width: 100%;
   min-height: 46px;
@@ -94,6 +120,7 @@
   color: var(--ink);
   font: inherit;
 }
+
 .finder-directions {
   display: flex;
   align-items: center;
@@ -109,11 +136,28 @@
   text-decoration: none;
   font-weight: 900;
 }
+
 .finder-directions:focus-visible,
-.finder-selection select:focus-visible { outline: 4px solid var(--warning); outline-offset: 3px; }
-.finder-directions:hover { background: var(--lime-green); }
-.finder-results h2 { font-size: 20px; }
-.finder-results ul { display: grid; gap: 14px; padding: 0; list-style: none; }
+.finder-selection select:focus-visible {
+  outline: 4px solid var(--warning);
+  outline-offset: 3px;
+}
+
+.finder-directions:hover {
+  background: var(--lime-green);
+}
+
+.finder-results h2 {
+  font-size: 20px;
+}
+
+.finder-results ul {
+  display: grid;
+  gap: 14px;
+  padding: 0;
+  list-style: none;
+}
+
 .machine-finder-page .finder-result {
   display: flex;
   align-items: flex-start;
@@ -122,10 +166,34 @@
   text-align: left;
   background: var(--white);
 }
-.machine-finder-page .finder-result.selected { background: var(--mint-green); }
-.finder-result svg { flex-shrink: 0; }
-.finder-result > span:first-of-type { display: grid; gap: 7px; min-width: 0; overflow-wrap: anywhere; }
+
+.machine-finder-page .finder-result.selected {
+  background: var(--mint-green);
+}
+
+.finder-result svg {
+  flex-shrink: 0;
+}
+
+.finder-result > span:first-of-type {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .finder-result span span,
-.finder-result small { font-size: 13px; font-weight: 600; line-height: 1.4; }
-.finder-result-action { margin-left: auto; font-size: 12px; }
-.machine-finder-page .empty-card button { margin-top: 16px; }
+.finder-result small {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.finder-result-action {
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.machine-finder-page .empty-card button:where(.finder-retry-button, .finder-clear-button) {
+  margin-top: 16px;
+}

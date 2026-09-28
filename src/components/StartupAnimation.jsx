@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Recycle } from "lucide-react";
-import "../styles/startup-animation.css";
+import "../styles/shared/startup-animation.css";
 
 export default function StartupAnimation({ children }) {
   const [visible, setVisible] = useState(

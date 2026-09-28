@@ -1,0 +1,98 @@
+/*
+ * UserProfile.jsx: account cards and profile form.
+ * Entry: user/user.css
+ */
+
+/* ---------- PROFILE STYLES KEPT FROM USER SIDE ---------- */
+
+.profile-card,
+.profile-form-card {
+  width: 100%;
+  margin-bottom: 24px;
+  padding: 22px;
+}
+
+.profile-card {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.profile-card h2 {
+  margin: 0 0 6px;
+}
+
+.profile-card p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-avatar {
+  width: 88px;
+  height: 88px;
+  border: 3px solid #173c2b;
+  border-radius: 50%;
+  background: #bff27c;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  font-size: 36px;
+  font-weight: 950;
+}
+
+.profile-points {
+  margin-top: 8px;
+  padding: 7px 11px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--mint-green);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.profile-form-card {
+  display: grid;
+  gap: 18px;
+}
+
+.profile-form-card h2 {
+  margin: 4px 0 0;
+}
+
+.profile-form-card label {
+  display: grid;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.profile-form-card input {
+  width: 100%;
+  min-height: 50px;
+  padding: 0 14px;
+  border: 2px solid #173c2b;
+  border-radius: 12px;
+  background: var(--white);
+  font: inherit;
+}
+
+.profile-form-card input:disabled {
+  background: #edf2ef;
+  color: #5c6f65;
+}
+
+.profile-logout-button {
+  width: 100%;
+  min-height: 52px;
+  margin-bottom: 12px;
+  border-color: #9e2f2f !important;
+  background: #ffe5e1 !important;
+  color: #812121 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}

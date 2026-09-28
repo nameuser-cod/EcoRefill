@@ -1,0 +1,214 @@
+/*
+ * CameraScan.jsx: camera preview, instructions, and detection states.
+ * Entry: user/user.css
+ */
+
+/* ---------- CAMERA SCANNER ---------- */
+
+.camera-scan-page {
+  min-height: 100dvh;
+  background: #0f2a1d;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.camera-scan-page * {
+  box-sizing: border-box;
+}
+
+.camera-scan-header {
+  width: 100%;
+  padding: 18px 20px;
+  background: #153d2b;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.camera-scan-header .back-button {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background: #e3eed4;
+  color: #0f2a1d;
+  box-shadow: none;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.camera-scan-header p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.camera-scan-header h1 {
+  margin: 2px 0 0;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.camera-scan-content {
+  width: min(100%, 540px);
+  margin: 0 auto;
+  padding: 22px;
+  flex: 1;
+}
+
+.camera-instruction {
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.camera-instruction svg {
+  flex: 0 0 auto;
+  color: #a8cf8e;
+}
+
+.camera-instruction h2 {
+  margin: 0 0 5px;
+  color: #ffffff;
+  font-size: 18px;
+}
+
+.camera-instruction p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.camera-reader-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 390px;
+  overflow: hidden;
+  border: 3px solid var(--lime-green);
+  border-radius: 22px;
+  background: #07150e;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+}
+
+.camera-reader {
+  width: 100%;
+  min-height: 390px;
+}
+
+.camera-reader video {
+  width: 100% !important;
+  min-height: 390px;
+  object-fit: cover !important;
+  border-radius: 18px;
+}
+
+.camera-reader img {
+  display: none !important;
+}
+
+.camera-reader-wrapper #qr-shaded-region {
+  border-color: rgba(156, 255, 87, 0.72) !important;
+}
+
+.camera-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: #07150e;
+  color: rgba(255, 255, 255, 0.78);
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+}
+
+.camera-error-card {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 16px;
+  background: #ffe6e6;
+  color: #7d1717;
+  display: grid;
+  gap: 12px;
+}
+
+.camera-error-card h3 {
+  margin: 0 0 4px;
+}
+
+.camera-error-card p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.camera-error-card button:where(.camera-retry-button),
+.camera-cancel-button {
+  min-height: 48px;
+  border: none;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.camera-error-card button:where(.camera-retry-button) {
+  background: #7d1717;
+  color: #ffffff;
+}
+
+.camera-cancel-button {
+  width: 100%;
+  margin-top: 18px;
+  background: #e3eed4;
+  color: #0f2a1d;
+}
+
+.camera-detected-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  padding: 24px;
+  background: rgba(15, 42, 29, 0.97);
+  color: #ffffff;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+}
+
+.camera-detected-icon {
+  width: 104px;
+  height: 104px;
+  border: 4px solid #07150e;
+  border-radius: 50%;
+  background: var(--main-green);
+  color: #07150e;
+  box-shadow: 8px 8px 0 #07150e;
+  display: grid;
+  place-items: center;
+}
+
+.camera-detected-overlay h2 {
+  margin: 8px 0 0;
+  font-size: 25px;
+}
+
+.camera-detected-overlay p {
+  max-width: 300px;
+  margin: 0;
+  opacity: 0.82;
+  line-height: 1.45;
+}

@@ -63,7 +63,7 @@ function OwnerAlerts() {
               <button
                 type="button"
                 key={filter}
-                className={activeFilter === filter ? "active" : ""}
+                className={`owner-filter-button ${activeFilter === filter ? "active" : ""}`}
                 onClick={() => setActiveFilter(filter)}
                 aria-pressed={activeFilter === filter}
               >

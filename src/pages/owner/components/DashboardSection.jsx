@@ -22,7 +22,7 @@ function DashboardSection({ title, sources, hasContent, onRetry, children }) {
             </p>
           )}
           {(slow || errors.length > 0) && (
-            <button type="button" onClick={onRetry}>Try again</button>
+            <button className="owner-section-retry-button" type="button" onClick={onRetry}>Try again</button>
           )}
         </section>
       )}

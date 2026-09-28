@@ -1,0 +1,11 @@
+/*
+ * Style entry point.
+ * Follow these imports to find the rules for each screen or component.
+ * Import order preserves the existing cascade; later files can override earlier rules.
+ */
+
+@import "./base.css";
+@import "./home.css";
+@import "./redeem-qr.css";
+@import "./water-refill.css";
+@import "./responsive.css";

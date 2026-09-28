@@ -1,0 +1,202 @@
+/*
+ * Inherited page backgrounds, cards, branding, and authentication styles.
+ * Entry: owner/owner.css
+ * Global compatibility rules retained in their original cascade order.
+ */
+
+.auth-page,
+.user-dashboard-page,
+.owner-dashboard-page,
+.scan-page,
+.history-page {
+  min-height: 100vh;
+  padding: 24px;
+  background: linear-gradient(90deg, rgba(8, 17, 11, 0.055) 1px, transparent 1px),
+    linear-gradient(rgba(8, 17, 11, 0.055) 1px, transparent 1px),
+    radial-gradient(circle at 8% 8%, var(--lime-green), transparent 22%),
+    radial-gradient(circle at 92% 12%, var(--main-green), transparent 22%),
+    var(--cream-green);
+  background-size: 34px 34px, 34px 34px, auto, auto, auto;
+}
+
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.auth-card,
+.recent-section,
+.owner-section,
+.scan-card,
+.manual-card,
+.history-list-section,
+.empty-owner-card {
+  background: var(--white);
+  border: var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 32px;
+  position: relative;
+}
+
+.auth-card::before,
+.recent-section::before,
+.owner-section::before,
+.scan-card::before,
+.manual-card::before,
+.history-list-section::before,
+.empty-owner-card::before {
+  content: "EcoRefill";
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 7px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--lime-green);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.brand-section {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.brand-logo,
+.machine-logo,
+.machine-hero-icon,
+.success-icon,
+.scan-icon,
+.points-icon,
+.machine-status-icon,
+.history-summary-icon,
+.transaction-icon,
+.owner-list-icon,
+.history-item-icon {
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.brand-logo {
+  width: 74px;
+  height: 74px;
+  margin: 0 auto 16px;
+  border-radius: 20px;
+  background: var(--main-green);
+  color: var(--ink);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 34px;
+  font-weight: 950;
+  transform: rotate(-3deg);
+}
+
+.brand-section h1,
+.dashboard-header h1,
+.scan-header h1,
+.history-header h1,
+.machine-brand h1,
+.machine-main-card h2,
+.qr-main-card h2 {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 950;
+  letter-spacing: -1.2px;
+  line-height: 0.95;
+}
+
+.brand-section h1 {
+  font-size: 38px;
+  text-transform: uppercase;
+}
+
+.brand-section p,
+.switch-text,
+.scan-card p,
+.manual-card p,
+.empty-owner-card p,
+.mini-card p,
+.owner-list-details p,
+.transaction-details p,
+.history-item-details p {
+  color: var(--dark-green);
+  line-height: 1.5;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-form label {
+  margin-top: 8px;
+  font-weight: 950;
+  color: var(--ink);
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.auth-form input,
+.auth-form select,
+.manual-form input {
+  width: 100%;
+  padding: 15px 16px;
+  border-radius: 12px;
+  border: var(--border);
+  background: var(--mint-green);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 750;
+  outline: none;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.auth-form input:focus,
+.auth-form select:focus,
+.manual-form input:focus {
+  background: var(--white);
+  box-shadow: 0 0 0 4px var(--lime-green), 4px 4px 0 var(--ink);
+}
+
+.auth-form button {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.error-message,
+.scan-error-message {
+  padding: 13px 14px;
+  border-radius: 12px;
+  background: #ffe5e5;
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--danger);
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.switch-text {
+  margin: 22px 0 0;
+  text-align: center;
+  font-weight: 750;
+}
+
+.switch-text a {
+  color: var(--ink);
+  font-weight: 950;
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+}

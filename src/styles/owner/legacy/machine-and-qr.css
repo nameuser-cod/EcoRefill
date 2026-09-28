@@ -1,0 +1,247 @@
+/*
+ * Inherited machine and QR styles; current kiosk rules live in machine/.
+ * Entry: owner/owner.css
+ * Global compatibility rules retained in their original cascade order.
+ */
+
+.machine-page {
+  min-height: 100vh;
+  padding: 28px;
+  color: var(--ink);
+  background: linear-gradient(90deg, rgba(8, 17, 11, 0.07) 1px, transparent 1px),
+    linear-gradient(rgba(8, 17, 11, 0.07) 1px, transparent 1px),
+    radial-gradient(circle at 12% 14%, var(--lime-green), transparent 25%),
+    linear-gradient(135deg, var(--cream-green), var(--sage-green));
+  background-size: 38px 38px, 38px 38px, auto, auto;
+}
+
+.machine-shell,
+.qr-shell {
+  min-height: calc(100vh - 56px);
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.machine-brand {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.machine-logo {
+  width: 78px;
+  height: 78px;
+  border-radius: 20px;
+  background: var(--main-green);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-3deg);
+}
+
+.machine-brand h1 {
+  font-size: 52px;
+  text-transform: uppercase;
+}
+
+.machine-brand p {
+  margin: 8px 0 0;
+  font-size: 18px;
+  color: var(--dark-green);
+  font-weight: 950;
+}
+
+.machine-online {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--white);
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
+  padding: 13px 18px;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.machine-online span {
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  background: var(--main-green);
+  border: 2px solid var(--ink);
+}
+
+.machine-main-card,
+.qr-main-card {
+  flex: 1;
+  background: var(--white);
+  border: var(--border);
+  border-radius: 24px;
+  padding: 54px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.machine-hero-icon,
+.success-icon {
+  width: 140px;
+  height: 140px;
+  border-radius: 28px;
+  background: var(--main-green);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  transform: rotate(3deg);
+}
+
+.machine-main-card h2,
+.qr-main-card h2 {
+  font-size: 58px;
+  text-transform: uppercase;
+}
+
+.machine-main-card p,
+.qr-subtitle {
+  max-width: 760px;
+  margin: 0;
+  color: var(--dark-green);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.machine-actions,
+.qr-actions {
+  display: flex;
+  gap: 22px;
+  margin-top: 28px;
+}
+
+.machine-actions button,
+.qr-actions button {
+  min-width: 260px;
+  min-height: 82px;
+  border-radius: 18px;
+  font-size: 21px;
+  font-weight: 950;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.machine-primary-btn {
+  background: var(--main-green);
+}
+
+.machine-secondary-btn {
+  background: var(--white);
+}
+
+.machine-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.machine-guide-card {
+  background: var(--white);
+}
+
+.machine-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-top: 22px;
+  color: var(--ink);
+}
+
+.machine-footer button {
+  margin: 0;
+  background: var(--white);
+}
+
+.machine-footer p {
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.qr-main-card {
+  padding: 42px;
+}
+
+.success-icon {
+  width: 120px;
+  height: 120px;
+}
+
+.qr-info-grid {
+  width: 100%;
+  max-width: 700px;
+  margin-bottom: 26px;
+}
+
+.qr-code-box {
+  background: var(--white);
+  border: var(--border);
+  border-radius: 22px;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+}
+
+.qr-code-value,
+.qr-loading-text {
+  margin: 14px 0 0;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 950;
+  letter-spacing: 1px;
+}
+
+.qr-loading-text {
+  padding: 80px 40px;
+}
+
+.qr-instruction-card {
+  width: 100%;
+  max-width: 700px;
+  background: var(--mint-green);
+  border: var(--border);
+  border-radius: 18px;
+  padding: 22px;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  text-align: left;
+  margin-bottom: 26px;
+  box-shadow: var(--shadow-sm);
+}
+
+.qr-instruction-card h3 {
+  margin: 0 0 6px;
+  color: var(--ink);
+  font-size: 24px;
+  font-weight: 950;
+}
+
+.qr-instruction-card p {
+  margin: 0;
+  color: var(--dark-green);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.5;
+}

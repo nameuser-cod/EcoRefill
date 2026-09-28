@@ -60,7 +60,7 @@ function RecyclingPhotoDialog({ transaction, records, onClose }) {
           <p>{getTransactionUser(transaction)}</p>
           <p>{items.length} {items.length === 1 ? "item" : "items"}</p>
         </div>
-        <button type="button" onClick={onClose} aria-label="Close recycling photos" autoFocus>
+        <button className="owner-photo-close-button" type="button" onClick={onClose} aria-label="Close recycling photos" autoFocus>
           <X size={24} aria-hidden="true" />
         </button>
       </header>

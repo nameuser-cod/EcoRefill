@@ -116,7 +116,7 @@ function ProfileForm({ owner, machine, onSaved }) {
       {error && <p className="owner-form-error" role="alert">{error}</p>}
       {message && <p className="owner-form-success" role="status">{message}</p>}
 
-      <button type="submit" disabled={saving}>
+      <button className="owner-profile-save-button" type="submit" disabled={saving}>
         <Save size={18} />
         {saving ? "Saving..." : "Save changes"}
       </button>

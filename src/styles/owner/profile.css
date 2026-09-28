@@ -1,0 +1,181 @@
+/*
+ * OwnerProfile.jsx: account form, connected machine, and logout action.
+ * Entry: owner/owner-dashboard.css
+ */
+
+.owner-profile-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.owner-profile-form {
+  display: grid;
+  gap: 17px;
+}
+
+.owner-form-heading h3 {
+  margin: 0 0 4px;
+  color: var(--owner-ink);
+  font-size: 0.9rem;
+}
+
+.owner-form-heading p {
+  margin: 0;
+  color: var(--owner-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.owner-profile-identity {
+  padding-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid var(--owner-line);
+}
+
+.owner-profile-identity > span {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: var(--owner-green-soft);
+  color: var(--owner-green-dark);
+}
+
+.owner-profile-identity h2 {
+  margin: 0 0 5px;
+  font-size: 1.1rem;
+}
+
+.owner-profile-identity p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--owner-muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.owner-profile-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--owner-ink);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.owner-profile-form input {
+  width: 100%;
+  min-height: 47px;
+  padding: 0 13px;
+  border: 3px solid var(--owner-line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--owner-ink);
+  font-weight: 650;
+}
+
+.owner-profile-form input:disabled {
+  background: #f3f6f4;
+  color: var(--owner-muted);
+}
+
+.owner-profile-form button:where(.owner-profile-save-button),
+.owner-logout-button {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 13px;
+}
+
+.owner-profile-form button:where(.owner-profile-save-button) {
+  background: var(--owner-green);
+  color: #fff;
+}
+
+.owner-form-error,
+.owner-form-success {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 11px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.owner-form-error {
+  background: var(--owner-danger);
+  color: var(--owner-danger-ink);
+}
+
+.owner-form-success {
+  background: var(--owner-green-soft);
+  color: var(--owner-green-dark);
+}
+
+.owner-connected-machine-label {
+  margin: 0 0 6px;
+  color: var(--owner-green-dark);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.owner-connected-machine h2 {
+  margin: 0 0 18px;
+  font-size: 1.15rem;
+}
+
+.owner-connected-machine dl {
+  margin: 0;
+  display: grid;
+}
+
+.owner-connected-machine dl > div {
+  padding: 12px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--owner-line);
+}
+
+.owner-connected-machine dt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--owner-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.owner-connected-machine dd {
+  overflow: hidden;
+  margin: 0;
+  color: var(--owner-ink);
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-align: right;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.owner-logout-button {
+  grid-column: 2;
+  background: var(--owner-danger) !important;
+  color: var(--owner-danger-ink) !important;
+}
+
+.owner-no-machine {
+  max-width: 600px;
+  margin: 60px auto 0;
+}

@@ -1,0 +1,197 @@
+/*
+ * MachineHome.jsx: recycling and water choices, progress, and shared step markers.
+ * Entry: machine/machine.css
+ */
+
+/* The home screen explains the two ways to start without repeating instructions. */
+
+.machine-home-choices {
+  justify-content: center;
+}
+
+.machine-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.machine-choice-card {
+  min-width: 0;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
+  border-radius: 16px;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+
+.recycle-choice {
+  background: var(--main-green);
+}
+
+.water-choice {
+  background: var(--cream-green);
+  cursor: pointer;
+}
+
+.machine-choice-icon {
+  color: var(--ink);
+  padding: 8px;
+  border: var(--border);
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.water-choice .machine-choice-icon {
+  color: #155c83;
+  background: var(--blue);
+}
+
+.machine-choice-icon svg {
+  width: 44px;
+  height: 44px;
+  display: block;
+}
+
+.machine-choice-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.machine-choice-text h3 {
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 950;
+  letter-spacing: -.8px;
+}
+
+.machine-choice-text p {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.machine-choice-action {
+  display: block;
+  margin-top: auto;
+  padding-top: 10px;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.machine-choice-text .machine-choice-rate {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.water-choice .machine-choice-action {
+  color: #114a6a;
+}
+
+.machine-session-total {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px 36px;
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--main-green);
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
+  font-size: 22px;
+}
+
+.machine-session-total strong {
+  font-size: 32px;
+}
+
+.machine-button-guide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.green-button-guide {
+  font-size: 22px;
+}
+
+.machine-physical-button {
+  display: inline-block;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border: 3px solid #145527;
+  border-radius: 50%;
+  background: var(--main-green);
+  box-shadow: 0 3px 0 #145527;
+}
+
+.machine-progress {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: min(100%, 560px);
+}
+
+.machine-progress-step {
+  width: 92px;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.machine-progress-step span,
+.reward-steps span,
+.water-guide-step span {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--white);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.machine-progress-step.active span,
+.reward-steps span,
+.water-guide-step span {
+  background: var(--lime-green);
+  border-color: var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.machine-progress-step p {
+  font-size: 18px;
+}
+
+.machine-progress-line {
+  flex: 1;
+  height: 4px;
+  margin-top: 15px;
+  background: var(--ink);
+}
+
+.machine-kiosk-footer,
+.reward-footer {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--dark-green);
+  text-align: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}

@@ -36,12 +36,12 @@ function OwnerAlertRow({ alert, onStatusChange }) {
           <>
             <div className="owner-alert-actions">
               {status === "unread" && (
-                <button type="button" disabled={Boolean(saving)} onClick={() => changeStatus("read")}>
+                <button className="owner-alert-action-button" type="button" disabled={Boolean(saving)} onClick={() => changeStatus("read")}>
                   <Check size={16} aria-hidden="true" />
                   {saving === "read" ? "Saving…" : "Mark as read"}
                 </button>
               )}
-              <button type="button" disabled={Boolean(saving)} onClick={() => changeStatus("resolved")}>
+              <button className="owner-alert-action-button" type="button" disabled={Boolean(saving)} onClick={() => changeStatus("resolved")}>
                 <CheckCheck size={16} aria-hidden="true" />
                 {saving === "resolved" ? "Saving…" : "Resolve"}
               </button>

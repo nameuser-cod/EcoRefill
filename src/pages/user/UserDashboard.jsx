@@ -27,7 +27,7 @@ import {
   getTransactionDescription,
   getTransactionTitle,
 } from "./utils/transactions";
-import "../../styles/user.css";
+import "../../styles/user/user.css";
 
 function UserDashboard() {
   const navigate = useNavigate();

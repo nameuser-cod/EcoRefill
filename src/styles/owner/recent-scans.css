@@ -1,0 +1,141 @@
+/*
+ * RecentScans.jsx: filters, pagination, and photo cards.
+ * Entry: owner/owner-dashboard.css
+ */
+
+.owner-scan-filters {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.owner-scan-filters fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.owner-scan-filters legend {
+  margin-bottom: 8px;
+  padding: 0;
+  color: var(--owner-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.owner-scan-filters .owner-filter-row {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.owner-scan-summary {
+  margin: 0 0 14px;
+  color: var(--owner-muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.owner-scan-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.owner-scan-pagination button:where(.owner-scan-page-button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--owner-card);
+  color: var(--owner-ink);
+  font-size: inherit;
+}
+
+.owner-scan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.owner-scan-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 3px solid var(--owner-line);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.owner-scan-photo {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #edf4ef;
+}
+
+.owner-scan-photo img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.owner-scan-photo > span:not(.owner-scan-status) {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--owner-muted);
+}
+
+.owner-scan-status {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 5px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  font-size: 0.62rem;
+  font-weight: 900;
+}
+
+.owner-scan-status.accepted {
+  color: var(--owner-green-dark);
+}
+
+.owner-scan-status.rejected {
+  color: var(--owner-danger-ink);
+}
+
+.owner-scan-info {
+  min-width: 0;
+  padding: 11px;
+}
+
+.owner-scan-info strong,
+.owner-scan-info span {
+  overflow: hidden;
+  display: block;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.owner-scan-info strong {
+  font-size: 0.78rem;
+  text-transform: capitalize;
+}
+
+.owner-scan-info span {
+  margin-top: 4px;
+  color: var(--owner-muted);
+  font-size: 0.64rem;
+  font-weight: 650;
+}

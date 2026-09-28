@@ -1,0 +1,75 @@
+/*
+ * Global theme tokens, reset, and button defaults. Loaded first by owner/owner.css.
+ * Entry: owner/owner.css
+ */
+
+:root {
+  --ink: #08110b;
+  --dark-green: #102719;
+  --deep-green: #1f6f3a;
+  --main-green: #35d04f;
+  --lime-green: #9cff59;
+  --mint-green: #dfffd6;
+  --cream-green: #f3ffe8;
+  --sage-green: #b8d7a8;
+  --white: #ffffff;
+  --danger: #ff4d4d;
+  --warning: #ffd43b;
+  --shadow: 8px 8px 0 var(--ink);
+  --shadow-sm: 5px 5px 0 var(--ink);
+  --shadow-lg: 12px 12px 0 var(--ink);
+  --border: 3px solid var(--ink);
+  --radius: 18px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  background: var(--cream-green);
+  color: var(--ink);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  border: var(--border);
+  border-radius: 14px;
+  background: var(--main-green);
+  color: var(--ink);
+  padding: 14px 18px;
+  font-size: 16px;
+  font-weight: 950;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+}
+
+button:hover {
+  background: var(--lime-green);
+  transform: translate(3px, 3px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+button:active {
+  transform: translate(5px, 5px);
+  box-shadow: none;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+  box-shadow: var(--shadow-sm);
+}

@@ -14,7 +14,7 @@ import {
   Wifi,
   WifiOff,
 } from "lucide-react";
-import "../../styles/machine.css";
+import "../../styles/machine/machine.css";
 
 import { pollMachine, requestMachine } from "./utils/machineApi";
 

@@ -5,7 +5,7 @@ import RefillStatusCard from "./components/RefillStatusCard";
 import WaterAmountSelector from "./components/WaterAmountSelector";
 import { WATER_OPTIONS } from "./constants";
 import { useWaterRefill } from "./hooks/useWaterRefill";
-import "../../styles/user.css";
+import "../../styles/user/user.css";
 
 function UserWaterRefill() {
   const navigate = useNavigate();
@@ -79,7 +79,7 @@ function UserWaterRefill() {
           <div className="scan-error-message">
             <p>{error}</p>
             {["expired", "cancelled"].includes(session?.status) && (
-              <button type="button" onClick={() => navigate("/user/scan-qr")}>Scan a new refill QR</button>
+              <button className="refill-rescan-button" type="button" onClick={() => navigate("/user/scan-qr")}>Scan a new refill QR</button>
             )}
           </div>
         )}

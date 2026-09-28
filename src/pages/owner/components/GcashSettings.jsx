@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { callPoints, paymentError } from "../../../firebase/pointPurchases";
-import "../../../styles/gcash.css";
+import "../../../styles/shared/gcash.css";
 
 export default function GcashSettings() {
   const [accountName, setAccountName] = useState("");
@@ -47,7 +47,7 @@ export default function GcashSettings() {
         <label>GCash mobile number<input type="tel" value={mobileNumber} onChange={(event) => setMobileNumber(event.target.value)} placeholder="09XXXXXXXXX" maxLength={20} autoComplete="tel" disabled={saving || loadFailed} required /></label>
         <label className="gcash-checkbox"><input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} disabled={saving || loadFailed} />Accept GCash point purchases</label>
         <p>Enabled account details will be shown to buyers. Existing orders keep the recipient details shown when they were created.</p>
-        <button type="submit" disabled={saving || loadFailed}>{saving ? "Saving..." : "Save GCash settings"}</button>
+        <button className="gcash-button" type="submit" disabled={saving || loadFailed}>{saving ? "Saving..." : "Save GCash settings"}</button>
       </form>}
       {error && <p className="gcash-error" role="alert">{error}{loadFailed && " Reload this page to try again."}</p>}
       {message && <p className="gcash-success" role="status">{message}</p>}

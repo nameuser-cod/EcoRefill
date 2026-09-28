@@ -1,0 +1,119 @@
+/*
+ * RecentActivity.jsx, PhotoActivityRow.jsx, and RejectedBreakdown.jsx.
+ * Entry: owner/owner-dashboard.css
+ */
+
+.owner-activity-list,
+.owner-breakdown-list,
+.owner-record-list {
+  display: grid;
+}
+
+.owner-activity-row,
+.owner-record-row {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--owner-line);
+}
+
+.owner-activity-row:first-child,
+.owner-record-row:first-child {
+  padding-top: 0;
+}
+
+.owner-activity-row:last-child,
+.owner-record-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.owner-activity-row > div,
+.owner-record-row > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.owner-activity-row strong,
+.owner-record-row strong {
+  color: var(--owner-ink);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.owner-activity-row p,
+.owner-record-row p {
+  margin: 3px 0 0;
+  color: var(--owner-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.owner-activity-row time,
+.owner-record-row time {
+  display: block;
+  margin-top: 5px;
+  color: #849189;
+  font-size: 0.64rem;
+  font-weight: 650;
+}
+
+.owner-activity-row .owner-transaction-user,
+.owner-record-row .owner-transaction-user {
+  overflow-wrap: anywhere;
+  color: var(--owner-green-dark);
+  font-weight: 800;
+}
+
+.owner-activity-row > .owner-status,
+.owner-record-row > .owner-status {
+  flex: 0 0 auto;
+}
+
+.owner-breakdown-list > div {
+  padding: 11px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--owner-line);
+}
+
+.owner-breakdown-list > div:first-child {
+  padding-top: 0;
+}
+
+.owner-breakdown-list > div:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.owner-breakdown-list span {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--owner-danger-ink);
+}
+
+.owner-breakdown-list strong {
+  overflow: hidden;
+  color: var(--owner-ink);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.owner-breakdown-list b {
+  min-width: 28px;
+  padding: 5px 8px;
+  border-radius: 9px;
+  background: var(--owner-danger);
+  color: var(--owner-danger-ink);
+  font-size: 0.72rem;
+  text-align: center;
+}

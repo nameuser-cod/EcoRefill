@@ -11,7 +11,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
-import "../../styles/auth.css";
+import "../../styles/auth/auth.css";
 
 function Register() {
   const navigate = useNavigate();
@@ -423,7 +423,7 @@ function Register() {
             </p>
           )}
 
-          <button type="submit" disabled={loading}>
+          <button className="auth-submit-button" type="submit" disabled={loading}>
             {loading ? "Creating account..." : "Register"}
           </button>
         </form>

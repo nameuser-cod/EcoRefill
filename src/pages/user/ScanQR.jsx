@@ -18,7 +18,7 @@ import {
   getTrustedTunnelUrl,
   getWaterRefillSessionId,
 } from "./utils/qrCodes";
-import "../../styles/user.css";
+import "../../styles/user/user.css";
 
 const LOCAL_API_BASE_URL =
   import.meta.env.VITE_MACHINE_API_URL || "http://192.168.101.23:5000";
@@ -203,6 +203,7 @@ function ScanQR() {
 
           <div className="scan-actions">
             <button
+              className="scan-camera-button"
               type="button"
               onClick={() => navigate("/user/camera-scan")}
               disabled={redeeming || authLoading}
@@ -227,6 +228,7 @@ function ScanQR() {
               <h2>+{earnedPoints} Points</h2>
               <p>{message}</p>
               <button
+                className="scan-return-button"
                 type="button"
                 onClick={() => navigate("/user/dashboard", { replace: true })}
               >

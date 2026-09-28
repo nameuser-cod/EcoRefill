@@ -1,0 +1,169 @@
+/*
+ * UserDashboard.jsx: point balance, actions, and information cards.
+ * Entry: user/user.css
+ */
+
+/* ---------- POINT BALANCE ---------- */
+
+.points-card,
+.history-summary-card {
+  margin-bottom: 26px;
+  padding: 24px;
+  border: var(--border);
+  border-radius: 20px;
+  background: var(--main-green);
+  color: var(--ink);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.points-card p,
+.history-summary-card p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.points-card h2,
+.history-summary-card h2 {
+  margin: 7px 0;
+  color: var(--ink);
+  font-size: clamp(42px, 12vw, 58px);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.points-card span,
+.history-summary-card span {
+  display: block;
+  max-width: 280px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.points-icon,
+.history-summary-icon {
+  width: 76px;
+  height: 76px;
+  flex: 0 0 76px;
+  border: var(--border);
+  border-radius: 20px;
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  place-items: center;
+  transform: rotate(2deg);
+}
+
+/* ---------- DASHBOARD ACTIONS ---------- */
+
+.dashboard-actions-section {
+  margin-bottom: 24px;
+}
+
+.section-heading {
+  margin-bottom: 13px;
+}
+
+.section-heading h2,
+.section-header h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 21px;
+  font-weight: 950;
+}
+
+.dashboard-action-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.dashboard-action-card {
+  min-height: 108px;
+  padding: 16px !important;
+  background: var(--white) !important;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  text-align: left;
+}
+
+.dashboard-action-card-alt {
+  background: var(--mint-green) !important;
+}
+
+.dashboard-action-icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border: 2px solid var(--ink);
+  border-radius: 13px;
+  background: var(--lime-green);
+  display: grid;
+  place-items: center;
+}
+
+.dashboard-action-card > span:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.dashboard-action-card strong {
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.dashboard-action-card small {
+  color: var(--dark-green);
+  font-size: 12px;
+  font-weight: 720;
+  line-height: 1.35;
+}
+
+/* ---------- INFO CARDS ---------- */
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+  margin-bottom: 24px;
+}
+
+.mini-card {
+  padding: 19px;
+  border: var(--border);
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+.mini-card svg {
+  color: var(--deep-green);
+  stroke-width: 3;
+}
+
+.mini-card h3 {
+  margin: 12px 0 6px;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.mini-card p {
+  margin: 0;
+  color: var(--dark-green);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}

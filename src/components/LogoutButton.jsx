@@ -3,7 +3,7 @@ import { signOut } from "firebase/auth";
 import { AlertTriangle, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../firebase/firebase";
-import "../styles/logout-confirmation.css";
+import "../styles/shared/logout-confirmation.css";
 
 function LogoutButton({
   className,

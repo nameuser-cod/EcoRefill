@@ -11,7 +11,7 @@ import {
   getTransactionTitle,
   TRANSACTION_FILTERS,
 } from "./utils/transactions";
-import "../../styles/user.css";
+import "../../styles/user/user.css";
 
 function TransactionDetails({ transaction }) {
   if (transaction.type === "recycling") {
@@ -138,7 +138,7 @@ function UserHistory() {
             <button
               type="button"
               key={value}
-              className={activeFilter === value ? "active-filter" : ""}
+              className={`history-filter-button ${activeFilter === value ? "active-filter" : ""}`}
               onClick={() => setActiveFilter(value)}
             >
               {label}

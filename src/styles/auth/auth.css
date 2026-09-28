@@ -1,3 +1,5 @@
+/* Login.jsx and Register.jsx: authentication pages and forms. */
+
 :root {
   --auth-ink: #08110b;
   --auth-dark-green: #102719;
@@ -27,8 +29,7 @@
   justify-content: center;
   color: var(--auth-ink);
   font-family: Inter, Arial, Helvetica, sans-serif;
-  background:
-    linear-gradient(90deg, rgba(8, 17, 11, 0.055) 1px, transparent 1px),
+  background: linear-gradient(90deg, rgba(8, 17, 11, 0.055) 1px, transparent 1px),
     linear-gradient(rgba(8, 17, 11, 0.055) 1px, transparent 1px),
     radial-gradient(circle at 8% 8%, var(--auth-lime-green), transparent 22%),
     radial-gradient(circle at 92% 12%, var(--auth-main-green), transparent 22%),
@@ -224,7 +225,7 @@
   line-height: 1.45;
 }
 
-.auth-form > button[type="submit"] {
+.auth-form > button:where(.auth-submit-button)[type="submit"] {
   width: 100%;
   min-height: 54px;
   margin-top: 16px;
@@ -241,23 +242,23 @@
   transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
 }
 
-.auth-form > button[type="submit"]:hover:not(:disabled) {
+.auth-form > button:where(.auth-submit-button)[type="submit"]:hover:not(:disabled) {
   background: var(--auth-lime-green);
   transform: translate(3px, 3px);
   box-shadow: 2px 2px 0 var(--auth-ink);
 }
 
-.auth-form > button[type="submit"]:active:not(:disabled) {
+.auth-form > button:where(.auth-submit-button)[type="submit"]:active:not(:disabled) {
   transform: translate(5px, 5px);
   box-shadow: none;
 }
 
-.auth-form > button[type="submit"]:disabled {
+.auth-form > button:where(.auth-submit-button)[type="submit"]:disabled {
   cursor: not-allowed;
   opacity: 0.62;
 }
 
-.auth-form > button[type="submit"]:focus-visible,
+.auth-form > button:where(.auth-submit-button)[type="submit"]:focus-visible,
 .switch-text a:focus-visible {
   outline: 4px solid var(--auth-lime-green);
   outline-offset: 4px;

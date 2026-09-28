@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { callPoints, paymentError, PURCHASE_STATUS } from "../../../firebase/pointPurchases";
-import "../../../styles/gcash.css";
+import "../../../styles/shared/gcash.css";
 
 function PaymentReview({ purchase, onReviewed, ownerPoints }) {
   const enoughPoints = Number.isSafeInteger(ownerPoints) && ownerPoints >= purchase.points;
@@ -40,8 +40,8 @@ function PaymentReview({ purchase, onReviewed, ownerPoints }) {
         <label>Note to buyer (required for rejection)<textarea value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} maxLength={500} rows={2} disabled={busy} /></label>
         {error && <p className="gcash-error" role="alert">{error}</p>}
         <div className="gcash-actions">
-          <button type="button" disabled={busy || !verified || !enoughPoints} onClick={() => review("approved")}>{busy ? "Saving..." : `Approve · transfer ${purchase.points} points`}</button>
-          <button type="button" className="gcash-reject" disabled={busy || !reviewNote.trim()} onClick={() => review("rejected")}>Reject payment</button>
+          <button className="gcash-button" type="button" disabled={busy || !verified || !enoughPoints} onClick={() => review("approved")}>{busy ? "Saving..." : `Approve · transfer ${purchase.points} points`}</button>
+          <button type="button" className="gcash-reject gcash-button" disabled={busy || !reviewNote.trim()} onClick={() => review("rejected")}>Reject payment</button>
         </div>
       </div>}
     </article>
@@ -79,10 +79,10 @@ export default function GcashPaymentReviews({ ownerPoints }) {
 
   return (
     <section className="owner-panel gcash-settings">
-      <div className="gcash-section-heading"><h2>GCash payments ({pendingCount} pending)</h2><button type="button" disabled={loading} onClick={refresh}>Refresh</button></div>
+      <div className="gcash-section-heading"><h2>GCash payments ({pendingCount} pending)</h2><button className="gcash-button" type="button" disabled={loading} onClick={refresh}>Refresh</button></div>
       <div className="owner-filter-row">
-        <button type="button" className={!showReviewed ? "active" : ""} aria-pressed={!showReviewed} onClick={() => setShowReviewed(false)}>Pending review</button>
-        <button type="button" className={showReviewed ? "active" : ""} aria-pressed={showReviewed} onClick={() => setShowReviewed(true)}>Reviewed</button>
+        <button type="button" className={`gcash-button owner-filter-button ${!showReviewed ? "active" : ""}`} aria-pressed={!showReviewed} onClick={() => setShowReviewed(false)}>Pending review</button>
+        <button type="button" className={`gcash-button owner-filter-button ${showReviewed ? "active" : ""}`} aria-pressed={showReviewed} onClick={() => setShowReviewed(true)}>Reviewed</button>
       </div>
       {error && <p className="gcash-error" role="alert">{error}</p>}
       {message && <p className="gcash-success" role="status">{message}</p>}

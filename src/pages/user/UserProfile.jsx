@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { auth, db } from "../../firebase/firebase";
 import LogoutButton from "../../components/LogoutButton";
 import UserBottomNav from "./components/UserBottomNav";
-import "../../styles/user.css";
+import "../../styles/user/user.css";
 
 function UserProfile() {
   const navigate = useNavigate();

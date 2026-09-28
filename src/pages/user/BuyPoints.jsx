@@ -5,8 +5,8 @@ import { ArrowLeft, ShoppingBag } from "lucide-react";
 import { auth } from "../../firebase/firebase";
 import { callPoints, paymentError, PURCHASE_STATUS } from "../../firebase/pointPurchases";
 import UserBottomNav from "./components/UserBottomNav";
-import "../../styles/user.css";
-import "../../styles/gcash.css";
+import "../../styles/user/user.css";
+import "../../styles/shared/gcash.css";
 
 function PaymentInstructions({ purchase, onSubmitted }) {
   const [referenceNumber, setReferenceNumber] = useState("");
@@ -42,7 +42,7 @@ function PaymentInstructions({ purchase, onSubmitted }) {
       <label>Sender name<input value={senderName} onChange={(event) => setSenderName(event.target.value)} maxLength={100} autoComplete="name" disabled={busy} required /></label>
       <label>GCash reference number<input value={referenceNumber} onChange={(event) => setReferenceNumber(event.target.value)} inputMode="numeric" maxLength={30} placeholder="Reference number from your receipt" disabled={busy} required /></label>
       {error && <p className="gcash-error" role="alert">{error}</p>}
-      <button className="buy-points-btn" disabled={busy}>{busy ? "Submitting..." : "Submit payment for verification"}</button>
+      <button className="buy-points-btn gcash-button" disabled={busy}>{busy ? "Submitting..." : "Submit payment for verification"}</button>
     </form>
   );
 }
@@ -156,7 +156,7 @@ function RefillPointPurchase({ machineId, refillSessionId, waterAmountMl }) {
           </section>
         </>}
         <section className="purchase-summary-card">
-          <div className="gcash-section-heading"><h2>My GCash purchases</h2><button type="button" onClick={refresh} disabled={loading || busy}>Refresh</button></div>
+          <div className="gcash-section-heading"><h2>My GCash purchases</h2><button className="gcash-button" type="button" onClick={refresh} disabled={loading || busy}>Refresh</button></div>
           {!loading && !purchases.length && <p>Your payment requests will appear here.</p>}
           {purchases.map((purchase) => <article key={purchase.id} className="gcash-purchase">
             <h3>{purchase.packageName || "Points purchase"} · ₱{purchase.price}</h3>
@@ -167,7 +167,7 @@ function RefillPointPurchase({ machineId, refillSessionId, waterAmountMl }) {
             {purchase.status === "rejected" && <p>Contact the owner with your receipt if you already paid. Do not send another payment to resolve this request.</p>}
             {purchase.status === "awaiting_payment" && (activePurchaseId === purchase.id
               ? <PaymentInstructions purchase={purchase} onSubmitted={submitted} />
-              : <button type="button" onClick={() => setActivePurchaseId(purchase.id)}>View payment details</button>)}
+              : <button className="gcash-button" type="button" onClick={() => setActivePurchaseId(purchase.id)}>View payment details</button>)}
           </article>)}
         </section>
       </div>

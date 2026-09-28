@@ -10,7 +10,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
 import { readRememberedEmail, saveRememberedEmail } from "./rememberedLogin";
-import "../../styles/auth.css";
+import "../../styles/auth/auth.css";
 
 async function getDashboardPath(user) {
   const userDocSnap = await getDoc(doc(db, "users", user.uid));
@@ -194,7 +194,7 @@ function Login() {
 
           {error && <p className="error-message">{error}</p>}
 
-          <button type="submit" disabled={loading || checkingSession}>
+          <button className="auth-submit-button" type="submit" disabled={loading || checkingSession}>
             {checkingSession ? "Checking session..." : loading ? "Logging in..." : "Login"}
           </button>
         </form>

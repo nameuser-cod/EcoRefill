@@ -1,0 +1,17 @@
+/*
+ * Global defaults and inherited compatibility styles.
+ * Keep this before owner-dashboard.css in OwnerPageShell.jsx.
+ * These selectors also affect other routes; preserve import order.
+ */
+
+@import "../shared/base.css";
+@import "./legacy/page-and-auth.css";
+@import "./legacy/dashboard-and-lists.css";
+@import "./legacy/machine-and-qr.css";
+@import "./legacy/scan-and-history.css";
+@import "./legacy/purchases.css";
+@import "./legacy/machine-status.css";
+@import "./legacy/profile.css";
+@import "./legacy/camera.css";
+@import "./legacy/forms-and-analytics.css";
+@import "./legacy/mobile-dashboard.css";

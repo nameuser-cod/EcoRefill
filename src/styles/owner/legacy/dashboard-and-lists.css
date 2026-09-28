@@ -1,0 +1,419 @@
+/*
+ * Inherited layouts, balances, lists, and status styles.
+ * Entry: owner/owner.css
+ * Global compatibility rules retained in their original cascade order.
+ */
+
+.user-dashboard-container,
+.owner-dashboard-container,
+.scan-container,
+.history-container {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding-bottom: 44px;
+}
+
+.owner-dashboard-container {
+  max-width: 560px;
+}
+
+.dashboard-header,
+.scan-header,
+.history-header,
+.machine-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.scan-header,
+.history-header {
+  justify-content: flex-start;
+  gap: 16px;
+}
+
+.small-title {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  background: var(--lime-green);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dashboard-header h1,
+.scan-header h1,
+.history-header h1 {
+  font-size: 34px;
+}
+
+.machine-location {
+  display: block;
+  margin-top: 7px;
+  color: var(--dark-green);
+  font-weight: 850;
+}
+
+.icon-button,
+.back-button {
+  width: 50px;
+  height: 50px;
+  padding: 0;
+  border-radius: 14px;
+  background: var(--ink);
+  color: var(--lime-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.points-card,
+.machine-status-card,
+.history-summary-card,
+.quality-card {
+  background: var(--main-green);
+  color: var(--ink);
+  border: var(--border);
+  border-radius: 20px;
+  padding: 26px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-lg);
+  margin-bottom: 26px;
+}
+
+.points-card p,
+.machine-status-card p,
+.history-summary-card p,
+.quality-card p,
+.owner-stat-card p {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 950;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+}
+
+.points-card h2,
+.history-summary-card h2 {
+  margin: 8px 0;
+  font-size: 58px;
+  line-height: 1;
+  font-weight: 950;
+}
+
+.machine-status-card h2,
+.quality-card h2 {
+  margin: 8px 0;
+  font-size: 34px;
+  text-transform: capitalize;
+  font-weight: 950;
+}
+
+.points-card span,
+.machine-status-card span,
+.history-summary-card span {
+  display: block;
+  max-width: 250px;
+  color: var(--ink);
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.points-icon,
+.machine-status-icon,
+.history-summary-icon {
+  width: 78px;
+  height: 78px;
+  border-radius: 20px;
+  background: var(--white);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transform: rotate(3deg);
+}
+
+.quick-actions,
+.history-filters {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 13px;
+  margin-bottom: 24px;
+}
+
+.quick-actions button,
+.history-filters button {
+  margin: 0;
+  padding: 15px 9px;
+  min-height: 74px;
+  border-radius: 14px;
+  background: var(--white);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.quick-actions button:nth-child(2),
+.history-filters button:nth-child(2) {
+  background: var(--mint-green);
+}
+
+.quick-actions button:nth-child(3),
+.history-filters button:nth-child(3) {
+  background: var(--lime-green);
+}
+
+.quick-actions button:hover,
+.history-filters button:hover,
+.history-filters .active-filter {
+  background: var(--ink);
+  color: var(--lime-green);
+}
+
+.info-grid,
+.owner-stats-grid,
+.qr-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 24px;
+}
+
+.mini-card,
+.owner-stat-card,
+.qr-info-card,
+.machine-guide-card,
+.transaction-item,
+.owner-list-item,
+.history-item,
+.empty-card {
+  background: var(--white);
+  border: var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.mini-card,
+.owner-stat-card,
+.qr-info-card,
+.machine-guide-card {
+  padding: 20px;
+}
+
+.mini-card svg,
+.owner-stat-card svg,
+.qr-info-card svg,
+.machine-guide-card svg,
+.manual-title svg {
+  color: var(--deep-green);
+  stroke-width: 3;
+}
+
+.mini-card h3,
+.owner-stat-card h3,
+.qr-info-card h3,
+.machine-guide-card h3,
+.manual-card h2,
+.scan-card h2,
+.empty-owner-card h2,
+.owner-list-details h4,
+.transaction-details h4,
+.history-item-top h3 {
+  margin: 12px 0 6px;
+  color: var(--ink);
+  font-weight: 950;
+}
+
+.recent-section,
+.owner-section,
+.history-list-section,
+.scan-card,
+.manual-card,
+.empty-owner-card {
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 22px;
+  color: var(--ink);
+  font-weight: 950;
+}
+
+.section-header button {
+  margin: 0;
+  padding: 9px 13px;
+  border-radius: 12px;
+  font-size: 13px;
+  background: var(--lime-green);
+}
+
+.empty-card {
+  text-align: center;
+  padding: 24px;
+  background: var(--mint-green);
+}
+
+.empty-card p {
+  margin: 0;
+  font-weight: 950;
+  color: var(--ink);
+}
+
+.empty-card span {
+  display: block;
+  margin-top: 6px;
+  color: var(--dark-green);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.transaction-list,
+.owner-list,
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.transaction-item,
+.owner-list-item,
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 15px;
+}
+
+.transaction-icon,
+.owner-list-icon,
+.history-item-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--main-green);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.transaction-details,
+.owner-list-details,
+.history-item-content {
+  flex: 1;
+}
+
+.transaction-details h4,
+.owner-list-details h4,
+.history-item-top h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.transaction-details p,
+.owner-list-details p,
+.history-item-details p {
+  margin: 5px 0 0;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.status-pill,
+.owner-status-pill,
+.history-item-top span {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: var(--lime-green);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.loading-text {
+  width: fit-content;
+  margin: 90px auto 0;
+  padding: 14px 18px;
+  border: var(--border);
+  border-radius: 14px;
+  background: var(--lime-green);
+  color: var(--ink);
+  font-weight: 950;
+  box-shadow: var(--shadow);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 16px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--cream-green);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--main-green);
+  border-right: 2px solid var(--ink);
+}
+
+.alert-icon {
+  background: var(--warning);
+}
+
+.status-good {
+  background: var(--lime-green);
+  color: var(--ink);
+}
+
+.status-warning {
+  background: var(--warning);
+  color: var(--ink);
+}
+
+.status-danger {
+  background: var(--danger);
+  color: var(--ink);
+}
+
+.quality-card {
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.empty-owner-card {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.empty-owner-card svg {
+  color: var(--deep-green);
+}

@@ -1,0 +1,76 @@
+/*
+ * Shared user sections, cards, and empty states.
+ * Entry: user/user.css
+ */
+
+/* ---------- USER SECTIONS / EMPTY STATES ---------- */
+
+.recent-section,
+.scan-card,
+.history-list-section,
+.purchase-intro-card,
+.purchase-summary-card,
+.water-selection-section,
+.refill-order-summary,
+.refill-success-card,
+.profile-card,
+.profile-form-card {
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.recent-section,
+.scan-card,
+.history-list-section {
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.text-action-button,
+.section-header > button:where(.text-action-button) {
+  width: auto;
+  min-height: 42px;
+  padding: 9px 13px !important;
+  border-radius: 12px !important;
+  background: var(--lime-green) !important;
+  font-size: 13px !important;
+  white-space: nowrap;
+}
+
+.empty-card {
+  padding: 24px;
+  border: 2px dashed var(--deep-green);
+  border-radius: 16px;
+  background: var(--mint-green);
+  color: var(--ink);
+  text-align: center;
+}
+
+.empty-card svg {
+  margin-bottom: 8px;
+  color: var(--deep-green);
+}
+
+.empty-card p {
+  margin: 0;
+  font-weight: 950;
+}
+
+.empty-card span {
+  display: block;
+  margin-top: 6px;
+  color: var(--dark-green);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}

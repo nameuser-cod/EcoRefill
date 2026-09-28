@@ -1,0 +1,278 @@
+/*
+ * MachineHome.jsx, RedeemQRCode.jsx, and MachineWaterRefill.jsx: kiosk layout and controls.
+ * Entry: machine/machine.css
+ */
+
+/* Machine-only styles. Keep instructions readable on 800×480 and 1024×600
+   panels; reduce decoration and spacing before reducing text size. */
+
+.machine-page {
+  --ink: #08110b;
+  --dark-green: #102719;
+  --deep-green: #1f6f3a;
+  --main-green: #35d04f;
+  --lime-green: #9cff59;
+  --mint-green: #dfffd6;
+  --cream-green: #f3ffe8;
+  --warning: #ffd43b;
+  --shadow: 8px 8px 0 var(--ink);
+  --shadow-sm: 5px 5px 0 var(--ink);
+  --white: #fff;
+  --blue: #e0f4ff;
+  --danger: #a51e28;
+  --border: 3px solid var(--ink);
+  --machine-qr-size: 240px;
+  color: var(--ink);
+  font: 600 20px/1.35 Inter, Arial, Helvetica, sans-serif;
+}
+
+.machine-page *,
+.machine-page *::before,
+.machine-page *::after {
+  box-sizing: border-box;
+}
+
+.machine-page h1,
+.machine-page h2,
+.machine-page h3,
+.machine-page p {
+  margin: 0;
+}
+
+.machine-page svg {
+  flex-shrink: 0;
+}
+
+.machine-page button {
+  touch-action: manipulation;
+  box-shadow: var(--shadow-sm);
+  transition: transform .14s ease, box-shadow .14s ease, background .14s ease;
+}
+
+.machine-page button:focus-visible {
+  outline: 4px solid var(--warning);
+  outline-offset: 3px;
+}
+
+.machine-page button:disabled {
+  cursor: wait;
+  opacity: .6;
+}
+
+.machine-kiosk-page {
+  min-height: 100dvh;
+  padding: 16px;
+  background: linear-gradient(90deg, rgba(8, 17, 11, .055) 1px, transparent 1px),
+    linear-gradient(rgba(8, 17, 11, .055) 1px, transparent 1px),
+    radial-gradient(circle at 8% 8%, var(--lime-green), transparent 22%),
+    radial-gradient(circle at 92% 12%, var(--main-green), transparent 22%),
+    var(--cream-green);
+  background-size: 34px 34px, 34px 34px, auto, auto, auto;
+}
+
+.machine-kiosk-shell {
+  width: min(100%, 1200px);
+  min-height: calc(100dvh - 32px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.machine-kiosk-header {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.machine-kiosk-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.machine-brand-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--main-green);
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.water-brand-icon {
+  background: var(--blue);
+}
+
+.machine-kiosk-brand h1 {
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -1px;
+}
+
+.machine-kiosk-brand p {
+  font-size: 18px;
+  color: var(--dark-green);
+}
+
+.machine-kiosk-status,
+.machine-kiosk-back {
+  min-height: 56px;
+  padding: 10px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: var(--border);
+  border-radius: 12px;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 750;
+}
+
+.machine-kiosk-status {
+  box-shadow: 3px 3px 0 var(--ink);
+  border-radius: 999px;
+}
+
+.machine-kiosk-status.is-online {
+  background: var(--lime-green);
+}
+
+.machine-kiosk-status.is-offline {
+  background: #ffeded;
+  color: var(--danger);
+}
+
+.machine-kiosk-back {
+  background: white;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.machine-kiosk-card,
+.water-kiosk-card {
+  flex: 1;
+  min-width: 0;
+  padding: 24px;
+  border: var(--border);
+  border-radius: 20px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.machine-kiosk-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  text-align: center;
+}
+
+.machine-home-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.machine-kiosk-hero-icon,
+.water-status-icon {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: var(--lime-green);
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.machine-kiosk-hero-icon svg,
+.water-status-icon svg {
+  width: 46px;
+  height: 46px;
+}
+
+.tone-active .machine-kiosk-hero-icon {
+  background: #fff0b8;
+}
+
+.tone-error .machine-kiosk-hero-icon {
+  background: #ffeded;
+  color: var(--danger);
+}
+
+.machine-kiosk-copy {
+  max-width: 780px;
+}
+
+.machine-kiosk-eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+
+.machine-kiosk-copy h2,
+.water-status-panel h2 {
+  font-size: 36px;
+  font-weight: 950;
+  line-height: 1.12;
+  letter-spacing: -.8px;
+}
+
+.machine-kiosk-copy p,
+.water-status-panel p {
+  margin-top: 10px;
+  color: var(--dark-green);
+  font-size: 22px;
+}
+
+.machine-kiosk-primary,
+.machine-kiosk-finish {
+  min-height: 60px;
+  padding: 12px 24px;
+  border: var(--border);
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--main-green);
+  color: var(--ink);
+  font: inherit;
+  font-size: 22px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.machine-kiosk-primary {
+  min-width: 240px;
+  max-width: 100%;
+}
+
+@media (hover: hover) {
+  .machine-page button:hover:not(:disabled) {
+    background: var(--lime-green);
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+}
+
+.machine-page button:active:not(:disabled) {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}

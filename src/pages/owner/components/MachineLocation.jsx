@@ -4,14 +4,14 @@ import { LocateFixed, MapPin, Pencil, Save, X } from "lucide-react";
 import { auth, db } from "../../../firebase/firebase";
 import { parseCoordinates } from "../utils/machineLocation";
 import MachineLocationMap from "./MachineLocationMap";
-import "../../../styles/machine-location.css";
+import "../../../styles/owner/machine-location.css";
 
 export default function MachineLocation({ machine }) {
   const [open, setOpen] = useState(false);
 
   return (
     <div className="machine-location machine-location-launcher">
-      <button type="button" aria-haspopup="dialog" onClick={() => setOpen(true)}>
+      <button className="machine-location-button" type="button" aria-haspopup="dialog" onClick={() => setOpen(true)}>
         <MapPin size={18} aria-hidden="true" />View machine map
       </button>
       {open && <MachineLocationDialog machine={machine} onClose={() => setOpen(false)} />}
@@ -134,8 +134,8 @@ function MachineLocationDialog({ machine, onClose }) {
           <p>{machine.machineName || machine.machineId || machine.id} · {machine.location || "Location not set"}</p>
         </div>
         <div className="machine-location-actions">
-          {!editing && <button type="button" onClick={edit}><Pencil size={16} />{savedCoordinates ? "Update location" : "Set location"}</button>}
-          <button type="button" className="machine-location-secondary" onClick={onClose} disabled={saving} aria-label="Close machine map" autoFocus><X size={20} aria-hidden="true" /></button>
+          {!editing && <button className="machine-location-button" type="button" onClick={edit}><Pencil size={16} />{savedCoordinates ? "Update location" : "Set location"}</button>}
+          <button type="button" className="machine-location-secondary machine-location-button" onClick={onClose} disabled={saving} aria-label="Close machine map" autoFocus><X size={20} aria-hidden="true" /></button>
         </div>
       </div>
       <p>{editing ? "Tap the map or drag the pin to where the machine is installed. Changes are saved only when you select Save location."
@@ -145,12 +145,12 @@ function MachineLocationDialog({ machine, onClose }) {
       {editing && <form onSubmit={save}>
         <fieldset disabled={saving || locating}>
           <label>Location name / address<input value={draft.location} onChange={(event) => select({ location: event.target.value })} maxLength={200} placeholder="e.g. Barangay hall, near the main entrance" required /></label>
-          <button className="machine-location-secondary" type="button" onClick={locate}><LocateFixed size={18} />{locating ? "Finding your location..." : "Use my location"}</button>
+          <button className="machine-location-secondary machine-location-button" type="button" onClick={locate}><LocateFixed size={18} />{locating ? "Finding your location..." : "Use my location"}</button>
           <p>Use your location only when you are standing beside the machine.</p>
         </fieldset>
         <div className="machine-location-actions">
-          <button type="submit" disabled={saving || locating}><Save size={18} />{saving ? "Saving..." : "Save location"}</button>
-          <button type="button" className="machine-location-secondary" onClick={cancel} disabled={saving}>Cancel</button>
+          <button className="machine-location-button" type="submit" disabled={saving || locating}><Save size={18} />{saving ? "Saving..." : "Save location"}</button>
+          <button type="button" className="machine-location-secondary machine-location-button" onClick={cancel} disabled={saving}>Cancel</button>
         </div>
       </form>}
       {error && <p className="owner-form-error" role="alert">{error}</p>}
