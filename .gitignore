@@ -37,6 +37,7 @@ ecorefill-pi/gpio.local.json
 ecorefill-pi/data/
 
 # EcoRefill datasets
+datasets/
 ecorefill_dataset/**/labels.cache
 aluminum_can_dataset/
 plastic_bottle_dataset/

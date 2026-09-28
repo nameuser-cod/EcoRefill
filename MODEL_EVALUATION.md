@@ -1,5 +1,103 @@
 # Bottle and can evaluation — September 5, 2026
 
+## September 28, 2026 — TACO and Waste Segregation candidate
+
+The user confirmed that the existing dataset's aluminum-can labels are verified
+aluminum. Those examples are reused without mapping generic public-dataset can
+labels to aluminum. Existing can polygons were explicitly converted into boxes;
+subpixel export rounding at image edges was clipped. Original data and deployed
+weights are preserved.
+
+The first version is a curated subset, not the entirety of either new dataset:
+
+| Split | Bottle images | Can images | Negative images | Total images |
+| --- | ---: | ---: | ---: | ---: |
+| Train | 151 | 68 | 77 | 296 |
+| Validation | 34 | 17 | 11 | 62 |
+
+There are 189 bottle boxes and 71 can boxes in training; validation has 40 bottle
+boxes and 17 can boxes. Source totals across the splits are 255 existing project
+images, 71 TACO images, and 32 Waste Segregation images.
+
+TACO contributes 71 usable images from an initial 129-image archive batch.
+The other 58 images are excluded because they include unverified can/ambiguous
+annotations. The 32 Waste Segregation examples were visually reviewed as food
+or produce scenes without visible accepted objects, with deliberate empty
+negative labels. Graphics, mixed packaging and apparent duplicate scenes were
+excluded. This selection does not cover the full range of rejected materials.
+
+Existing bottle training images were sampled deterministically (seed 42) to
+reduce the original imbalance while retaining the 68 can images. Two validation
+candidates were excluded for duplicate pixels or source-name overlap with
+training. This does not establish that every near-duplicate or physical object
+has been separated across the original public dataset.
+
+Dataset recipe and individual review/source records are in the local ignored
+`datasets/review/candidate_v2_notes.json`, `datasets/review/existing_verified.csv`,
+`datasets/review/waste_selected.csv`, and `datasets/ecorefill_v2/provenance.json`.
+The new [training guide](DATASET_TRAINING.md) documents reproducible conversion,
+training, and comparison commands.
+
+The deployed baseline made all 62 expected material decisions correctly on this
+public validation subset (34 bottles, 17 cans, 11 food-scene negatives), recorded
+in `runs/detection_baseline_v2_public.json`. This diagnostic uses full public
+images without the machine scan crop, with the existing material confidence
+and area thresholds. It bypasses weight/visual inspection. It is **not** a
+machine-camera accuracy result or an independent final test: these validation
+examples participate in candidate checkpoint selection, and the existing
+checkpoint's historical data provenance has not been fully reconstructed.
+
+Two candidates were trained from the existing checkpoint at image size 416,
+batch size 8 and seed 42 on the Mac GPU. The default-optimizer run stopped after
+11 epochs and selected epoch 1. It regressed to 16/34 correct bottle acceptances,
+with 16 bottle rejections and two bottles incorrectly accepted as cans, despite
+rejecting every glass scene. It was not deployed.
+
+The conservative run used AdamW, learning rate 0.0001, one warmup epoch, no mosaic,
+and patience 5. It also stopped after 11 epochs, selecting epoch 6. Its validation
+box metrics recorded for epoch 6 were mAP50 0.99202 and mAP50–95 0.95503; these are
+bounding-box metrics, **not acceptance accuracy**.
+
+Final material-decision comparisons at the unchanged acceptance thresholds:
+
+| Public-image check | Existing model | Conservative candidate |
+| --- | ---: | ---: |
+| Correct bottle acceptance | 34/34 | 29/34 |
+| Correct can acceptance | 17/17 | 17/17 |
+| Correct food-scene rejection | 11/11 | 11/11 |
+| Correct glass-scene rejection | 23/26 | 26/26 |
+| Wrong-material acceptances on the validation subset | 0 | 0 |
+
+The glass check uses 26 TACO scenes outside the training batch. An initial
+29-scene selection was reviewed before inference; three ambiguous mixed scenes
+were excluded. Some scenes contain small objects or multiple views of the same
+physical bottle, so these image counts are not independent material trials.
+The scenes were excluded from training, but comparisons were repeated across
+candidates; this is exploratory evaluation, not an untouched final machine test.
+
+**Decision: retain the deployed checkpoint.** The new candidate improves glass
+rejection on these examples but rejects five valid bottle images. The user has
+no original machine-camera photos available yet, so neither candidate establishes
+that the previously reported can-as-bottle problem is fixed. No runtime thresholds,
+reward rules, hardware code, or deployed weights were changed.
+
+Local artifacts:
+
+- Conservative candidate: `runs/detect/ecorefill_taco_waste_conservative/weights/best.pt`
+- First candidate: `runs/detect/ecorefill_taco_waste_v2/weights/best.pt`
+- Final validation comparison: `runs/detection_comparison_conservative_public.json`
+- Final glass comparison: `runs/detection_comparison_conservative_glass.json`
+- Complete source inventory: `datasets/review/download_report.json` (1,500 TACO
+  images and 15,366 Waste Segregation image files downloaded and extracted).
+
+The deployed checkpoint's SHA-256 remained
+`a7d59d7aacd1c84c4400354aa37bc98755ecb68725f3efa98897ce03f8810ac2`.
+All 16 preparation regression tests and 12 material-decision tests passed.
+The converter was additionally exercised on actual TACO images, and both final
+models were run through the production material-decision code with the scan crop
+disabled for these public-image diagnostics. Original full-frame machine photos
+remain the next required evidence before deployment.
+
 ## September 9 machine-camera report
 
 ### 15:41 preview and uncertain-material handling

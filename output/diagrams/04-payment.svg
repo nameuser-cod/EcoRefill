@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="2400" viewBox="0 0 1600 2400" role="img" aria-labelledby="title">
+<title id="title">4. Buy points and verify payment</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#43515e"/></marker></defs>
+<rect width="1600" height="2400" fill="white"/>
+<style>text{font-family:Arial,Helvetica,sans-serif;fill:#192b39}.edge{fill:none;stroke:#43515e;stroke-width:2;stroke-linejoin:round;marker-end:url(#arrow)}.label{font-size:17px;paint-order:stroke;stroke:white;stroke-width:8px;stroke-linejoin:round}.role{font-size:12px;letter-spacing:1px;font-weight:700;fill:#526978}</style>
+<text x="55" y="53" font-size="32" font-weight="700">4. Buy points and verify payment</text>
+<text x="55" y="87" font-size="16">Called from the refill selection page. The signed-in owner reviews purchases in Transactions; records do not replace owner login.</text>
+<path d="M55 108 H1545" stroke="#b7d8c4" stroke-width="3"/>
+<polyline class="edge" points="800,218.0 800,305.0"/>
+<polyline class="edge" points="800,589.0 800,671.0"/>
+<polyline class="edge" points="800,749.0 800,831.0"/>
+<polyline class="edge" points="800,909.0 800,985.0"/>
+<polyline class="edge" points="800,1289.0 800,1375.0"/>
+<polyline class="edge" points="800,1679.0 800,2040.0"/>
+<polyline class="edge" points="800,415.0 800,511.0"/>
+<polyline class="edge" points="935.0,360 1075.0,360"/>
+<polyline class="edge" points="1405.0,360 1530,360 1530,2090 1020.0,2090"/>
+<polyline class="edge" points="665.0,1040 515.0,1040"/>
+<polyline class="edge" points="360,1001.0 360,795 800,795 800,831.0"/>
+<polyline class="edge" points="935.0,1040 1075.0,1040"/>
+<polyline class="edge" points="1405.0,1040 1490,1040 1490,2090 1020.0,2090"/>
+<polyline class="edge" points="800,1095.0 800,1211.0"/>
+<polyline class="edge" points="800,1485.0 800,1601.0"/>
+<polyline class="edge" points="935.0,1430 1075.0,1430"/>
+<polyline class="edge" points="1240,1469.0 1240,1930 1080,1930 1080,2090 1020.0,2090"/>
+<rect x="665.0" y="142.0" width="270" height="76" rx="30" fill="#e4f4e9" stroke="#26734d" stroke-width="2"/>
+<text class="role" text-anchor="middle" x="800" y="172.0">USER</text>
+<text text-anchor="middle" font-size="18" x="800" y="195.0">Enter points to purchase</text>
+<polygon points="800,305.0 935.0,360 800,415.0 665.0,360" fill="#fff3cf" stroke="#a47716" stroke-width="2"/>
+<text class="role" text-anchor="middle" x="800" y="352.0">SYSTEM</text>
+<text text-anchor="middle" font-size="18" x="800" y="375.0">Purchase available?</text>
+<rect x="1075.0" y="321.0" width="330" height="78" rx="9" fill="#edf5ff" stroke="#3d6689" stroke-width="2"/>
+<text class="role" text-anchor="middle" x="1240" y="341.0">USER APP</text>
+<text text-anchor="middle" font-size="18" x="1240" y="364.0">Show unavailable;</text>
+<text text-anchor="middle" font-size="18" x="1240" y="386.0">no payment / no points transferred</text>
+<rect x="665.0" y="511.0" width="270" height="78" rx="9" fill="#edf5ff" stroke="#3d6689" stroke-width="2"/>
+<text class="role" text-anchor="middle" x="800" y="531.0">USER</text>
+<text text-anchor="middle" font-size="18" x="800" y="554.0">Pay via GCash and</text>
+<text text-anchor="middle" font-size="18" x="800" y="576.0">submit payment reference</text>
+<rect x="665.0" y="671.0" width="270" height="78" rx="9" fill="#edf5ff" stroke="#3d6689" stroke-width="2"/>
+<text class="role" text-anchor="middle" x="800" y="691.0">SYSTEM</text>
+<text text-anchor="middle" font-size="18" x="800" y="714.0">Save pending purchase;</text>
+<text text-anchor="middle" font-size="18" x="800" y="736.0">no points credited yet</text>
+<rect x="665.0" y="831.0" width="270" height="78" rx="9" fill="#edf5ff" stroke="#3d6689" stroke-width="2"/>
+<text class="role" text-anchor="middle" x="800" y="851.0">SIGNED-IN OWNER</text>
+<text text-anchor="middle" font-size="18" x="800" y="874.0">Review received payment</text>
+<text text-anchor="middle" font-size="18" x="800" y="896.0">and purchase details</text>
+<polygon points="800,985.0 935.0,1040 800,1095.0 665.0,1040" fill="#fff3cf" stroke="#a47716" stroke-width="2"/>
+<text class="role" text-anchor="middle" x="800" y="1032.0">OWNER</text>
+<text text-anchor="middle" font-size="18" x="800" y="1055.0">Review status?</text>
+<rect x="205.0" y="1001.0" width="310" height="78" rx="9" fill="#edf5ff" stroke="#3d6689" stroke-width="2"/>
+<text class="role" text-anchor="middle" x="360" y="1021.0">SYSTEM</text>
+<text text-anchor="middle" font-size="18" x="360" y="1044.0">Keep pending; wait for review</text>
+<text text-anchor="middle" font-size="18" x="360" y="1066.0">No points credited</text>
+<rect x="1075.0" y="1001.0" width="330" height="78" rx="9" fill="#edf5ff" stroke="#3d6689" stroke-width="2"/>
+<text class="role" text-anchor="middle" x="1240" y="1021.0">OWNER / SYSTEM</text>
+<text text-anchor="middle" font-size="18" x="1240" y="1044.0">Reject payment; notify user</text>
+<text text-anchor="middle" font-size="18" x="1240" y="1066.0">No points credited</text>
+<rect x="665.0" y="1211.0" width="270" height="78" rx="9" fill="#edf5ff" stroke="#3d6689" stroke-width="2"/>
+<text class="role" text-anchor="middle" x="800" y="1231.0">SYSTEM</text>
+<text text-anchor="middle" font-size="18" x="800" y="1254.0">Validate owner balance and</text>
+<text text-anchor="middle" font-size="18" x="800" y="1276.0">transfer eligibility</text>
+<polygon points="800,1375.0 935.0,1430 800,1485.0 665.0,1430" fill="#fff3cf" stroke="#a47716" stroke-width="2"/>
+<text class="role" text-anchor="middle" x="800" y="1422.0">SYSTEM</text>
+<text text-anchor="middle" font-size="18" x="800" y="1445.0">Transfer allowed?</text>
+<rect x="1075.0" y="1391.0" width="330" height="78" rx="9" fill="#edf5ff" stroke="#3d6689" stroke-width="2"/>
+<text class="role" text-anchor="middle" x="1240" y="1411.0">SYSTEM</text>
+<text text-anchor="middle" font-size="18" x="1240" y="1434.0">Show transfer pending / error</text>
+<text text-anchor="middle" font-size="18" x="1240" y="1456.0">Do not credit points</text>
+<rect x="615.0" y="1601.0" width="370" height="78" rx="9" fill="#edf5ff" stroke="#3d6689" stroke-width="2"/>
+<text class="role" text-anchor="middle" x="800" y="1621.0">SYSTEM</text>
+<text text-anchor="middle" font-size="18" x="800" y="1644.0">Transfer owner points to user</text>
+<text text-anchor="middle" font-size="18" x="800" y="1666.0">and record approved purchase once</text>
+<rect x="580.0" y="2040.0" width="440" height="100" rx="30" fill="#e4f4e9" stroke="#26734d" stroke-width="2"/>
+<text class="role" text-anchor="middle" x="800" y="2060.0">USER APP</text>
+<text text-anchor="middle" font-size="18" x="800" y="2083.0">Show purchase status; return to</text>
+<text text-anchor="middle" font-size="18" x="800" y="2105.0">Section 3: resume refill and recheck</text>
+<text text-anchor="middle" font-size="18" x="800" y="2127.0">QR validity and available balance</text>
+<text class="label" text-anchor="middle" x="830" y="470">Yes</text>
+<text class="label" text-anchor="middle" x="1010" y="335">No</text>
+<text class="label" text-anchor="middle" x="590" y="1015">Pending</text>
+<text class="label" text-anchor="middle" x="1010" y="1015">Rejected</text>
+<text class="label" text-anchor="middle" x="855" y="1160">Approved</text>
+<text class="label" text-anchor="middle" x="830" y="1545">Yes</text>
+<text class="label" text-anchor="middle" x="1010" y="1405">No</text>
+<text x="55" y="2365" font-size="15" fill="#526978">EcoRefill · Rectangles: actions · Diamonds: decisions · Purple boxes: linked sections · Actor shown inside each node</text></svg>

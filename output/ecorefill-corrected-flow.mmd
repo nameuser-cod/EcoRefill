@@ -1,0 +1,103 @@
+flowchart TB
+  subgraph USER["USER FLOW"]
+    direction TB
+    U0([Start]) --> U1[Log in to app]
+    U1 --> U2{Valid login?}
+    U2 -->|No| U1
+    U2 -->|Yes| U3[View dashboard]
+    U3 --> U4{Choose action}
+    U4 -->|Recycle| U5[Insert item]
+    U6{More items?} -->|Yes| U5
+    U6 -->|No| U7[Press green button]
+    U8[Scan reward QR]
+    U4 -->|Refill| U9[Press blue button]
+    U10[Scan refill QR and select amount] --> U11{Enough points?}
+    U11 -->|Yes| U12[Place container and confirm refill]
+    U11 -->|No| U13{Buy points?}
+    U13 -->|No| U3
+    U13 -->|Yes| U14[Pay via GCash and submit reference]
+    U15[View result or error] --> U3
+    U4 -->|Log out| U16[Log out of app]
+    U16 --> U17([End])
+  end
+
+  subgraph MACHINE["MACHINE FLOW / SYSTEM SERVICES"]
+    direction TB
+    M0([Start]) --> M1[Machine ready]
+    M2[Check material and weight] --> M3{Item accepted?}
+    M3 -->|Yes| M4[Sort item and add session points]
+    M3 -->|No| M5[Reject item; no points]
+    M6{Session points earned?} -->|Yes| M7[Display reward QR]
+    M8{QR valid and unclaimed?} -->|Yes| M9[Credit user points and save record]
+    M10[Create refill session and display QR]
+    M11[Validate session, amount and balance] --> M12{Refill allowed?}
+    M12 -->|Yes| M13[Deduct points and dispense water]
+    M13 --> M14{Dispensing successful?}
+    M14 -->|Yes| M15[Save refill and credit owner points]
+    M14 -->|No| M16[Stop pump; attempt refund; save failure]
+    M17[Reset session and return to ready]
+    M17 --> M1
+    M18[Validate purchase and transfer owner points to user]
+    M18 --> M19{Transfer successful?}
+    M20[Update machine records and alerts]
+  end
+
+  subgraph OWNER["OWNER FLOW"]
+    direction TB
+    O0([Start]) --> O1[Log in to app]
+    O1 --> O2{Valid login?}
+    O2 -->|No| O1
+    O2 -->|Yes| O3[View owner dashboard]
+    O3 --> O4{Choose action}
+    O4 -->|Monitor| O5[View water, storage, quality, item counts and records]
+    O5 --> O3
+    O4 -->|Alerts| O6[Review alerts and take action]
+    O6 --> O3
+    O4 -->|Collect| O7[Collect stored bottles and cans]
+    O7 --> O3
+    O4 -->|Payments| O8[Review pending payment reference]
+    O8 --> O9{Payment verified and owner points sufficient?}
+    O9 -->|Yes| O10[Approve payment]
+    O9 -->|No| O11[Reject with reason or keep pending]
+    O10 --> O3
+    O11 --> O3
+    O4 -->|Log out| O12[Log out of app]
+    O12 --> O13([End])
+  end
+
+  M1 -. Ready for requests .-> M2
+  M1 -. Ready for requests .-> M10
+  U5 --> M2
+  M4 --> U6
+  M5 --> U6
+  U7 --> M6
+  M6 -->|No| M21[Show no reward and reset batch]
+  M21 --> U15
+  M21 -. Ready again .-> M1
+  M7 --> U8
+  U8 --> M8
+  M8 -->|Invalid or expired| U15
+  M9 -. Claim completed .-> M17
+  U9 --> M10
+  M10 --> U10
+  U14 -. Pending purchase; wait for review .-> O8
+  O10 --> M18
+  M19 -->|Yes| U12
+  M19 -->|No: purchase error| U15
+  O11 -. Payment status; no points transferred .-> U15
+  U12 --> M11
+  M12 -->|No: show reason or rescan| U15
+  M15 --> M17
+  M16 --> M17
+  M17 -. Session result .-> U15
+  M4 -. Scan record .-> M20
+  M5 -. Scan record .-> M20
+  M9 -. Reward record .-> M20
+  M15 -. Refill record .-> M20
+  M16 -. Failure record .-> M20
+  M20 -. Live monitoring data .-> O5
+  M20 -. Alerts when raised .-> O6
+
+  style USER fill:#eff6ff,stroke:#2563eb
+  style MACHINE fill:#f0fdf4,stroke:#16a34a
+  style OWNER fill:#fff7ed,stroke:#ea580c

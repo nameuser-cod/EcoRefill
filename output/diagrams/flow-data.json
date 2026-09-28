@@ -1,0 +1,1839 @@
+[
+  {
+    "key": "01-access",
+    "title": "1. Sign in and choose an activity",
+    "subtitle": "User and owner sessions are independent. Machine operation does not require an owner to be logged in.",
+    "height": 1500,
+    "nodes": {
+      "ustart": {
+        "text": "Open EcoRefill app",
+        "role": "USER",
+        "x": 360,
+        "y": 180,
+        "kind": "terminal",
+        "w": 270,
+        "h": 76
+      },
+      "ulogin": {
+        "text": "Log in",
+        "role": "USER",
+        "x": 360,
+        "y": 310,
+        "kind": "action",
+        "w": 270,
+        "h": 76
+      },
+      "uvalid": {
+        "text": "Credentials valid?",
+        "role": "SYSTEM",
+        "x": 360,
+        "y": 465,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "uerror": {
+        "text": "Show login error",
+        "role": "SYSTEM",
+        "x": 660,
+        "y": 465,
+        "kind": "action",
+        "w": 220,
+        "h": 76
+      },
+      "udash": {
+        "text": "Open dashboard",
+        "role": "USER",
+        "x": 360,
+        "y": 630,
+        "kind": "action",
+        "w": 270,
+        "h": 76
+      },
+      "ostart": {
+        "text": "Open EcoRefill app",
+        "role": "OWNER",
+        "x": 1140,
+        "y": 180,
+        "kind": "terminal",
+        "w": 270,
+        "h": 76
+      },
+      "ologin": {
+        "text": "Log in",
+        "role": "OWNER",
+        "x": 1140,
+        "y": 310,
+        "kind": "action",
+        "w": 270,
+        "h": 76
+      },
+      "ovalid": {
+        "text": "Credentials valid?",
+        "role": "SYSTEM",
+        "x": 1140,
+        "y": 465,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "oerror": {
+        "text": "Show login error",
+        "role": "SYSTEM",
+        "x": 1440,
+        "y": 465,
+        "kind": "action",
+        "w": 220,
+        "h": 76
+      },
+      "odash": {
+        "text": "Open dashboard",
+        "role": "OWNER",
+        "x": 1140,
+        "y": 630,
+        "kind": "action",
+        "w": 270,
+        "h": 76
+      },
+      "uchoice": {
+        "text": "Choose activity",
+        "role": "USER",
+        "x": 360,
+        "y": 800,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "recycle": {
+        "text": "2. Recycling flow\nReturn here when finished",
+        "role": "USER + MACHINE",
+        "x": 190,
+        "y": 990,
+        "kind": "link",
+        "w": 270,
+        "h": 78
+      },
+      "refill": {
+        "text": "3. Water refill flow\nReturn here when finished",
+        "role": "USER + MACHINE",
+        "x": 530,
+        "y": 990,
+        "kind": "link",
+        "w": 270,
+        "h": 78
+      },
+      "ulogout": {
+        "text": "Log out / End session",
+        "role": "USER",
+        "x": 360,
+        "y": 1280,
+        "kind": "terminal",
+        "w": 270,
+        "h": 76
+      },
+      "ochoice": {
+        "text": "Choose activity",
+        "role": "OWNER",
+        "x": 1140,
+        "y": 800,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "manage": {
+        "text": "Monitor / Handle alerts /\nCollect bottles and cans",
+        "role": "OWNER",
+        "x": 980,
+        "y": 990,
+        "kind": "action",
+        "w": 270,
+        "h": 78
+      },
+      "payments": {
+        "text": "4. Join at owner review\nReturn here after review",
+        "role": "OWNER + SYSTEM",
+        "x": 1330,
+        "y": 990,
+        "kind": "link",
+        "w": 270,
+        "h": 78
+      },
+      "ologout": {
+        "text": "Log out / End session",
+        "role": "OWNER",
+        "x": 1140,
+        "y": 1280,
+        "kind": "terminal",
+        "w": 270,
+        "h": 76
+      }
+    },
+    "edges": [
+      {
+        "a": "ustart",
+        "b": "ulogin",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "ulogin",
+        "b": "uvalid",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "uvalid",
+        "b": "uerror",
+        "label": "No",
+        "ports": "RL",
+        "via": [],
+        "at": [
+          565,
+          440
+        ]
+      },
+      {
+        "a": "uerror",
+        "b": "ulogin",
+        "label": "",
+        "ports": "TL",
+        "via": [
+          [
+            660,
+            250
+          ],
+          [
+            185,
+            250
+          ],
+          [
+            185,
+            310
+          ]
+        ],
+        "at": null
+      },
+      {
+        "a": "uvalid",
+        "b": "udash",
+        "label": "Yes",
+        "ports": "BT",
+        "via": [],
+        "at": [
+          388,
+          565
+        ]
+      },
+      {
+        "a": "ostart",
+        "b": "ologin",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "ologin",
+        "b": "ovalid",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "ovalid",
+        "b": "oerror",
+        "label": "No",
+        "ports": "RL",
+        "via": [],
+        "at": [
+          1345,
+          440
+        ]
+      },
+      {
+        "a": "oerror",
+        "b": "ologin",
+        "label": "",
+        "ports": "TL",
+        "via": [
+          [
+            1440,
+            250
+          ],
+          [
+            965,
+            250
+          ],
+          [
+            965,
+            310
+          ]
+        ],
+        "at": null
+      },
+      {
+        "a": "ovalid",
+        "b": "odash",
+        "label": "Yes",
+        "ports": "BT",
+        "via": [],
+        "at": [
+          1168,
+          565
+        ]
+      },
+      {
+        "a": "udash",
+        "b": "uchoice",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "uchoice",
+        "b": "recycle",
+        "label": "Recycle",
+        "ports": "LT",
+        "via": [
+          [
+            190,
+            800
+          ]
+        ],
+        "at": [
+          185,
+          770
+        ]
+      },
+      {
+        "a": "uchoice",
+        "b": "refill",
+        "label": "Refill",
+        "ports": "RT",
+        "via": [
+          [
+            530,
+            800
+          ]
+        ],
+        "at": [
+          525,
+          770
+        ]
+      },
+      {
+        "a": "uchoice",
+        "b": "ulogout",
+        "label": "Log out",
+        "ports": "BT",
+        "via": [],
+        "at": [
+          402,
+          1160
+        ]
+      },
+      {
+        "a": "recycle",
+        "b": "udash",
+        "label": "",
+        "ports": "LT",
+        "via": [
+          [
+            35,
+            990
+          ],
+          [
+            35,
+            565
+          ],
+          [
+            360,
+            565
+          ]
+        ],
+        "at": null
+      },
+      {
+        "a": "refill",
+        "b": "udash",
+        "label": "",
+        "ports": "RT",
+        "via": [
+          [
+            720,
+            990
+          ],
+          [
+            720,
+            565
+          ],
+          [
+            360,
+            565
+          ]
+        ],
+        "at": null
+      },
+      {
+        "a": "odash",
+        "b": "ochoice",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "ochoice",
+        "b": "manage",
+        "label": "Manage",
+        "ports": "LT",
+        "via": [
+          [
+            980,
+            800
+          ]
+        ],
+        "at": [
+          960,
+          770
+        ]
+      },
+      {
+        "a": "ochoice",
+        "b": "payments",
+        "label": "Payments",
+        "ports": "RT",
+        "via": [
+          [
+            1330,
+            800
+          ]
+        ],
+        "at": [
+          1340,
+          770
+        ]
+      },
+      {
+        "a": "ochoice",
+        "b": "ologout",
+        "label": "Log out",
+        "ports": "BT",
+        "via": [],
+        "at": [
+          1182,
+          1160
+        ]
+      },
+      {
+        "a": "manage",
+        "b": "odash",
+        "label": "",
+        "ports": "LT",
+        "via": [
+          [
+            805,
+            990
+          ],
+          [
+            805,
+            565
+          ],
+          [
+            1140,
+            565
+          ]
+        ],
+        "at": null
+      },
+      {
+        "a": "payments",
+        "b": "odash",
+        "label": "",
+        "ports": "RT",
+        "via": [
+          [
+            1530,
+            990
+          ],
+          [
+            1530,
+            565
+          ],
+          [
+            1140,
+            565
+          ]
+        ],
+        "at": null
+      }
+    ]
+  },
+  {
+    "key": "02-recycling",
+    "title": "2. Recycle items and claim points",
+    "subtitle": "Entry: signed-in user chooses recycling. Accepted and rejected items both finish inspection before the next-item decision.",
+    "height": 2390,
+    "nodes": {
+      "rstart": {
+        "text": "Machine ready / Start recycling",
+        "role": "USER + MACHINE",
+        "x": 800,
+        "y": 180,
+        "kind": "terminal",
+        "w": 270,
+        "h": 76
+      },
+      "insert": {
+        "text": "Insert one item",
+        "role": "USER",
+        "x": 800,
+        "y": 310,
+        "kind": "action",
+        "w": 270,
+        "h": 76
+      },
+      "inspect": {
+        "text": "Inspect the item",
+        "role": "MACHINE",
+        "x": 800,
+        "y": 440,
+        "kind": "action",
+        "w": 270,
+        "h": 76
+      },
+      "accept": {
+        "text": "Item accepted?",
+        "role": "MACHINE",
+        "x": 800,
+        "y": 605,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "sort": {
+        "text": "Sort item and add\nsession points",
+        "role": "MACHINE",
+        "x": 420,
+        "y": 770,
+        "kind": "action",
+        "w": 270,
+        "h": 78
+      },
+      "reject": {
+        "text": "Return rejected item;\nadd no points",
+        "role": "MACHINE",
+        "x": 1180,
+        "y": 770,
+        "kind": "action",
+        "w": 270,
+        "h": 78
+      },
+      "more": {
+        "text": "More items?",
+        "role": "USER",
+        "x": 800,
+        "y": 940,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "green": {
+        "text": "Press GREEN button",
+        "role": "USER",
+        "x": 800,
+        "y": 1110,
+        "kind": "action",
+        "w": 270,
+        "h": 76
+      },
+      "earned": {
+        "text": "Session points > 0?",
+        "role": "MACHINE",
+        "x": 800,
+        "y": 1270,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "none": {
+        "text": "Show no reward",
+        "role": "MACHINE",
+        "x": 1180,
+        "y": 1270,
+        "kind": "action",
+        "w": 270,
+        "h": 76
+      },
+      "reward": {
+        "text": "Display reward QR",
+        "role": "MACHINE",
+        "x": 800,
+        "y": 1430,
+        "kind": "action",
+        "w": 270,
+        "h": 76
+      },
+      "scan": {
+        "text": "Scan reward QR in app",
+        "role": "USER",
+        "x": 800,
+        "y": 1560,
+        "kind": "action",
+        "w": 270,
+        "h": 76
+      },
+      "claim": {
+        "text": "Claim valid and unclaimed?",
+        "role": "SYSTEM",
+        "x": 800,
+        "y": 1720,
+        "kind": "decision",
+        "w": 330,
+        "h": 110
+      },
+      "claimerror": {
+        "text": "Show error; do not credit points",
+        "role": "SYSTEM",
+        "x": 1220,
+        "y": 1720,
+        "kind": "action",
+        "w": 290,
+        "h": 76
+      },
+      "retry": {
+        "text": "Retry with valid QR?",
+        "role": "USER",
+        "x": 1220,
+        "y": 1900,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "credit": {
+        "text": "Credit user points once;\nsave reward transaction",
+        "role": "SYSTEM",
+        "x": 800,
+        "y": 1910,
+        "kind": "action",
+        "w": 270,
+        "h": 78
+      },
+      "rend": {
+        "text": "Show result; machine returns to\nrecycling; user returns to Section 1",
+        "role": "USER + MACHINE",
+        "x": 800,
+        "y": 2220,
+        "kind": "terminal",
+        "w": 430,
+        "h": 78
+      }
+    },
+    "edges": [
+      {
+        "a": "rstart",
+        "b": "insert",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "insert",
+        "b": "inspect",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "inspect",
+        "b": "accept",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "sort",
+        "b": "more",
+        "label": "",
+        "ports": "BT",
+        "via": [
+          [
+            420,
+            860
+          ],
+          [
+            800,
+            860
+          ]
+        ],
+        "at": null
+      },
+      {
+        "a": "reject",
+        "b": "more",
+        "label": "",
+        "ports": "BT",
+        "via": [
+          [
+            1180,
+            860
+          ],
+          [
+            800,
+            860
+          ]
+        ],
+        "at": null
+      },
+      {
+        "a": "green",
+        "b": "earned",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "reward",
+        "b": "scan",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "scan",
+        "b": "claim",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "credit",
+        "b": "rend",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "accept",
+        "b": "sort",
+        "label": "Yes",
+        "ports": "LT",
+        "via": [
+          [
+            420,
+            605
+          ]
+        ],
+        "at": [
+          580,
+          580
+        ]
+      },
+      {
+        "a": "accept",
+        "b": "reject",
+        "label": "No",
+        "ports": "RT",
+        "via": [
+          [
+            1180,
+            605
+          ]
+        ],
+        "at": [
+          1015,
+          580
+        ]
+      },
+      {
+        "a": "more",
+        "b": "insert",
+        "label": "Yes",
+        "ports": "LL",
+        "via": [
+          [
+            170,
+            940
+          ],
+          [
+            170,
+            310
+          ]
+        ],
+        "at": [
+          340,
+          915
+        ]
+      },
+      {
+        "a": "more",
+        "b": "green",
+        "label": "No",
+        "ports": "BT",
+        "via": [],
+        "at": [
+          825,
+          1040
+        ]
+      },
+      {
+        "a": "earned",
+        "b": "reward",
+        "label": "Yes",
+        "ports": "BT",
+        "via": [],
+        "at": [
+          830,
+          1370
+        ]
+      },
+      {
+        "a": "earned",
+        "b": "none",
+        "label": "No",
+        "ports": "RL",
+        "via": [],
+        "at": [
+          1000,
+          1245
+        ]
+      },
+      {
+        "a": "none",
+        "b": "rend",
+        "label": "",
+        "ports": "RR",
+        "via": [
+          [
+            1510,
+            1270
+          ],
+          [
+            1510,
+            2220
+          ]
+        ],
+        "at": null
+      },
+      {
+        "a": "claim",
+        "b": "credit",
+        "label": "Yes",
+        "ports": "BT",
+        "via": [],
+        "at": [
+          825,
+          1830
+        ]
+      },
+      {
+        "a": "claim",
+        "b": "claimerror",
+        "label": "No",
+        "ports": "RL",
+        "via": [],
+        "at": [
+          1010,
+          1695
+        ]
+      },
+      {
+        "a": "claimerror",
+        "b": "retry",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "retry",
+        "b": "scan",
+        "label": "Yes",
+        "ports": "RT",
+        "via": [
+          [
+            1450,
+            1900
+          ],
+          [
+            1450,
+            1490
+          ],
+          [
+            800,
+            1490
+          ]
+        ],
+        "at": [
+          1470,
+          1780
+        ]
+      },
+      {
+        "a": "retry",
+        "b": "rend",
+        "label": "No / Cancel",
+        "ports": "BR",
+        "via": [
+          [
+            1220,
+            2140
+          ],
+          [
+            1080,
+            2140
+          ],
+          [
+            1080,
+            2220
+          ]
+        ],
+        "at": [
+          1275,
+          2060
+        ]
+      }
+    ]
+  },
+  {
+    "key": "03-refill",
+    "title": "3. Select, pay for, and dispense water",
+    "subtitle": "Entry: signed-in user chooses refill. Payment approval adds points; only a validated refill request can start dispensing.",
+    "height": 3260,
+    "nodes": {
+      "blue": {
+        "text": "Press BLUE button / Select refill",
+        "role": "USER",
+        "x": 740,
+        "y": 180,
+        "kind": "action",
+        "w": 310,
+        "h": 76
+      },
+      "qr": {
+        "text": "Create refill session; display QR",
+        "role": "MACHINE",
+        "x": 740,
+        "y": 310,
+        "kind": "action",
+        "w": 310,
+        "h": 76
+      },
+      "selection": {
+        "text": "Scan valid refill QR;\nselect water amount",
+        "role": "USER",
+        "x": 740,
+        "y": 440,
+        "kind": "action",
+        "w": 310,
+        "h": 78
+      },
+      "confirm": {
+        "text": "Place container and\nconfirm refill request",
+        "role": "USER",
+        "x": 740,
+        "y": 790,
+        "kind": "action",
+        "w": 310,
+        "h": 78
+      },
+      "validate": {
+        "text": "Validate session, amount,\nbalance and machine availability",
+        "role": "SYSTEM / MACHINE",
+        "x": 740,
+        "y": 940,
+        "kind": "action",
+        "w": 310,
+        "h": 78
+      },
+      "reserve": {
+        "text": "Reserve refill and\ndeduct points atomically",
+        "role": "SYSTEM",
+        "x": 740,
+        "y": 1300,
+        "kind": "action",
+        "w": 310,
+        "h": 78
+      },
+      "dispense": {
+        "text": "Dispense water; monitor container",
+        "role": "MACHINE",
+        "x": 740,
+        "y": 1450,
+        "kind": "action",
+        "w": 310,
+        "h": 76
+      },
+      "success": {
+        "text": "Save completed refill",
+        "role": "SYSTEM",
+        "x": 740,
+        "y": 1820,
+        "kind": "action",
+        "w": 310,
+        "h": 76
+      },
+      "result": {
+        "text": "Show actual refill / refund result",
+        "role": "USER APP",
+        "x": 740,
+        "y": 2560,
+        "kind": "action",
+        "w": 310,
+        "h": 76
+      },
+      "reset": {
+        "text": "Return machine to recycling mode",
+        "role": "MACHINE",
+        "x": 740,
+        "y": 2710,
+        "kind": "action",
+        "w": 310,
+        "h": 76
+      },
+      "balance": {
+        "text": "Enough points?",
+        "role": "USER APP",
+        "x": 740,
+        "y": 620,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "buy": {
+        "text": "Buy points?",
+        "role": "USER",
+        "x": 1240,
+        "y": 620,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "purchase": {
+        "text": "4. Point purchase flow\nReturn with purchase status",
+        "role": "USER + OWNER",
+        "x": 1240,
+        "y": 810,
+        "kind": "link",
+        "w": 320,
+        "h": 78
+      },
+      "resume": {
+        "text": "Resume refill; scan new QR\nif the session expired",
+        "role": "USER",
+        "x": 1240,
+        "y": 980,
+        "kind": "action",
+        "w": 320,
+        "h": 78
+      },
+      "cancelbuy": {
+        "text": "Cancel refill",
+        "role": "USER",
+        "x": 1240,
+        "y": 1190,
+        "kind": "action",
+        "w": 270,
+        "h": 76
+      },
+      "valid": {
+        "text": "Refill request valid?",
+        "role": "SYSTEM / MACHINE",
+        "x": 740,
+        "y": 1120,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "invalid": {
+        "text": "Show reason; no deduction\nand no dispensing",
+        "role": "SYSTEM",
+        "x": 270,
+        "y": 1120,
+        "kind": "action",
+        "w": 310,
+        "h": 78
+      },
+      "retryrefill": {
+        "text": "Retry refill?",
+        "role": "USER",
+        "x": 270,
+        "y": 1320,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "complete": {
+        "text": "Dispensing complete?",
+        "role": "MACHINE",
+        "x": 740,
+        "y": 1630,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "stop": {
+        "text": "Stop dispensing on\nerror or timeout",
+        "role": "MACHINE",
+        "x": 1240,
+        "y": 1630,
+        "kind": "action",
+        "w": 270,
+        "h": 78
+      },
+      "refund": {
+        "text": "Attempt refund of deducted points",
+        "role": "SYSTEM",
+        "x": 1240,
+        "y": 1790,
+        "kind": "action",
+        "w": 330,
+        "h": 76
+      },
+      "refunded": {
+        "text": "Refund successful?",
+        "role": "SYSTEM",
+        "x": 1240,
+        "y": 1970,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "refundok": {
+        "text": "Record failed refill\nand successful refund",
+        "role": "SYSTEM",
+        "x": 1090,
+        "y": 2150,
+        "kind": "action",
+        "w": 270,
+        "h": 78
+      },
+      "refundpending": {
+        "text": "Record failed refill;\nrefund unresolved",
+        "role": "SYSTEM",
+        "x": 1430,
+        "y": 2310,
+        "kind": "action",
+        "w": 280,
+        "h": 78
+      },
+      "end": {
+        "text": "Return to user dashboard\nSection 1",
+        "role": "USER",
+        "x": 740,
+        "y": 2950,
+        "kind": "terminal",
+        "w": 350,
+        "h": 78
+      }
+    },
+    "edges": [
+      {
+        "a": "blue",
+        "b": "qr",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "qr",
+        "b": "selection",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "selection",
+        "b": "balance",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "confirm",
+        "b": "validate",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "validate",
+        "b": "valid",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "reserve",
+        "b": "dispense",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "dispense",
+        "b": "complete",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "success",
+        "b": "result",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "result",
+        "b": "reset",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "reset",
+        "b": "end",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "purchase",
+        "b": "resume",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "stop",
+        "b": "refund",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "refund",
+        "b": "refunded",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "balance",
+        "b": "confirm",
+        "label": "Yes",
+        "ports": "BT",
+        "via": [],
+        "at": [
+          770,
+          720
+        ]
+      },
+      {
+        "a": "balance",
+        "b": "buy",
+        "label": "No",
+        "ports": "RL",
+        "via": [],
+        "at": [
+          980,
+          595
+        ]
+      },
+      {
+        "a": "buy",
+        "b": "purchase",
+        "label": "Yes",
+        "ports": "BT",
+        "via": [],
+        "at": [
+          1270,
+          735
+        ]
+      },
+      {
+        "a": "buy",
+        "b": "cancelbuy",
+        "label": "No",
+        "ports": "RR",
+        "via": [
+          [
+            1545,
+            620
+          ],
+          [
+            1545,
+            1190
+          ]
+        ],
+        "at": [
+          1530,
+          725
+        ]
+      },
+      {
+        "a": "resume",
+        "b": "selection",
+        "label": "Recheck QR and balance",
+        "ports": "RT",
+        "via": [
+          [
+            1490,
+            980
+          ],
+          [
+            1490,
+            365
+          ],
+          [
+            740,
+            365
+          ]
+        ],
+        "at": [
+          1300,
+          345
+        ]
+      },
+      {
+        "a": "cancelbuy",
+        "b": "reset",
+        "label": "",
+        "ports": "RL",
+        "via": [
+          [
+            1585,
+            1190
+          ],
+          [
+            1585,
+            2840
+          ],
+          [
+            520,
+            2840
+          ],
+          [
+            520,
+            2710
+          ]
+        ],
+        "at": null
+      },
+      {
+        "a": "valid",
+        "b": "reserve",
+        "label": "Yes",
+        "ports": "BT",
+        "via": [],
+        "at": [
+          770,
+          1230
+        ]
+      },
+      {
+        "a": "valid",
+        "b": "invalid",
+        "label": "No",
+        "ports": "LR",
+        "via": [],
+        "at": [
+          510,
+          1090
+        ]
+      },
+      {
+        "a": "invalid",
+        "b": "retryrefill",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "retryrefill",
+        "b": "blue",
+        "label": "Yes",
+        "ports": "LL",
+        "via": [
+          [
+            40,
+            1320
+          ],
+          [
+            40,
+            180
+          ]
+        ],
+        "at": [
+          70,
+          800
+        ]
+      },
+      {
+        "a": "retryrefill",
+        "b": "reset",
+        "label": "No / Cancel",
+        "ports": "BL",
+        "via": [
+          [
+            270,
+            2710
+          ]
+        ],
+        "at": [
+          210,
+          1700
+        ]
+      },
+      {
+        "a": "complete",
+        "b": "success",
+        "label": "Yes",
+        "ports": "BT",
+        "via": [],
+        "at": [
+          770,
+          1740
+        ]
+      },
+      {
+        "a": "complete",
+        "b": "stop",
+        "label": "No",
+        "ports": "RL",
+        "via": [],
+        "at": [
+          990,
+          1605
+        ]
+      },
+      {
+        "a": "refunded",
+        "b": "refundok",
+        "label": "Yes",
+        "ports": "LT",
+        "via": [
+          [
+            1090,
+            1970
+          ]
+        ],
+        "at": [
+          1050,
+          1940
+        ]
+      },
+      {
+        "a": "refunded",
+        "b": "refundpending",
+        "label": "No",
+        "ports": "RT",
+        "via": [
+          [
+            1430,
+            1970
+          ]
+        ],
+        "at": [
+          1420,
+          1940
+        ]
+      },
+      {
+        "a": "refundok",
+        "b": "result",
+        "label": "",
+        "ports": "BT",
+        "via": [
+          [
+            1090,
+            2490
+          ],
+          [
+            740,
+            2490
+          ]
+        ],
+        "at": null
+      },
+      {
+        "a": "refundpending",
+        "b": "result",
+        "label": "",
+        "ports": "BT",
+        "via": [
+          [
+            1430,
+            2490
+          ],
+          [
+            740,
+            2490
+          ]
+        ],
+        "at": null
+      }
+    ]
+  },
+  {
+    "key": "04-payment",
+    "title": "4. Buy points and verify payment",
+    "subtitle": "Called from the refill selection page. The signed-in owner reviews purchases in Transactions; records do not replace owner login.",
+    "height": 2400,
+    "nodes": {
+      "pstart": {
+        "text": "Enter points to purchase",
+        "role": "USER",
+        "x": 800,
+        "y": 180,
+        "kind": "terminal",
+        "w": 270,
+        "h": 76
+      },
+      "available": {
+        "text": "Purchase available?",
+        "role": "SYSTEM",
+        "x": 800,
+        "y": 360,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "unavailable": {
+        "text": "Show unavailable;\nno payment / no points transferred",
+        "role": "USER APP",
+        "x": 1240,
+        "y": 360,
+        "kind": "action",
+        "w": 330,
+        "h": 78
+      },
+      "submit": {
+        "text": "Pay via GCash and\nsubmit payment reference",
+        "role": "USER",
+        "x": 800,
+        "y": 550,
+        "kind": "action",
+        "w": 270,
+        "h": 78
+      },
+      "pending": {
+        "text": "Save pending purchase;\nno points credited yet",
+        "role": "SYSTEM",
+        "x": 800,
+        "y": 710,
+        "kind": "action",
+        "w": 270,
+        "h": 78
+      },
+      "review": {
+        "text": "Review received payment\nand purchase details",
+        "role": "SIGNED-IN OWNER",
+        "x": 800,
+        "y": 870,
+        "kind": "action",
+        "w": 270,
+        "h": 78
+      },
+      "status": {
+        "text": "Review status?",
+        "role": "OWNER",
+        "x": 800,
+        "y": 1040,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "wait": {
+        "text": "Keep pending; wait for review\nNo points credited",
+        "role": "SYSTEM",
+        "x": 360,
+        "y": 1040,
+        "kind": "action",
+        "w": 310,
+        "h": 78
+      },
+      "rejectpay": {
+        "text": "Reject payment; notify user\nNo points credited",
+        "role": "OWNER / SYSTEM",
+        "x": 1240,
+        "y": 1040,
+        "kind": "action",
+        "w": 330,
+        "h": 78
+      },
+      "transfer": {
+        "text": "Validate owner balance and\ntransfer eligibility",
+        "role": "SYSTEM",
+        "x": 800,
+        "y": 1250,
+        "kind": "action",
+        "w": 270,
+        "h": 78
+      },
+      "allowed": {
+        "text": "Transfer allowed?",
+        "role": "SYSTEM",
+        "x": 800,
+        "y": 1430,
+        "kind": "decision",
+        "w": 270,
+        "h": 110
+      },
+      "blocked": {
+        "text": "Show transfer pending / error\nDo not credit points",
+        "role": "SYSTEM",
+        "x": 1240,
+        "y": 1430,
+        "kind": "action",
+        "w": 330,
+        "h": 78
+      },
+      "creditpoints": {
+        "text": "Transfer owner points to user\nand record approved purchase once",
+        "role": "SYSTEM",
+        "x": 800,
+        "y": 1640,
+        "kind": "action",
+        "w": 370,
+        "h": 78
+      },
+      "pend": {
+        "text": "Show purchase status; return to\nSection 3: resume refill and recheck\nQR validity and available balance",
+        "role": "USER APP",
+        "x": 800,
+        "y": 2090,
+        "kind": "terminal",
+        "w": 440,
+        "h": 100
+      }
+    },
+    "edges": [
+      {
+        "a": "pstart",
+        "b": "available",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "submit",
+        "b": "pending",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "pending",
+        "b": "review",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "review",
+        "b": "status",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "transfer",
+        "b": "allowed",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "creditpoints",
+        "b": "pend",
+        "label": "",
+        "ports": "BT",
+        "via": [],
+        "at": null
+      },
+      {
+        "a": "available",
+        "b": "submit",
+        "label": "Yes",
+        "ports": "BT",
+        "via": [],
+        "at": [
+          830,
+          470
+        ]
+      },
+      {
+        "a": "available",
+        "b": "unavailable",
+        "label": "No",
+        "ports": "RL",
+        "via": [],
+        "at": [
+          1010,
+          335
+        ]
+      },
+      {
+        "a": "unavailable",
+        "b": "pend",
+        "label": "",
+        "ports": "RR",
+        "via": [
+          [
+            1530,
+            360
+          ],
+          [
+            1530,
+            2090
+          ]
+        ],
+        "at": null
+      },
+      {
+        "a": "status",
+        "b": "wait",
+        "label": "Pending",
+        "ports": "LR",
+        "via": [],
+        "at": [
+          590,
+          1015
+        ]
+      },
+      {
+        "a": "wait",
+        "b": "review",
+        "label": "",
+        "ports": "TT",
+        "via": [
+          [
+            360,
+            795
+          ],
+          [
+            800,
+            795
+          ]
+        ],
+        "at": null
+      },
+      {
+        "a": "status",
+        "b": "rejectpay",
+        "label": "Rejected",
+        "ports": "RL",
+        "via": [],
+        "at": [
+          1010,
+          1015
+        ]
+      },
+      {
+        "a": "rejectpay",
+        "b": "pend",
+        "label": "",
+        "ports": "RR",
+        "via": [
+          [
+            1490,
+            1040
+          ],
+          [
+            1490,
+            2090
+          ]
+        ],
+        "at": null
+      },
+      {
+        "a": "status",
+        "b": "transfer",
+        "label": "Approved",
+        "ports": "BT",
+        "via": [],
+        "at": [
+          855,
+          1160
+        ]
+      },
+      {
+        "a": "allowed",
+        "b": "creditpoints",
+        "label": "Yes",
+        "ports": "BT",
+        "via": [],
+        "at": [
+          830,
+          1545
+        ]
+      },
+      {
+        "a": "allowed",
+        "b": "blocked",
+        "label": "No",
+        "ports": "RL",
+        "via": [],
+        "at": [
+          1010,
+          1405
+        ]
+      },
+      {
+        "a": "blocked",
+        "b": "pend",
+        "label": "",
+        "ports": "BR",
+        "via": [
+          [
+            1240,
+            1930
+          ],
+          [
+            1080,
+            1930
+          ],
+          [
+            1080,
+            2090
+          ]
+        ],
+        "at": null
+      }
+    ]
+  }
+]

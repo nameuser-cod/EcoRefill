@@ -1,0 +1,39 @@
+flowchart TD
+    rstart(["USER + MACHINE<br/>Machine ready / Start recycling"])
+    insert["USER<br/>Insert one item"]
+    inspect["MACHINE<br/>Inspect the item"]
+    accept{"MACHINE<br/>Item accepted?"}
+    sort["MACHINE<br/>Sort item and add<br/>session points"]
+    reject["MACHINE<br/>Return rejected item;<br/>add no points"]
+    more{"USER<br/>More items?"}
+    green["USER<br/>Press GREEN button"]
+    earned{"MACHINE<br/>Session points > 0?"}
+    none["MACHINE<br/>Show no reward"]
+    reward["MACHINE<br/>Display reward QR"]
+    scan["USER<br/>Scan reward QR in app"]
+    claim{"SYSTEM<br/>Claim valid and unclaimed?"}
+    claimerror["SYSTEM<br/>Show error; do not credit points"]
+    retry{"USER<br/>Retry with valid QR?"}
+    credit["SYSTEM<br/>Credit user points once;<br/>save reward transaction"]
+    rend(["USER + MACHINE<br/>Show result; machine returns to<br/>recycling; user returns to Section 1"])
+    rstart --> insert
+    insert --> inspect
+    inspect --> accept
+    sort --> more
+    reject --> more
+    green --> earned
+    reward --> scan
+    scan --> claim
+    credit --> rend
+    accept -->|"Yes"| sort
+    accept -->|"No"| reject
+    more -->|"Yes"| insert
+    more -->|"No"| green
+    earned -->|"Yes"| reward
+    earned -->|"No"| none
+    none --> rend
+    claim -->|"Yes"| credit
+    claim -->|"No"| claimerror
+    claimerror --> retry
+    retry -->|"Yes"| scan
+    retry -->|"No / Cancel"| rend

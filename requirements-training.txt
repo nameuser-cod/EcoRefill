@@ -1,0 +1,4 @@
+# Training workstation only; no Raspberry Pi/GPIO packages.
+ultralytics==8.4.83
+Pillow>=10
+PyYAML>=6
