@@ -108,7 +108,7 @@ function OwnerTransactions() {
               <button
                 type="button"
                 key={filter.value}
-                className={`owner-filter-button ${activeFilter === filter.value ? "active" : ""}`}
+                className={`filter-transactions-button ${activeFilter === filter.value ? "active" : ""}`}
                 onClick={() => setActiveFilter(filter.value)}
                 aria-pressed={activeFilter === filter.value}
               >

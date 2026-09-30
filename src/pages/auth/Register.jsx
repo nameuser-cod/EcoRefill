@@ -11,7 +11,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
-import "../../styles/auth/auth.css";
+import AuthLayout from "./AuthLayout";
 
 function Register() {
   const navigate = useNavigate();
@@ -264,22 +264,14 @@ function Register() {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <div className="brand-section">
-          <div className="brand-logo">♻</div>
-
-          <h1>EcoRefill</h1>
-
-          <p>
-            Create your account to start recycling and earning
-            points.
-          </p>
-        </div>
-
-        <form onSubmit={handleRegister} className="auth-form">
-          <label htmlFor="register-full-name">Full Name</label>
-
+    <AuthLayout
+      title="Create account"
+      description="Start your EcoRefill journey."
+      footer={<>Already registered? <Link to="/login">Log in</Link></>}
+    >
+      <form onSubmit={handleRegister} className="auth-form auth-form-layout">
+        <div className="auth-field">
+          <label htmlFor="register-full-name">Full name</label>
           <input
             id="register-full-name"
             type="text"
@@ -290,9 +282,10 @@ function Register() {
             disabled={loading}
             required
           />
+        </div>
 
-          <label htmlFor="register-role">Account Type</label>
-
+        <div className="auth-field">
+          <label htmlFor="register-role">Account type</label>
           <select
             id="register-role"
             value={role}
@@ -302,34 +295,32 @@ function Register() {
             <option value="user">User</option>
             <option value="device_owner">Device Owner</option>
           </select>
+        </div>
 
-          {role === "device_owner" && (
-            <div className="machine-id-section">
-              <label htmlFor="register-machine-id">
-                Machine ID
-              </label>
+        {role === "device_owner" && (
+          <div className="auth-field">
+            <label htmlFor="register-machine-id">Machine ID</label>
+            <input
+              id="register-machine-id"
+              type="text"
+              placeholder="Example: machine_001"
+              value={machineId}
+              onChange={(e) => setMachineId(e.target.value)}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck="false"
+              disabled={loading}
+              aria-describedby="register-machine-help"
+              required
+            />
+            <p id="register-machine-help" className="field-help-text">
+              Enter the ID printed on your EcoRefill machine.
+            </p>
+          </div>
+        )}
 
-              <input
-                id="register-machine-id"
-                type="text"
-                placeholder="Example: machine_001"
-                value={machineId}
-                onChange={(e) => setMachineId(e.target.value)}
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck="false"
-                disabled={loading}
-                required
-              />
-
-              <p className="field-help-text">
-                Enter the ID printed on your EcoRefill machine.
-              </p>
-            </div>
-          )}
-
+        <div className="auth-field">
           <label htmlFor="register-email">Email</label>
-
           <input
             id="register-email"
             type="email"
@@ -340,9 +331,10 @@ function Register() {
             disabled={loading}
             required
           />
+        </div>
 
+        <div className="auth-field">
           <label htmlFor="register-password">Password</label>
-
           <div className="password-field">
             <input
               id="register-password"
@@ -355,34 +347,22 @@ function Register() {
               disabled={loading}
               required
             />
-
-            <span
-              className="password-eye"
-              role="button"
-              tabIndex={0}
-              aria-label={
-                showPassword ? "Hide password" : "Show password"
-              }
-              onClick={() =>
-                setShowPassword((current) => !current)
-              }
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setShowPassword((current) => !current);
-                }
-              }}
+            <button
+              type="button"
+              className="auth-password-toggle"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-controls="register-password"
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((current) => !current)}
+              disabled={loading}
             >
-              {showPassword ? (
-                <Eye size={25} />
-              ) : (
-                <EyeOff size={25} />
-              )}
-            </span>
+              {showPassword ? <Eye size={21} /> : <EyeOff size={21} />}
+            </button>
           </div>
+        </div>
 
-          <label htmlFor="register-confirm-password">Confirm Password</label>
-
+        <div className="auth-field">
+          <label htmlFor="register-confirm-password">Confirm password</label>
           <div className="password-field">
             <input
               id="register-confirm-password"
@@ -395,45 +375,27 @@ function Register() {
               disabled={loading}
               required
             />
-
-            <span
-              className="password-eye"
-              role="button"
-              tabIndex={0}
-              aria-label={
-                showConfirmPassword
-                  ? "Hide confirm password"
-                  : "Show confirm password"
-              }
+            <button
+              type="button"
+              className="auth-password-toggle"
+              aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+              aria-controls="register-confirm-password"
+              aria-pressed={showConfirmPassword}
               onClick={() => setShowConfirmPassword((current) => !current)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setShowConfirmPassword((current) => !current);
-                }
-              }}
+              disabled={loading}
             >
-              {showConfirmPassword ? <Eye size={25} /> : <EyeOff size={25} />}
-            </span>
+              {showConfirmPassword ? <Eye size={21} /> : <EyeOff size={21} />}
+            </button>
           </div>
+        </div>
 
-          {error && (
-            <p className="error-message" role="alert">
-              {error}
-            </p>
-          )}
+        {error && <p className="error-message" role="alert">{error}</p>}
 
-          <button className="auth-submit-button" type="submit" disabled={loading}>
-            {loading ? "Creating account..." : "Register"}
-          </button>
-        </form>
-
-        <p className="switch-text">
-          Already have an account?{" "}
-          <Link to="/login">Login here</Link>
-        </p>
-      </div>
-    </div>
+        <button className="register-button" type="submit" disabled={loading}>
+          {loading ? "Creating account..." : "Create account"}
+        </button>
+      </form>
+    </AuthLayout>
   );
 }
 

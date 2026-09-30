@@ -74,7 +74,7 @@ function RefillStatusCard({ onReturn, selectedOption, session, userPoints }) {
       </div>
 
       {isFinished && (
-        <button type="button" className="primary-action-button" onClick={onReturn}>
+        <button type="button" className="refill-done-button" onClick={onReturn}>
           Return to Dashboard
         </button>
       )}

@@ -363,7 +363,7 @@ function MachineHome() {
               </div>
 
               <button
-                className="machine-choice-card water-choice"
+                className="choose-water-button"
                 onClick={openWaterRefill}
                 disabled={openingWater}
               >
@@ -483,7 +483,7 @@ function MachineHome() {
               )}
 
               <button
-                className="machine-kiosk-primary"
+                className="try-another-item-button"
                 onClick={resetMachine}
                 disabled={resetting}
               >
@@ -505,7 +505,7 @@ function MachineHome() {
           {machineState.phase === "error" &&
             !connectionError && (
               <button
-                className="machine-kiosk-primary"
+                className="reset-machine-button"
                 onClick={resetMachine}
                 disabled={resetting}
               >
@@ -516,7 +516,7 @@ function MachineHome() {
 
           {connectionError && (
             <button
-              className="machine-kiosk-primary"
+              className="retry-connection-button"
               onClick={() => window.location.reload()}
             >
               <RotateCcw size={28} />

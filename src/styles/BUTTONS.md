@@ -1,108 +1,106 @@
-# Button style reference
+# Button class names
 
-Find the button's `className` in JSX, then search that class in the CSS file below.
-Related actions intentionally share a class when they share the same appearance.
-For example, both pagination controls use `owner-scan-page-button`.
+Name buttons after their action, using lowercase words separated by hyphens:
+`login-button`, `register-button`, `buy-points-button`, or `save-profile-button`.
+Use a short context when different controls need different styles, such as
+`owner-profile-logout-button` and `profile-logout-button`.
 
-Button selectors such as
-`.owner-profile-form button:where(.owner-profile-save-button)` name the button
-explicitly while preserving the specificity of the previous parent-and-tag
-selector. Keep the `:where(...)` wrapper when editing these selectors.
+```jsx
+<button className="login-button" type="submit">Login</button>
+```
 
-## User buttons
+Each control keeps its action class while loading or disabled. State classes
+such as `active` and `selected` are added separately. Buttons with the same
+appearance share a comma-separated CSS rule, so their names can describe their
+individual actions without duplicating declarations.
 
-| Button | Component | Class | CSS |
-| --- | --- | --- | --- |
-| Dashboard logout | `UserDashboard.jsx` | `icon-button` | [base.css](user/base.css) |
-| Scan QR / find machines | `UserDashboard.jsx` | `dashboard-action-card`, `dashboard-action-card-alt` | [dashboard.css](user/dashboard.css) |
-| View all transactions | `UserDashboard.jsx` | `text-action-button` | [cards.css](user/cards.css) |
-| Back to dashboard / refill | `ScanQR.jsx`, `UserHistory.jsx`, `BuyPoints.jsx` | `back-button` | [base.css](user/base.css) |
-| Open camera | `ScanQR.jsx` | `scan-camera-button` | [scan-qr.css](user/scan-qr.css) |
-| Return after QR redemption | `ScanQR.jsx` | `scan-return-button` | [scan-qr.css](user/scan-qr.css) |
-| Camera back | `CameraScan.jsx` | `back-button` | [camera-scan.css](user/camera-scan.css), [base.css](user/base.css) |
-| Camera retry | `CameraScan.jsx` | `camera-retry-button` | [camera-scan.css](user/camera-scan.css) |
-| Cancel scanning | `CameraScan.jsx` | `camera-cancel-button` | [camera-scan.css](user/camera-scan.css) |
-| History filters | `UserHistory.jsx` | `history-filter-button`, `active-filter` | [history.css](user/history.css) |
-| Buy points / continue payment / return to refill | `BuyPoints.jsx`, `WaterAmountSelector.jsx` | `buy-points-btn` | [buy-points.css](user/buy-points.css) |
-| Submit payment receipt | `BuyPoints.jsx` | `buy-points-btn`, `gcash-button` | [buy-points.css](user/buy-points.css), [gcash.css](shared/gcash.css) |
-| Refresh purchases / view payment details | `BuyPoints.jsx` | `gcash-button` | [gcash.css](shared/gcash.css) |
-| Locate nearby machines | `FindMachines.jsx` | `finder-locate-button` | [machine-finder.css](user/machine-finder.css) |
-| Retry finding machines | `FindMachines.jsx` | `finder-retry-button` | [machine-finder.css](user/machine-finder.css) |
-| Clear machine search | `FindMachines.jsx` | `finder-clear-button` | [machine-finder.css](user/machine-finder.css) |
-| Select a machine | `FindMachines.jsx` | `finder-result`, `selected` | [machine-finder.css](user/machine-finder.css) |
-| Refill back | `UserWaterRefill.jsx` | `icon-button` | [base.css](user/base.css) |
-| Scan a new refill QR | `UserWaterRefill.jsx` | `refill-rescan-button` | [scan-qr.css](user/scan-qr.css) |
-| Choose water amount | `WaterAmountSelector.jsx` | `water-option-card`, `selected` | [water-refill.css](user/water-refill.css) |
-| Confirm refill / return after refill | `WaterAmountSelector.jsx`, `RefillStatusCard.jsx` | `primary-action-button` | [buy-points.css](user/buy-points.css), [water-refill.css](user/water-refill.css) |
-| Save profile | `UserProfile.jsx` | `primary-action-button` | [buy-points.css](user/buy-points.css), [water-refill.css](user/water-refill.css) |
-| Profile logout | `UserProfile.jsx` | `profile-logout-button` | [profile.css](user/profile.css) |
-| Bottom navigation | `UserBottomNav.jsx` | `user-bottom-nav-item`, `active` | [navigation.css](user/navigation.css) |
+Search a class in the corresponding one of the four stylesheets below.
 
-## Owner buttons
+## Auth controls
 
-| Button | Component | Class | CSS |
-| --- | --- | --- | --- |
-| Dashboard logout | `OwnerDashboard.jsx` | `owner-header-button` | [shell.css](owner/shell.css), [theme-overrides.css](owner/theme-overrides.css) |
-| Retry dashboard section | `DashboardSection.jsx` | `owner-section-retry-button` | [dashboard-layout.css](owner/dashboard-layout.css) |
-| View all alerts / transactions | `RecentActivity.jsx` | `owner-view-all-button` | [shell.css](owner/shell.css), [theme-overrides.css](owner/theme-overrides.css) |
-| Transaction / alert / scan filters | `OwnerTransactions.jsx`, `OwnerAlerts.jsx`, `RecentScans.jsx` | `owner-filter-button`, `active` | [transactions-and-alerts.css](owner/transactions-and-alerts.css), [theme-overrides.css](owner/theme-overrides.css) |
-| Previous / next scan page | `RecentScans.jsx` | `owner-scan-page-button` | [recent-scans.css](owner/recent-scans.css) |
-| Mark alert read / resolved | `OwnerAlertRow.jsx` | `owner-alert-action-button` | [transactions-and-alerts.css](owner/transactions-and-alerts.css) |
-| Close recycling photos | `RecyclingPhotoDialog.jsx` | `owner-photo-close-button` | [recycling-photo-dialog.css](owner/recycling-photo-dialog.css) |
-| Save profile | `OwnerProfile.jsx` | `owner-profile-save-button` | [profile.css](owner/profile.css), [theme-overrides.css](owner/theme-overrides.css) |
-| Profile logout | `OwnerProfile.jsx` | `owner-logout-button` | [profile.css](owner/profile.css), [theme-overrides.css](owner/theme-overrides.css) |
-| View map / edit / save location | `MachineLocation.jsx` | `machine-location-button` | [machine-location.css](owner/machine-location.css) |
-| Close map / locate me / cancel edit | `MachineLocation.jsx` | `machine-location-button`, `machine-location-secondary` | [machine-location.css](owner/machine-location.css) |
-| Save GCash settings | `GcashSettings.jsx` | `gcash-button` | [gcash.css](shared/gcash.css) |
-| Approve payment / refresh reviews | `GcashPaymentReviews.jsx` | `gcash-button` | [gcash.css](shared/gcash.css) |
-| Reject payment | `GcashPaymentReviews.jsx` | `gcash-button`, `gcash-reject` | [gcash.css](shared/gcash.css) |
-| Pending / reviewed filters | `GcashPaymentReviews.jsx` | `gcash-button`, `owner-filter-button`, `active` | [gcash.css](shared/gcash.css), [transactions-and-alerts.css](owner/transactions-and-alerts.css), [theme-overrides.css](owner/theme-overrides.css) |
+Styles: [auth.css](auth/auth.css).
 
-## Auth, kiosk, and shared buttons
+| Component | Button classes |
+| --- | --- |
+| [Login.jsx](../pages/auth/Login.jsx) | `auth-password-toggle`, `login-button` |
+| [Register.jsx](../pages/auth/Register.jsx) | `auth-password-toggle`, `register-button` |
+| [Welcome.jsx](../pages/auth/Welcome.jsx) | `welcome-start-button`, `welcome-login-button` |
 
-| Button | Component | Class | CSS |
-| --- | --- | --- | --- |
-| Login / register | `Login.jsx`, `Register.jsx` | `auth-submit-button` | [auth.css](auth/auth.css) |
-| Choose water refill | `MachineHome.jsx` | `machine-choice-card`, `water-choice` | [home.css](machine/home.css) |
-| Reset machine / retry connection | `MachineHome.jsx` | `machine-kiosk-primary` | [base.css](machine/base.css) |
-| Cancel refill / return | `MachineWaterRefill.jsx` | `machine-kiosk-back` | [base.css](machine/base.css) |
-| Retry refill session | `MachineWaterRefill.jsx` | `machine-kiosk-primary` | [base.css](machine/base.css) |
-| Stay logged in | `LogoutButton.jsx` | `logout-confirm-cancel` | [logout-confirmation.css](shared/logout-confirmation.css) |
-| Confirm logout | `LogoutButton.jsx` | `logout-confirm-submit` | [logout-confirmation.css](shared/logout-confirmation.css) |
+## User controls
 
-`LogoutButton.jsx` forwards its caller's `className` to its trigger button. The
-four caller styles are listed above: `icon-button`, `profile-logout-button`,
-`owner-header-button`, and `owner-logout-button`.
+Styles: [user.css](user/user.css).
 
-## Other controls that look or act like buttons
+| Component | Button classes |
+| --- | --- |
+| [BuyPoints.jsx](../pages/user/BuyPoints.jsx) | `submit-payment-button`, `back-button`, `back-to-refill-button`, `continue-payment-button`, `refresh-purchases-button`, `view-payment-button` |
+| [CameraScan.jsx](../pages/user/CameraScan.jsx) | `back-button`, `retry-camera-button`, `cancel-scan-button` |
+| [FindMachines.jsx](../pages/user/FindMachines.jsx) | `find-nearby-button`, `retry-search-button`, `clear-search-button`, `select-machine-button` |
+| [ScanQR.jsx](../pages/user/ScanQR.jsx) | `back-button`, `open-camera-button`, `scan-done-button` |
+| [UserDashboard.jsx](../pages/user/UserDashboard.jsx) | `logout-button`, `scan-qr-button`, `find-machines-button`, `view-history-button` |
+| [UserHistory.jsx](../pages/user/UserHistory.jsx) | `back-button`, `history-filter-button` |
+| [UserProfile.jsx](../pages/user/UserProfile.jsx) | `save-profile-button`, `profile-logout-button` |
+| [UserWaterRefill.jsx](../pages/user/UserWaterRefill.jsx) | `refill-back-button`, `rescan-refill-button` |
+| [RefillStatusCard.jsx](../pages/user/components/RefillStatusCard.jsx) | `refill-done-button` |
+| [WaterAmountSelector.jsx](../pages/user/components/WaterAmountSelector.jsx) | `buy-points-button`, `select-water-button`, `confirm-refill-button` |
 
-| Control | Component | Class | CSS |
-| --- | --- | --- | --- |
-| Password visibility | `Login.jsx`, `Register.jsx` | `password-eye` | [auth.css](auth/auth.css) |
-| Open recycling photos | `PhotoActivityRow.jsx` | `owner-photo-trigger` | [recycling-photo-dialog.css](owner/recycling-photo-dialog.css) |
-| Owner navigation links | `OwnerBottomNav.jsx` | `owner-app-nav-item`, `active` | [navigation.css](owner/navigation.css), [theme-overrides.css](owner/theme-overrides.css) |
-| Machine directions link | `FindMachines.jsx` | `finder-directions` | [machine-finder.css](user/machine-finder.css) |
+## Owner controls
 
-## When another rule wins
+Styles: [owner.css](owner/owner.css).
 
-The table points to component rules. Buttons also receive shared defaults and
-state styles:
+| Component | Button classes |
+| --- | --- |
+| [OwnerAlerts.jsx](../pages/owner/OwnerAlerts.jsx) | `filter-alerts-button` |
+| [OwnerDashboard.jsx](../pages/owner/OwnerDashboard.jsx) | `owner-dashboard-logout-button` |
+| [OwnerProfile.jsx](../pages/owner/OwnerProfile.jsx) | `save-owner-profile-button`, `owner-profile-logout-button` |
+| [OwnerTransactions.jsx](../pages/owner/OwnerTransactions.jsx) | `filter-transactions-button` |
+| [DashboardSection.jsx](../pages/owner/components/DashboardSection.jsx) | `retry-dashboard-button` |
+| [GcashPaymentReviews.jsx](../pages/owner/components/GcashPaymentReviews.jsx) | `approve-payment-button`, `reject-payment-button`, `refresh-payments-button`, `pending-payments-button`, `reviewed-payments-button` |
+| [GcashSettings.jsx](../pages/owner/components/GcashSettings.jsx) | `save-gcash-button` |
+| [MachineLocation.jsx](../pages/owner/components/MachineLocation.jsx) | `view-map-button`, `edit-location-button`, `close-map-button`, `use-location-button`, `save-location-button`, `cancel-location-button` |
+| [OwnerAlertRow.jsx](../pages/owner/components/OwnerAlertRow.jsx) | `mark-read-button`, `resolve-alert-button` |
+| [RecentActivity.jsx](../pages/owner/components/RecentActivity.jsx) | `view-alerts-button`, `view-transactions-button` |
+| [RecentScans.jsx](../pages/owner/components/RecentScans.jsx) | `filter-scans-button`, `filter-material-button`, `previous-page-button`, `next-page-button` |
+| [RecyclingPhotoDialog.jsx](../pages/owner/components/RecyclingPhotoDialog.jsx) | `close-photos-button` |
+| [PhotoActivityRow.jsx](../pages/owner/components/PhotoActivityRow.jsx) | `view-photos-button` |
 
-- Global button defaults: [shared/base.css](shared/base.css).
-- User hover, active, disabled, and focus styles: [user/base.css](user/base.css).
-- Owner defaults: [owner/shell.css](owner/shell.css), with later overrides in
-  [owner/theme-overrides.css](owner/theme-overrides.css).
-- Kiosk defaults: [machine/base.css](machine/base.css), with reduced-motion
-  rules in [machine/water-refill.css](machine/water-refill.css).
-- Screen-size adjustments: [user/responsive.css](user/responsive.css),
-  [owner/responsive.css](owner/responsive.css), and
-  [machine/responsive.css](machine/responsive.css).
-- Inherited global rules: `owner/legacy/`, loaded through `owner/owner.css`.
+## Machine controls
 
-Use DevTools' Styles panel to see the winning declaration. Development source
-maps link it to the section file. Check `:hover`, `:focus-visible`, `:disabled`,
-active classes, and media queries as well as the default rule.
+Styles: [machine.css](machine/machine.css).
 
-For a new button, give it a stable descriptive class even when its active state
-changes. Reuse an existing style class only when it should share that design,
-and add its component and CSS file to this reference.
+| Component | Button classes |
+| --- | --- |
+| [MachineHome.jsx](../pages/machine/MachineHome.jsx) | `choose-water-button`, `try-another-item-button`, `reset-machine-button`, `retry-connection-button` |
+| [MachineWaterRefill.jsx](../pages/machine/MachineWaterRefill.jsx) | `machine-back-button`, `retry-refill-button` |
+
+## Shared controls
+
+Logout dialog styles are included in both [user.css](user/user.css) and
+[owner.css](owner/owner.css). Keep these shared sections identical.
+
+| Component | Button classes |
+| --- | --- |
+| [LogoutButton.jsx](../components/LogoutButton.jsx) | `cancel-logout-button`, `confirm-logout-button` |
+
+## Styling notes
+
+`LogoutButton.jsx` receives its trigger class from its caller. Its confirmation
+buttons use `cancel-logout-button` and `confirm-logout-button`.
+
+GCash button styles are included in both user and owner CSS; keep the shared
+sections identical. Navigation keeps its existing `user-bottom-nav-item` and
+`owner-app-nav-item` classes.
+
+Use the action name directly in CSS:
+
+```css
+.login-button,
+.register-button {
+  width: 100%;
+  min-height: 54px;
+}
+```
+
+Some rules use `button.action-name-button` to keep their priority over shared
+button defaults. Context is retained where a rule depends on a container, such
+as a location button inside a fieldset. Check hover, focus, disabled, active,
+and mobile states in DevTools when editing styles.

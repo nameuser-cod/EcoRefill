@@ -19,7 +19,7 @@ function WaterAmountSelector({
           <p>Available Points</p>
           <h2>{userPoints.toLocaleString()}</h2>
           <span>Select the amount of water you need.</span>
-          <button type="button" className="buy-points-btn" onClick={onBuyPoints} disabled={confirming || !canBuyPoints}>
+          <button type="button" className="buy-points-button" onClick={onBuyPoints} disabled={confirming || !canBuyPoints}>
             Buy Points
           </button>
           <span>1 point = ₱1 via GCash. Owner approval required.</span>
@@ -39,7 +39,7 @@ function WaterAmountSelector({
               <button
                 key={option.waterAmountMl}
                 type="button"
-                className={`water-option-card ${selected ? "selected" : ""}`}
+                className={`select-water-button ${selected ? "selected" : ""}`}
                 onClick={() => onSelect(option.waterAmountMl)}
               >
                 <Droplets size={30} />
@@ -77,7 +77,7 @@ function WaterAmountSelector({
 
       <button
         type="button"
-        className="primary-action-button"
+        className="confirm-refill-button"
         onClick={onConfirm}
         disabled={confirming || !hasEnoughPoints}
       >

@@ -63,7 +63,7 @@ function UserWaterRefill() {
         <header className="dashboard-header">
           <button
             type="button"
-            className="icon-button"
+            className="refill-back-button"
             onClick={() => navigate(-1)}
             aria-label="Go back"
           >
@@ -79,7 +79,7 @@ function UserWaterRefill() {
           <div className="scan-error-message">
             <p>{error}</p>
             {["expired", "cancelled"].includes(session?.status) && (
-              <button className="refill-rescan-button" type="button" onClick={() => navigate("/user/scan-qr")}>Scan a new refill QR</button>
+              <button className="rescan-refill-button" type="button" onClick={() => navigate("/user/scan-qr")}>Scan a new refill QR</button>
             )}
           </div>
         )}

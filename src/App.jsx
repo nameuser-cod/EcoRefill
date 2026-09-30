@@ -1,7 +1,8 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import StartupAnimation from "./components/StartupAnimation";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import Welcome from "./pages/auth/Welcome";
 import UserDashboard from "./pages/user/UserDashboard";
 import OwnerDashboard from "./pages/owner/OwnerDashboard";
 import OwnerAlerts from "./pages/owner/OwnerAlerts";
@@ -22,7 +23,8 @@ function App() {
   return (
     <StartupAnimation>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/" element={<Welcome />} />
+        <Route path="/welcome" element={<Welcome />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/user/dashboard" element={<UserDashboard />} />

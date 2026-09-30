@@ -1,6 +1,5 @@
 import OwnerBottomNav from "./OwnerBottomNav";
 import "../../../styles/owner/owner.css";
-import "../../../styles/owner/owner-dashboard.css";
 
 function OwnerPageShell({
   eyebrow,

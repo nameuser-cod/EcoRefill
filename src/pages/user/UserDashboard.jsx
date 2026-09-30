@@ -17,7 +17,6 @@ import {
   LogOut,
   MapPin,
   QrCode,
-  Recycle,
 } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
 import LogoutButton from "../../components/LogoutButton";
@@ -120,7 +119,7 @@ function UserDashboard() {
           </div>
 
           <LogoutButton
-            className="icon-button"
+            className="logout-button"
             ariaLabel="Log out"
             title="Log out"
           >
@@ -157,7 +156,7 @@ function UserDashboard() {
           <div className="dashboard-action-grid">
             <button
               type="button"
-              className="dashboard-action-card"
+              className="scan-qr-button"
               onClick={() => navigate("/user/scan-qr")}
             >
               <span className="dashboard-action-icon">
@@ -171,7 +170,7 @@ function UserDashboard() {
 
             <button
               type="button"
-              className="dashboard-action-card dashboard-action-card-alt"
+              className="find-machines-button"
               onClick={() => navigate("/user/machines")}
             >
               <span className="dashboard-action-icon"><MapPin size={26} /></span>
@@ -180,25 +179,6 @@ function UserDashboard() {
                 <small>Explore the map and get directions</small>
               </span>
             </button>
-          </div>
-        </section>
-
-        <section className="info-grid">
-          <div className="mini-card">
-            <Recycle size={26} />
-            <h3>Recycle</h3>
-            <p>
-              Insert an accepted bottle or can, then scan the machine QR code.
-            </p>
-          </div>
-
-          <div className="mini-card">
-            <Droplets size={26} />
-            <h3>Refill Water</h3>
-            <p>
-              Use earned or purchased points to dispense the amount of water
-              you need.
-            </p>
           </div>
         </section>
 
@@ -211,7 +191,7 @@ function UserDashboard() {
 
             <button
               type="button"
-              className="text-action-button"
+              className="view-history-button"
               onClick={() => navigate("/user/history")}
             >
               View All

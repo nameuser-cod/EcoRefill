@@ -64,7 +64,7 @@ function RecentScans({ items }) {
               <button
                 key={filter.value}
                 type="button"
-                className={`owner-filter-button ${statusFilter === filter.value ? "active" : ""}`}
+                className={`filter-scans-button ${statusFilter === filter.value ? "active" : ""}`}
                 aria-pressed={statusFilter === filter.value}
                 onClick={() => {
                   setStatusFilter(filter.value);
@@ -83,7 +83,7 @@ function RecentScans({ items }) {
               <button
                 key={filter.value}
                 type="button"
-                className={`owner-filter-button ${materialFilter === filter.value ? "active" : ""}`}
+                className={`filter-material-button ${materialFilter === filter.value ? "active" : ""}`}
                 aria-pressed={materialFilter === filter.value}
                 onClick={() => {
                   setMaterialFilter(filter.value);
@@ -154,7 +154,7 @@ function RecentScans({ items }) {
       {filteredItems.length > 0 && (
         <nav className="owner-scan-pagination" aria-label="Scan history pages">
           <button
-            className="owner-scan-page-button"
+            className="previous-page-button"
             type="button"
             disabled={currentPage === 1}
             onClick={() => setPage(currentPage - 1)}
@@ -164,7 +164,7 @@ function RecentScans({ items }) {
           </button>
           <span>Page {currentPage} of {totalPages}</span>
           <button
-            className="owner-scan-page-button"
+            className="next-page-button"
             type="button"
             disabled={currentPage === totalPages}
             onClick={() => setPage(currentPage + 1)}

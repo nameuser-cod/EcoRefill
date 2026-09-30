@@ -31,7 +31,7 @@ function OwnerDashboard() {
   const { recycling, transactions, alerts, refills } = dashboard.sections;
   const logoutAction = (
     <LogoutButton
-      className="owner-header-button"
+      className="owner-dashboard-logout-button"
       ariaLabel="Log out"
       title="Log out"
     >

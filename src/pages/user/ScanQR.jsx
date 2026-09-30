@@ -203,7 +203,7 @@ function ScanQR() {
 
           <div className="scan-actions">
             <button
-              className="scan-camera-button"
+              className="open-camera-button"
               type="button"
               onClick={() => navigate("/user/camera-scan")}
               disabled={redeeming || authLoading}
@@ -228,7 +228,7 @@ function ScanQR() {
               <h2>+{earnedPoints} Points</h2>
               <p>{message}</p>
               <button
-                className="scan-return-button"
+                className="scan-done-button"
                 type="button"
                 onClick={() => navigate("/user/dashboard", { replace: true })}
               >

@@ -167,7 +167,7 @@ function UserProfile() {
               {message && <div className="success-message"><p>{message}</p></div>}
               {error && <div className="scan-error-message"><p>{error}</p></div>}
 
-              <button type="submit" className="primary-action-button" disabled={saving}>
+              <button type="submit" className="save-profile-button" disabled={saving}>
                 {saving ? (
                   <LoaderCircle size={20} className="user-spin" />
                 ) : (

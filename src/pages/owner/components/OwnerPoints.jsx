@@ -1,7 +1,6 @@
 import { Coins } from "lucide-react";
 import { useEffect, useState } from "react";
 import { callPoints } from "../../../firebase/pointPurchases";
-import "../../../styles/owner/owner-points.css";
 
 async function syncPastRefills(isActive) {
   let cursor = null;

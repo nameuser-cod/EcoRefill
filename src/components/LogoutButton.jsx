@@ -3,7 +3,6 @@ import { signOut } from "firebase/auth";
 import { AlertTriangle, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../firebase/firebase";
-import "../styles/shared/logout-confirmation.css";
 
 function LogoutButton({
   className,
@@ -102,7 +101,7 @@ function LogoutButton({
               <button
                 type="button"
                 ref={cancelRef}
-                className="logout-confirm-cancel"
+                className="cancel-logout-button"
                 onClick={closeDialog}
                 disabled={loggingOut}
               >
@@ -110,7 +109,7 @@ function LogoutButton({
               </button>
               <button
                 type="button"
-                className="logout-confirm-submit"
+                className="confirm-logout-button"
                 onClick={handleConfirm}
                 disabled={loggingOut}
               >

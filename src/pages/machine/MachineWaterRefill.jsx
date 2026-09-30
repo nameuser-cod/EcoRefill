@@ -349,7 +349,7 @@ function MachineWaterRefill() {
           </div>
 
           <button
-            className="machine-kiosk-back"
+            className="machine-back-button"
             onClick={cancelSession}
             disabled={creating || leaving || refillBusy}
           >
@@ -393,7 +393,7 @@ function MachineWaterRefill() {
                 <p role="alert">{error}</p>
 
                 <button
-                  className="machine-kiosk-primary"
+                  className="retry-refill-button"
                   onClick={
                     retrySession
                   }
@@ -553,7 +553,7 @@ function MachineWaterRefill() {
                 {["failed", "expired"].includes(session.status) && (
                   <div className="water-center-state error">
                     <button
-                      className="machine-kiosk-primary"
+                      className="retry-refill-button"
                       onClick={retrySession}
                       disabled={leaving}
                     >

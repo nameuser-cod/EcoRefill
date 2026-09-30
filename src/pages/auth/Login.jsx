@@ -10,7 +10,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
 import { readRememberedEmail, saveRememberedEmail } from "./rememberedLogin";
-import "../../styles/auth/auth.css";
+import AuthLayout from "./AuthLayout";
 
 async function getDashboardPath(user) {
   const userDocSnap = await getDoc(doc(db, "users", user.uid));
@@ -127,15 +127,13 @@ function Login() {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <div className="brand-section">
-          <div className="brand-logo">♻</div>
-          <h1>Welcome Back</h1>
-          <p>Login to your EcoRefill account.</p>
-        </div>
-
-        <form onSubmit={handleLogin} className="auth-form">
+    <AuthLayout
+      title="Welcome back"
+      description="Log in to EcoRefill."
+      footer={<>New here? <Link to="/register">Create account</Link></>}
+    >
+      <form onSubmit={handleLogin} className="auth-form auth-form-layout">
+        <div className="auth-field">
           <label htmlFor="login-email">Email</label>
           <input
             id="login-email"
@@ -147,63 +145,56 @@ function Login() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
+        </div>
 
-<label htmlFor="login-password">Password</label>
-
-<div className="password-field">
-  <input
-    id="login-password"
-    name="password"
-    type={showPassword ? "text" : "password"}
-    autoComplete="current-password"
-    placeholder="Enter your password"
-    value={password}
-    onChange={(e) => setPassword(e.target.value)}
-    required
-  />
-
-  <span
-    className="password-eye"
-    onClick={() => setShowPassword((current) => !current)}
-    role="button"
-    tabIndex={0}
-    aria-label={showPassword ? "Hide password" : "Show password"}
-    onKeyDown={(e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        setShowPassword((current) => !current);
-      }
-    }}
-  >
-    {showPassword ? <Eye size={26} /> : <EyeOff size={26} />}
-  </span>
-</div>
-
-          <label className="remember-me">
+        <div className="auth-field">
+          <label htmlFor="login-password">Password</label>
+          <div className="password-field">
             <input
-              type="checkbox"
-              name="rememberMe"
-              checked={rememberMe}
-              onChange={(e) => {
-                setRememberMe(e.target.checked);
-                if (!e.target.checked) saveRememberedEmail("");
-              }}
-              disabled={loading || checkingSession}
+              id="login-password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
             />
-            <span>Remember me</span>
-          </label>
+            <button
+              type="button"
+              className="auth-password-toggle"
+              onClick={() => setShowPassword((current) => !current)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-controls="login-password"
+              aria-pressed={showPassword}
+            >
+              {showPassword ? <Eye size={21} /> : <EyeOff size={21} />}
+            </button>
+          </div>
+        </div>
 
-          {error && <p className="error-message">{error}</p>}
+        <label className="remember-me">
+          <input
+            type="checkbox"
+            name="rememberMe"
+            checked={rememberMe}
+            onChange={(e) => {
+              setRememberMe(e.target.checked);
+              if (!e.target.checked) saveRememberedEmail("");
+            }}
+            disabled={loading || checkingSession}
+          />
+          <span>Remember me</span>
+        </label>
 
-          <button className="auth-submit-button" type="submit" disabled={loading || checkingSession}>
-            {checkingSession ? "Checking session..." : loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
+        {error && <p className="error-message" role="alert">{error}</p>}
 
-        <p className="switch-text">
-          No account yet? <Link to="/register">Create account</Link>
-        </p>
-      </div>
-    </div>
+        <button className="login-button" type="submit" disabled={loading || checkingSession}>
+          {checkingSession ? "Checking session..." : loading ? "Logging in..." : "Log in"}
+        </button>
+      </form>
+
+    </AuthLayout>
   );
 }
 

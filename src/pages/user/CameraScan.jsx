@@ -218,14 +218,14 @@ function CameraScan() {
               <h3>Camera unavailable</h3>
               <p>{error}</p>
             </div>
-            <button className="camera-retry-button" type="button" onClick={() => window.location.reload()}>
+            <button className="retry-camera-button" type="button" onClick={() => window.location.reload()}>
               Try Again
             </button>
           </div>
         )}
 
         {!qrDetected && (
-          <button type="button" className="camera-cancel-button" onClick={cancelScanner}>
+          <button type="button" className="cancel-scan-button" onClick={cancelScanner}>
             Cancel Scanning
           </button>
         )}

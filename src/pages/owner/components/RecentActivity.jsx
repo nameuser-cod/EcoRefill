@@ -64,7 +64,7 @@ export function RecentAlerts({ alerts }) {
           <p>Needs attention</p>
           <h2>Recent alerts</h2>
         </div>
-        <button className="owner-view-all-button" type="button" onClick={() => navigate("/owner/alerts")}>
+        <button className="view-alerts-button" type="button" onClick={() => navigate("/owner/alerts")}>
           View all
         </button>
       </div>
@@ -106,7 +106,7 @@ export function RecentTransactions({ transactions, recyclingRecords, machineId }
           <h2>Transactions</h2>
         </div>
         <button
-          className="owner-view-all-button"
+          className="view-transactions-button"
           type="button"
           onClick={() => navigate("/owner/transactions")}
         >

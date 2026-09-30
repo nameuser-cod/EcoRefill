@@ -1,7 +1,7 @@
 function PhotoActivityRow({ className, onOpen, children }) {
   return (
     <div
-      className={`${className}${onOpen ? " owner-photo-trigger" : ""}`}
+      className={`${className}${onOpen ? " view-photos-button" : ""}`}
       role={onOpen ? "button" : undefined}
       tabIndex={onOpen ? 0 : undefined}
       aria-haspopup={onOpen ? "dialog" : undefined}

@@ -116,7 +116,7 @@ function ProfileForm({ owner, machine, onSaved }) {
       {error && <p className="owner-form-error" role="alert">{error}</p>}
       {message && <p className="owner-form-success" role="status">{message}</p>}
 
-      <button className="owner-profile-save-button" type="submit" disabled={saving}>
+      <button className="save-owner-profile-button" type="submit" disabled={saving}>
         <Save size={18} />
         {saving ? "Saving..." : "Save changes"}
       </button>
@@ -165,7 +165,7 @@ function OwnerProfile() {
 
           <GcashSettings />
 
-          <LogoutButton className="owner-logout-button">
+          <LogoutButton className="owner-profile-logout-button">
             <LogOut size={19} />
             Log out of EcoRefill
           </LogoutButton>
