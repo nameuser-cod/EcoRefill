@@ -122,7 +122,7 @@ function MachineWaterRefill() {
   }, [creating, sessionId, sessionStatus, navigate]);
 
   useEffect(() => {
-    if (sessionStatus !== "completed") return;
+    if (!["completed", "failed"].includes(sessionStatus)) return;
     const timer = window.setTimeout(() => { void cancelSession(); }, 4000);
     return () => window.clearTimeout(timer);
   }, [sessionStatus, cancelSession]);
@@ -150,6 +150,14 @@ function MachineWaterRefill() {
     ).trim();
 
     const normalized = rawError.toUpperCase();
+
+    if (normalized.includes("CONTAINER_TIMEOUT")) {
+      return {
+        title: "Refill failed",
+        message: "No cup was detected within 5 seconds. Returning to the home screen...",
+        detail: rawError,
+      };
+    }
 
     if (normalized.includes("NO_BOTTLE")) {
       return {
@@ -238,7 +246,7 @@ function MachineWaterRefill() {
           message: `Dispensing ${
             session.waterAmountMl ||
             0
-          } ml. Please keep your container in place.`,
+          } ml. If you remove your cup, filling pauses. Replace it within 5 seconds to continue.`,
 
           icon: (
             <LoaderCircle
@@ -550,7 +558,11 @@ function MachineWaterRefill() {
                   <p role="status">Result saved on this machine. Your account will update when connected.</p>
                 )}
 
-                {["failed", "expired"].includes(session.status) && (
+                {session.status === "failed" && (
+                  <p role="status">Returning home automatically...</p>
+                )}
+
+                {session.status === "expired" && (
                   <div className="water-center-state error">
                     <button
                       className="retry-refill-button"

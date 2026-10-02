@@ -1,6 +1,7 @@
 """Direct-controller regressions; fake GPIO, PWM sysfs, clock, and sensor."""
 
 from dataclasses import replace
+from itertools import chain, cycle, repeat
 from pathlib import Path
 from types import SimpleNamespace
 import tempfile
@@ -46,9 +47,9 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual([c.args for c in self.hardware.pump.call_args_list], [(True,), (False,)])
         self.assertAlmostEqual(self.now, 0.7)  # two close readings + 0.5 s refill
 
-    def test_original_water_durations_are_preserved(self):
+    def test_current_water_durations_are_preserved(self):
         s = ControllerSettings()
-        self.assertEqual((s.water_250_seconds, s.water_500_seconds, s.water_1000_seconds), (25, 30, 45))
+        self.assertEqual((s.water_250_seconds, s.water_500_seconds, s.water_1000_seconds), (13, 25, 45))
 
     def test_each_water_command_selects_its_own_calibrated_duration(self):
         self.controller.settings = replace(self.settings, water_500_seconds=1, water_1000_seconds=1.5)
@@ -63,21 +64,64 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(self.run_water(), (False, "ERROR WATER_250 NO_BOTTLE"))
         self.hardware.pump.assert_not_called()
 
-    def test_far_readings_stop_the_pump(self):
-        self.assertEqual(self.run_water([5, 5, 20, 20, 20, 20]),
-                         (False, "ERROR WATER_250 CONTAINER_REMOVED"))
-        self.assertEqual(self.hardware.pump.call_args.args, (False,))
-
-    def test_missing_and_alternating_bad_readings_cannot_run_forever(self):
-        self.controller.settings = replace(self.settings, water_250_seconds=10)
-        for bad in ([None] * 20, [None, 20] * 10):
+    def test_absent_cup_stops_pump_immediately_and_fails_after_five_seconds(self):
+        for bad in ([20], [None], [None, 20], [None, 5]):
             with self.subTest(bad=bad):
-                self.assertEqual(self.run_water([5, 5] + bad),
-                                 (False, "ERROR WATER_250 SENSOR_LOST"))
-                self.assertEqual(self.hardware.pump.call_args.args, (False,))
+                self.hardware.reset_mock()
+                self.responses.clear()
+                pump_events = []
+                self.hardware.pump.side_effect = lambda on: pump_events.append((on, self.now))
+                start = self.now
+                self.assertEqual(self.run_water(chain([5, 5], cycle(bad))),
+                                 (False, "ERROR WATER_250 CONTAINER_TIMEOUT"))
+                self.assertEqual([on for on, _ in pump_events], [True, False, False])
+                self.assertAlmostEqual(pump_events[1][1] - start, 0.2)
+                self.assertAlmostEqual(self.now - pump_events[1][1], 5.0)
+                self.assertNotIn("OK WATER_250", self.responses)
 
-    def test_short_dropout_recovers(self):
-        self.assertEqual(self.run_water([5, 5, None, None, 5, 5, 5, 5]), (True, None))
+    def test_repeated_pauses_preserve_total_pump_time_and_callback_runs_once(self):
+        pump_events = []
+        self.hardware.pump.side_effect = lambda on: pump_events.append((on, self.now))
+        callback = Mock()
+        # Initial detection and callback recheck, followed by two separate removals.
+        readings = chain([5, 5, 5, 5, None, None, 5, 5, 20, 5, 5], repeat(5))
+        self.assertEqual(self.run_water(readings, callback), (True, None))
+        callback.assert_called_once_with()
+        self.assertEqual([on for on, _ in pump_events], [True, False, True, False, True, False])
+        pumped_seconds = sum(pump_events[i + 1][1] - pump_events[i][1]
+                             for i in range(0, len(pump_events), 2))
+        self.assertAlmostEqual(pumped_seconds, self.settings.water_250_seconds)
+        self.assertAlmostEqual(self.now, 1.2)  # 0.2 detection + 0.5 pumping + 0.5 paused
+
+    def test_return_requires_two_close_readings_and_a_fresh_window_each_time(self):
+        pump_events = []
+        self.hardware.pump.side_effect = lambda on: pump_events.append((on, self.now))
+        readings = chain([5, 5, None], [None] * 45, [5, 12, 5, 5, 20],
+                         [20] * 45, [5, 5], repeat(5))
+        self.assertEqual(self.run_water(readings), (True, None))
+        self.assertEqual([on for on, _ in pump_events], [True, False, True, False, True, False])
+        self.assertAlmostEqual(pump_events[2][1] - pump_events[1][1], 4.9)
+        self.assertAlmostEqual(pump_events[4][1] - pump_events[3][1], 4.7)
+
+    def test_return_reading_finishing_after_deadline_cannot_restart_pump(self):
+        calls = 0
+
+        def distance():
+            nonlocal calls
+            calls += 1
+            if calls <= 2:
+                return 5
+            if calls == 3:
+                return None
+            if calls == 4:
+                return 5
+            self.now += 5
+            return 5
+
+        self.hardware.distance_cm.side_effect = distance
+        self.assertEqual(self.run_water(), (False, "ERROR WATER_250 CONTAINER_TIMEOUT"))
+        self.assertEqual([c.args for c in self.hardware.pump.call_args_list],
+                         [(True,), (False,), (False,)])
 
     def test_sensor_exception_turns_off_and_does_not_retry(self):
         ok, error = self.run_water([5, 5, OSError("sensor unplugged")])
@@ -137,6 +181,7 @@ class ControllerTests(unittest.TestCase):
             {"gate_accept_us": 499}, {"gate_reject_us": 2501},
             {"water_250_seconds": 0}, {"water_500_seconds": 61},
             {"water_1000_seconds": float("nan")}, {"move_seconds": True},
+            {"container_return_seconds": 0}, {"container_return_seconds": float("inf")},
             {"trigger_distance_cm": 15, "remove_distance_cm": 14},
         ):
             with self.subTest(changes=changes), self.assertRaises(ValueError):
@@ -144,6 +189,32 @@ class ControllerTests(unittest.TestCase):
 
 
 class CancellationTests(unittest.TestCase):
+    def test_reset_and_close_while_paused_never_restart_pump(self):
+        for action in ("reset", "close"):
+            with self.subTest(action=action):
+                hardware = Mock()
+                hardware.distance_cm.side_effect = chain([5, 5], repeat(None))
+                paused = threading.Event()
+                controller = GPIOController(
+                    hardware, emit=lambda message: paused.set() if message.startswith("PAUSED") else None,
+                )
+                result = []
+                worker = threading.Thread(target=lambda: result.append(controller.execute("WATER_250")))
+                worker.start()
+                try:
+                    self.assertTrue(paused.wait(2))
+                    self.assertEqual(hardware.pump.call_args.args, (False,))
+                    self.assertEqual(controller.execute("WATER_500"), (False, "ERROR WATER_500 BUSY"))
+                    getattr(controller, action)()
+                    worker.join(timeout=2)
+                    self.assertFalse(worker.is_alive())
+                    self.assertEqual(result, [(False, "ERROR WATER_250 CANCELLED")])
+                    self.assertEqual([c.args for c in hardware.pump.call_args_list],
+                                     [(True,), (False,), (False,)])
+                finally:
+                    controller.close()
+                    worker.join(timeout=2)
+
     def test_reset_and_close_interrupt_active_water_and_busy_commands_are_rejected(self):
         for action in ("reset", "close"):
             with self.subTest(action=action):

@@ -1,4 +1,5 @@
 import { AlertTriangle, LogOut } from "lucide-react";
+import PhoneNotificationSettings from "./components/PhoneNotificationSettings";
 import LogoutButton from "../../components/LogoutButton";
 import MachineOverview from "./components/MachineOverview";
 import DashboardSection from "./components/DashboardSection";
@@ -11,7 +12,6 @@ import {
 } from "./components/OwnerFeedback";
 import RecentScans from "./components/RecentScans";
 import RecyclingOverview from "./components/RecyclingOverview";
-import RejectedBreakdown from "./components/RejectedBreakdown";
 import {
   RecentAlerts,
   RecentTransactions,
@@ -87,6 +87,7 @@ function OwnerDashboard() {
     >
       <OwnerError message={machineError} />
       <MachineOverview machine={machine} owner={owner} />
+      <PhoneNotificationSettings />
 
       <div className="owner-dashboard-layout">
         <div className="owner-dashboard-main">
@@ -96,7 +97,7 @@ function OwnerDashboard() {
             hasContent={dashboard.recentItems.length > 0}
             onRetry={() => dashboard.retry(["recycling"])}
           >
-            <RecyclingOverview analytics={dashboard.analytics} machine={machine} />
+            <RecyclingOverview key={machine.id} analytics={dashboard.analytics} machine={machine} records={dashboard.recentItems} />
             <RecentScans key={machine.id} items={dashboard.recentItems} />
           </DashboardSection>
         </div>
@@ -126,14 +127,6 @@ function OwnerDashboard() {
               transactions={dashboard.recentTransactions}
               recyclingRecords={dashboard.recentItems}
             />
-          </DashboardSection>
-          <DashboardSection
-            title="Rejected items"
-            sources={[recycling]}
-            hasContent={dashboard.recentItems.length > 0}
-            onRetry={() => dashboard.retry(["recycling"])}
-          >
-            <RejectedBreakdown rejectedTypes={dashboard.analytics.rejectedTypes} />
           </DashboardSection>
         </aside>
       </div>

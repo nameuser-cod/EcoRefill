@@ -9,6 +9,7 @@
     "build:kiosk": "vite build --mode kiosk",
     "lint": "eslint .",
     "test:dashboard": "node --test tests/owner-dashboard.test.mjs",
+    "test:notifications": "node --test tests/phone-notifications.test.mjs && python3 -m unittest discover -s ecorefill-pi -p 'test_push_notifications.py' -v",
     "test:rules": "firebase emulators:exec --project demo-ecorefill-rules --only firestore \"node --test tests/firestore.rules.test.mjs\"",
     "preview": "vite preview"
   },
@@ -16,6 +17,7 @@
     "@capacitor/android": "^8.5.0",
     "@capacitor/cli": "^8.4.2",
     "@capacitor/core": "^8.4.2",
+    "@capacitor/push-notifications": "^8.1.2",
     "firebase": "^12.14.0",
     "html5-qrcode": "^2.3.8",
     "leaflet": "^1.9.4",

@@ -364,11 +364,14 @@ Edit `gpio.local.json` for both the console and the app:
 - Water waits at most 30 seconds for **two consecutive** readings within 10 cm.
   Missing readings reset that count. The app marks dispensing before pump-on;
   after that callback completes, the controller rechecks bottle presence.
-- Four consecutive valid readings beyond 14 cm stop with `CONTAINER_REMOVED`.
-  Twenty consecutive readings without confirmed presence (no echo or too far)
-  stop with `SENSOR_LOST`. A valid reading within 14 cm clears both counters.
-  Samples are separated by 100 ms, with up to 60 ms waiting for echo delivery;
-  those limits deliberately tolerate short dropouts and do not stop instantly.
+- While dispensing, a missing echo or a reading beyond 14 cm immediately
+  switches the pump off. The cup has `container_return_seconds` (default **5
+  seconds**) to return, confirmed by two consecutive readings within 10 cm.
+  Dispensing resumes with its remaining pump-on time; paused time does not count
+  toward the selected amount. Each new removal gets a fresh return window.
+  If the cup does not return in time, the command fails with `CONTAINER_TIMEOUT`.
+  The kiosk shows **Refill failed**, then returns home after 4 seconds.
+  Samples are separated by 100 ms, with up to 60 ms waiting for echo delivery.
 - Channel 2 is unused: IN2 and its screw terminals are disconnected, and the
   app does not control it.
 

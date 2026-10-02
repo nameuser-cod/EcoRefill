@@ -112,11 +112,11 @@ CAN_ITEMS = {
 }
 
 POINTS = {
-    # Two accepted plastic bottles earn one point; cans retain their rate.
+    # Each accepted plastic bottle or aluminum can earns half a point.
     "plastic_bottle": 0.5,
     "pet_bottle": 0.5,
-    "aluminum_can": 1,
-    "aluminium_can": 1,
+    "aluminum_can": 0.5,
+    "aluminium_can": 0.5,
 }
 
 # Water prices are calculated on the SERVER.

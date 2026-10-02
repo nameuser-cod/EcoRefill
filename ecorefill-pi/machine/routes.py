@@ -7,6 +7,7 @@ def create_apps(runtime):
     from flask import Flask, send_from_directory
     from flask_cors import CORS
     from point_payments import register_payment_routes
+    from .push_notifications import register_notification_routes
 
     runtime.app = Flask("ecorefill.machine")
     kiosk_dir = Path(os.getenv("ECOREFILL_KIOSK_DIR", str(
@@ -21,11 +22,13 @@ def create_apps(runtime):
     runtime.app.add_url_rule('/assets/<path:path>', 'kiosk_asset',
                              lambda path: send_from_directory(kiosk_dir / 'assets', path))
     CORS(runtime.app)
-    # Only redemption and payment routes are exposed by the public server.
+    # The public server exposes authenticated redemption, payments, and phone
+    # registration. Machine controls remain on the local server.
     runtime.public_redeem_app = Flask("ecorefill.machine.public_redeem")
     CORS(runtime.public_redeem_app)
     for app in (runtime.app, runtime.public_redeem_app):
         register_payment_routes(app, lambda: runtime.db, runtime.require_firebase_user)
+        register_notification_routes(app, lambda: runtime.db, runtime.require_firebase_user)
 
     runtime.app.add_url_rule(
         '/api/machine/state', endpoint='api_machine_state',

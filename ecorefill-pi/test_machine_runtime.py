@@ -394,10 +394,10 @@ class APITests(unittest.TestCase):
         self.assertEqual(self.machine.get_state(), before)
         self.assertFalse(self.machine.recycling_paused.is_set())
 
-    def test_public_server_exposes_only_rewards_and_payments(self):
+    def test_public_server_exposes_only_authenticated_rewards_payments_and_notifications(self):
         public_routes = {rule.rule for rule in self.machine.public_redeem_app.url_map.iter_rules()
                          if rule.endpoint != "static"}
-        self.assertEqual(public_routes, {"/api/recycling/redeem", "/api/points/<action>"})
+        self.assertEqual(public_routes, {"/api/recycling/redeem", "/api/points/<action>", "/api/notifications/<action>"})
         for rule in self.machine.app.url_map.iter_rules():
             if rule.rule.startswith(("/api/machine/", "/api/water-refill/")):
                 path = rule.rule.replace("<session_id>", "test-session")
@@ -557,6 +557,7 @@ class LifecycleTests(unittest.TestCase):
              patch.object(machine, "start_redemption_tunnel") as tunnel, \
              patch("machine.upload_queue.RecyclingUploadQueue"), \
              patch("machine.journal.MachineJournal"), \
+             patch("machine.push_notifications.MachineAlertNotifications"), \
              patch.object(machine, "restore_pending_reward"), \
              patch("machine.runtime.create_apps") as apps, \
              patch("machine.runtime.threading.Thread") as thread:
@@ -568,8 +569,8 @@ class LifecycleTests(unittest.TestCase):
             thread.return_value.start.side_effect = check_ready
             machine.start()
             machine.start()
-            self.assertEqual(thread.call_count, 4)
-            self.assertEqual(thread.return_value.start.call_count, 4)
+            self.assertEqual(thread.call_count, 5)
+            self.assertEqual(thread.return_value.start.call_count, 5)
             tunnel.assert_called_once_with()
             machine.close()
 

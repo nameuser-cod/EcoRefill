@@ -19,10 +19,11 @@ class ControllerSettings:
     sort_can_us: int = 2400
     move_seconds: float = 0.7
     drop_seconds: float = 1.5
-    water_250_seconds: float = 25.0
-    water_500_seconds: float = 30.0
+    water_250_seconds: float = 13.0
+    water_500_seconds: float = 25.0
     water_1000_seconds: float = 45.0
     bottle_wait_seconds: float = 30.0
+    container_return_seconds: float = 5.0
     trigger_distance_cm: float = 10.0
     remove_distance_cm: float = 14.0
 
@@ -134,29 +135,45 @@ class GPIOController:
                 raise OperationError("NO_BOTTLE")
         self._check_cancel()
         self.emit(f"DISPENSING {command}")
-        deadline = time.monotonic() + duration
         # Serialize the last cancellation check with RESET/close's pump-off.
         with self.state_lock:
             self._check_cancel()
             self.hardware.pump(True)
-        far_readings = bad_readings = 0
+        deadline = time.monotonic() + duration
         try:
             while time.monotonic() < deadline:
                 distance = self._distance()
-                if distance is not None and distance <= s.remove_distance_cm:
-                    far_readings = bad_readings = 0
-                else:
-                    bad_readings += 1
-                    far_readings = far_readings + 1 if distance is not None else 0
-                    if far_readings >= 4:
-                        raise OperationError("CONTAINER_REMOVED")
-                    # Includes mixed far/no-echo runs, which must not keep
-                    # resetting each other while there is no presence evidence.
-                    if bad_readings >= 20:
-                        raise OperationError("SENSOR_LOST")
+                if distance is None or distance > s.remove_distance_cm:
+                    self.hardware.pump(False)
+                    paused_at = time.monotonic()
+                    self.emit(f"PAUSED {command} WAITING FOR CONTAINER")
+                    self._wait_for_container_return(paused_at)
+                    with self.state_lock:
+                        self._check_cancel()
+                        self.hardware.pump(True)
+                    # Preserve the remaining pump-on time across every pause.
+                    deadline += time.monotonic() - paused_at
+                    self.emit(f"DISPENSING {command}")
                 self._wait(max(0, min(0.1, deadline - time.monotonic())))
         finally:
             self.hardware.pump(False)
+
+    def _wait_for_container_return(self, paused_at):
+        deadline = paused_at + self.settings.container_return_seconds
+        close_readings = 0
+        while time.monotonic() < deadline:
+            self._wait(max(0, min(0.1, deadline - time.monotonic())))
+            if time.monotonic() >= deadline:
+                break
+            distance = self._distance()
+            if time.monotonic() >= deadline:
+                break
+            close_readings = close_readings + 1 if (
+                distance is not None and distance <= self.settings.trigger_distance_cm
+            ) else 0
+            if close_readings >= 2:
+                return
+        raise OperationError("CONTAINER_TIMEOUT")
 
     def execute(self, command, on_dispensing=None):
         command = command.strip().upper()

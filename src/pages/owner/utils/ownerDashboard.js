@@ -33,6 +33,14 @@ const isCanMaterial = (value) => {
   );
 };
 
+export const getRecyclingMaterialCategory = (record) => {
+  const category = normalizeText(record.category);
+  const material = getDetectedMaterial(record);
+  if (category === "bottle" || isBottleMaterial(material)) return "bottle";
+  if (category === "can" || isCanMaterial(material)) return "can";
+  return "other";
+};
+
 export const calculateAnalytics = (records) => {
   let bottleCount = 0;
   let canCount = 0;
@@ -53,11 +61,11 @@ export const calculateAnalytics = (records) => {
     }
 
     acceptedCount += 1;
-    const category = normalizeText(record.category);
+    const category = getRecyclingMaterialCategory(record);
 
-    if (category === "bottle" || isBottleMaterial(material)) {
+    if (category === "bottle") {
       bottleCount += 1;
-    } else if (category === "can" || isCanMaterial(material)) {
+    } else if (category === "can") {
       canCount += 1;
     }
   });

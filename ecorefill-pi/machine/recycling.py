@@ -17,6 +17,14 @@ from .points import read_points
 class RecyclingWorker:
     """Methods composed into MachineRuntime; shared resources live on that instance."""
 
+    @staticmethod
+    def is_unknown_item_alert(result):
+        return (
+            not result.get("accepted")
+            and result.get("item") == "unknown"
+            and result.get("confidence") == 0
+        )
+
     def queue_recycling_upload(self, item_id, result, image_data_url=None, batch_session_id=None):
         """Commit the complete record locally before publishing the scan result."""
         self.recycling_upload_queue.put({
@@ -181,6 +189,27 @@ Created At: {time.time()}
                     return
                 transaction.set(record_ref, record_data)
                 transaction.set(machine_ref, machine_updates, merge=True)
+                if self.is_unknown_item_alert(result):
+                    # Commit the notification with the scan so offline retries
+                    # cannot lose it or reopen an already acknowledged alert.
+                    transaction.set(
+                        self.db.collection("machine_alerts").document(f"unknown_item_{item_id}"),
+                        {
+                            "machineId": MACHINE_ID,
+                            "recyclingRecordId": item_id,
+                            "alertType": "unknown_item",
+                            "status": "unread",
+                            "message": (
+                                "Unknown item detected at 0% confidence. "
+                                "The item was rejected. Please check the machine "
+                                "and review the scan."
+                            ),
+                            "confidence": confidence,
+                            "materialType": material_type,
+                            "createdAt": record_data["createdAt"],
+                            "updatedAt": firestore.SERVER_TIMESTAMP,
+                        },
+                    )
 
             save_once(self.db.transaction())
             log(f"Recycling item saved to Firestore: {item_id}")
@@ -572,6 +601,7 @@ Created At: {time.time()}
                     self.publish_recycling_result(
                         item_id,
                         phase="rejected",
+                        unknownItemAlert=self.is_unknown_item_alert(result),
                         message=(
                             result.get("rejection_reason")
                             or "Item rejected. Use a plastic bottle or aluminum can."

@@ -219,6 +219,19 @@ class OfflineRecoveryTests(unittest.TestCase):
             self.assertEqual(self.machine.app.test_client().post(f"/api/machine/{path}").status_code, 409)
         self.assertEqual(len(self.machine.journal.entries("reward")), 1)
 
+    def test_container_timeout_is_visible_locally_and_allows_return_home(self):
+        self.request_refill((False, "ERROR WATER_500 CONTAINER_TIMEOUT"))
+        self.machine.db = None
+        create_apps(self.machine)
+        client = self.machine.app.test_client()
+        result = client.get("/api/water-refill/session/refill")
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.json["session"]["status"], "failed")
+        self.assertEqual(result.json["session"]["error"], "ERROR WATER_500 CONTAINER_TIMEOUT")
+        self.assertEqual(client.post("/api/machine/resume-recycling").status_code, 200)
+        self.machine.run_water_command.assert_called_once()
+        self.assertEqual(self.machine.journal.entries("refill")[0][1]["outcome"], "failed")
+
     def test_photo_moves_to_separate_durable_queue_after_record(self):
         record = {"item_id": "item", "image_data_url": "photo"}
         self.machine.journal.put(record)

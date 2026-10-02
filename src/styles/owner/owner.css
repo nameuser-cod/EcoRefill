@@ -863,7 +863,8 @@ button.retry-dashboard-button {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.owner-analytics-grid > div {
+.owner-analytics-grid > div,
+.owner-analytics-grid > button.owner-analytics-button {
   min-width: 0;
   padding: 14px;
   display: grid;
@@ -871,6 +872,176 @@ button.retry-dashboard-button {
   border: 3px solid #08110b;
   border-radius: 15px;
   background: #fafcf9;
+}
+
+.owner-analytics-grid > button.owner-analytics-button {
+  text-align: left;
+  box-shadow: none;
+  color: #08110b;
+}
+
+.owner-analytics-grid > button.owner-analytics-button:hover {
+  background: #e1ffd5;
+  transform: translateY(-2px);
+}
+
+.owner-analytics-button:focus-visible,
+.owner-breakdown-dialog button:focus-visible,
+.owner-breakdown-dialog select:focus-visible {
+  outline: 3px solid #2472a4;
+  outline-offset: 4px;
+}
+
+.owner-analytics-button small {
+  color: #236c37;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.owner-breakdown-dialog {
+  width: min(860px, calc(100% - 28px));
+  max-width: none;
+  max-height: 90dvh;
+  padding: 0;
+  border: 3px solid #08110b;
+  border-radius: 22px;
+  background: #fff;
+  color: #08110b;
+  box-shadow: 8px 8px 0 #08110b;
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.owner-breakdown-dialog[open] { display: flex; flex-direction: column; }
+
+.owner-breakdown-dialog::backdrop {
+  background: rgb(8 24 15 / 60%);
+}
+
+.owner-breakdown-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+  padding: 20px 24px;
+  border-bottom: 1px solid #dbe8da;
+}
+
+.owner-breakdown-heading h2 { margin: 4px 0; font-size: 1.65rem; }
+.owner-breakdown-heading p { margin: 0; color: #236c37; font-size: 0.85rem; line-height: 1.5; }
+.owner-breakdown-heading p:first-child { font-weight: 800; }
+
+button.owner-breakdown-close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  box-shadow: none;
+  background: #e1ffd5;
+}
+
+.owner-breakdown-body {
+  min-height: 0;
+  padding: 20px 24px 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.owner-app-page .owner-breakdown-dialog button,
+.owner-breakdown-dialog button {
+  box-shadow: none;
+}
+
+.owner-app-page .owner-breakdown-dialog button:hover:not(:disabled),
+.owner-app-page .owner-breakdown-dialog button:active:not(:disabled),
+.owner-breakdown-dialog button:hover,
+.owner-breakdown-dialog button:active {
+  transform: none;
+  box-shadow: none;
+}
+
+.owner-breakdown-toolbar {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 18px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #f3ffe8;
+}
+
+.owner-breakdown-toolbar > div,
+.owner-breakdown-toolbar label { display: grid; gap: 6px; font-size: 0.8rem; font-weight: 700; }
+.owner-breakdown-toolbar > div { padding-left: 16px; border-left: 1px solid #cee4c5; }
+.owner-breakdown-toolbar strong { font-size: 1.6rem; }
+.owner-breakdown-toolbar select { min-height: 44px; padding: 8px; border: 2px solid #08110b; border-radius: 8px; background: #fff; color: #08110b; }
+.owner-breakdown-notice { font-size: 0.85rem; line-height: 1.5; }
+.owner-breakdown-legend { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 0.8rem; }
+.owner-breakdown-legend > span { display: flex; align-items: center; gap: 6px; }
+.owner-breakdown-legend i { width: 12px; height: 12px; border-radius: 3px; }
+.owner-breakdown-color-bottle { background: #35d04f; }
+.owner-breakdown-color-can { background: #2472a4; }
+.owner-breakdown-color-other { background: #a96119; }
+.owner-breakdown-axis { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin: 18px 0 10px; font-size: 0.75rem; color: #385442; }
+.owner-monthly-chart { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; margin: 0; padding: 0; list-style: none; }
+.owner-monthly-chart > li { min-width: 0; }
+.owner-breakdown-dialog button.owner-monthly-button {
+  display: grid;
+  grid-template-rows: 24px 150px 22px;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 5px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 0.75rem;
+  color: #385442;
+}
+.owner-breakdown-dialog button.owner-monthly-button[aria-pressed="true"] { border-color: #236c37; background: #f3ffe8; color: #174e27; }
+.owner-app-page .owner-breakdown-dialog button.owner-monthly-button:hover { background: #e1ffd5; }
+.owner-monthly-count { font-size: 0.7rem; font-weight: 800; overflow-wrap: anywhere; }
+.owner-monthly-label { font-weight: 800; }
+.owner-monthly-track { display: flex; flex-direction: column-reverse; align-self: stretch; width: 100%; max-width: 34px; justify-self: center; border-radius: 5px 5px 0 0; background: #edf2eb; overflow: hidden; border-bottom: 1px solid #9db49f; }
+.owner-monthly-track > span { width: 100%; flex-shrink: 0; }
+.owner-breakdown-paging { display: none; }
+.owner-monthly-details { margin-top: 18px; padding: 16px; border: 1px solid #cee4c5; border-radius: 14px; background: #fafcf9; }
+.owner-monthly-details-heading { display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+.owner-monthly-details-heading p,
+.owner-monthly-details-heading span { margin: 0; font-size: 0.75rem; color: #385442; }
+.owner-monthly-details-heading h3 { margin: 4px 0 0; font-size: 1rem; }
+.owner-monthly-details-heading > div:last-child { display: grid; gap: 4px; text-align: right; }
+.owner-monthly-details-heading strong { font-size: 1.5rem; }
+.owner-monthly-details dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0 0; padding-top: 14px; border-top: 1px solid #dbe8da; }
+.owner-monthly-details dt { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #385442; }
+.owner-monthly-details dt i { width: 8px; height: 8px; flex-shrink: 0; border-radius: 2px; }
+.owner-monthly-details dd { margin: 6px 0 0; font-size: 1.1rem; font-weight: 800; }
+.owner-monthly-empty { margin: 12px 0 0; color: #385442; font-size: 0.8rem; }
+
+@media (max-width: 600px) {
+  .owner-breakdown-heading { padding: 16px; gap: 10px; }
+  .owner-breakdown-heading h2 { font-size: 1.4rem; }
+  .owner-breakdown-heading p { font-size: 0.75rem; }
+  .owner-breakdown-body { padding: 16px; }
+  .owner-breakdown-toolbar { gap: 10px; padding: 12px; }
+  .owner-breakdown-toolbar > div { padding-left: 10px; }
+  .owner-breakdown-toolbar > div,
+  .owner-breakdown-toolbar label { font-size: 0.7rem; }
+  .owner-breakdown-toolbar strong { font-size: 1.25rem; }
+  .owner-monthly-chart { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .owner-breakdown-dialog button.owner-monthly-button { grid-template-rows: 20px 100px 20px; gap: 4px; padding: 6px 4px; }
+  .owner-monthly-chart[data-half="0"] > li[data-half="1"],
+  .owner-monthly-chart[data-half="1"] > li[data-half="0"] { display: none; }
+  .owner-breakdown-paging { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; }
+  .owner-breakdown-paging > span { font-size: 0.75rem; color: #385442; white-space: nowrap; }
+  .owner-breakdown-dialog .owner-breakdown-paging button { display: flex; align-items: center; gap: 4px; min-height: 44px; padding: 8px; border: 1px solid #cee4c5; border-radius: 8px; background: #f3ffe8; font-size: 0.75rem; }
+  .owner-monthly-details { padding: 12px; }
+  .owner-monthly-details dl { gap: 8px; }
 }
 
 .owner-analytics-grid svg {
@@ -1469,6 +1640,24 @@ button.resolve-alert-button:focus-visible {
 
 .owner-record-row .owner-alert-help {
   margin-top: 8px;
+}
+
+.owner-phone-notifications {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-block: 18px;
+  flex-wrap: wrap;
+}
+
+.owner-phone-notifications > div {
+  flex: 1 1 180px;
+}
+
+.owner-phone-notifications p {
+  margin: 5px 0 0;
+  color: #102719;
+  font-size: 0.875rem;
 }
 
 /* ===== 12. Profile and account form ===== */

@@ -65,6 +65,8 @@ class MachineRuntime(
         self.recycling_upload_queue = None
         self.journal = None
         self.sync_thread = None
+        self.notification_thread = None
+        self.notifications = None
         self.reward_sync_lock = threading.Lock()
         self._started = False
         self._closed = False
@@ -89,6 +91,7 @@ class MachineRuntime(
             "qrCode": None,
 
             "confidence": 0,
+            "unknownItemAlert": False,
             "imageUrl": None,
             "firebaseSaved": False,
             "recyclingRecordId": None,
@@ -222,6 +225,14 @@ class MachineRuntime(
                 target=self.journal_sync_worker, name="reward-refill-sync", daemon=True,
             )
             self.sync_thread.start()
+            from .push_notifications import MachineAlertNotifications
+            self.notifications = MachineAlertNotifications(
+                lambda: self.db, MACHINE_ID, self.recycling_upload_queue.path, self.shutdown_event,
+            )
+            self.notification_thread = threading.Thread(
+                target=self.notifications.run, name="machine-alert-notifications", daemon=True,
+            )
+            self.notification_thread.start()
             self.recycling_upload_thread = threading.Thread(
                 target=self.recycling_upload_worker, name="recycling-uploads", daemon=True,
             )
@@ -270,6 +281,8 @@ class MachineRuntime(
             # Unsent records stay on disk; do not wait on a slow network call.
             if self.recycling_upload_thread.is_alive():
                 self.recycling_upload_thread.join(timeout=1)
+        if self.notification_thread is not None and self.notification_thread.is_alive():
+            self.notification_thread.join(timeout=1)
         if self.weight_scale is not None:
             try:
                 self.weight_scale.close()

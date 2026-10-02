@@ -2,6 +2,11 @@
   "appId": "com.ecorefill.app",
   "appName": "EcoRefill",
   "webDir": "dist",
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["sound", "alert"]
+    }
+  },
   "android": {
     "allowMixedContent": true
   }

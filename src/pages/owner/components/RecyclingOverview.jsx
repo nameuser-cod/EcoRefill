@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { CheckCircle2, Package, PackageX, Recycle } from "lucide-react";
 import MachineMetrics from "./MachineMetrics";
+import RecyclingBreakdownDialog from "./RecyclingBreakdownDialog";
 
 const SUMMARY_ITEMS = [
   { key: "bottleCount", label: "Bottles", icon: Package },
@@ -8,7 +10,8 @@ const SUMMARY_ITEMS = [
   { key: "rejectedCount", label: "Rejected", icon: PackageX },
 ];
 
-function RecyclingOverview({ analytics, machine }) {
+function RecyclingOverview({ analytics, machine, records = [] }) {
+  const [selectedMetric, setSelectedMetric] = useState(null);
   return (
     <section className="owner-panel owner-analytics-panel">
       <div className="owner-panel-heading">
@@ -21,11 +24,14 @@ function RecyclingOverview({ analytics, machine }) {
 
       <div className="owner-analytics-grid">
         {SUMMARY_ITEMS.map(({ key, label, icon: Icon }) => (
-          <div key={key}>
-            <Icon size={20} />
+          <button key={key} type="button" className="owner-analytics-button"
+            aria-haspopup="dialog" aria-label={`${label}: ${analytics[key]}. View monthly breakdown`}
+            onClick={() => setSelectedMetric({ key, label })}>
+            <Icon size={20} aria-hidden="true" />
             <span>{label}</span>
             <strong>{analytics[key]}</strong>
-          </div>
+            <small>View monthly breakdown →</small>
+          </button>
         ))}
         <MachineMetrics machine={machine} />
       </div>
@@ -39,6 +45,10 @@ function RecyclingOverview({ analytics, machine }) {
           <span style={{ width: `${analytics.acceptanceRate}%` }} />
         </div>
       </div>
+      {selectedMetric && (
+        <RecyclingBreakdownDialog metric={selectedMetric} records={records}
+          total={analytics[selectedMetric.key]} onClose={() => setSelectedMetric(null)} />
+      )}
     </section>
   );
 }

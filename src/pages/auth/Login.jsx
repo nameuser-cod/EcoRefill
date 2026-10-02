@@ -11,6 +11,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
 import { readRememberedEmail, saveRememberedEmail } from "./rememberedLogin";
 import AuthLayout from "./AuthLayout";
+import { pendingNotificationPath } from "../../firebase/phoneNotifications";
 
 async function getDashboardPath(user) {
   const userDocSnap = await getDoc(doc(db, "users", user.uid));
@@ -18,7 +19,7 @@ async function getDashboardPath(user) {
   if (!userDocSnap.exists()) return null;
 
   return userDocSnap.data().role === "device_owner"
-    ? "/owner/dashboard"
+    ? pendingNotificationPath(user.uid) || "/owner/dashboard"
     : "/user/dashboard";
 }
 

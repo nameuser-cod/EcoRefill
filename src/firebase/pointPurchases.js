@@ -1,40 +1,9 @@
-import { doc, getDocFromServer } from "firebase/firestore";
-import { auth, db } from "./firebase";
-import { validatePaymentEndpoint } from "./paymentEndpoint";
+import { callPiService } from "./piService";
 
 export async function callPoints(name, data = {}) {
-  if (!auth.currentUser) throw new Error("Please sign in to continue.");
-  const configuredUrl = import.meta.env.VITE_PAYMENT_API_URL;
-  let endpoint;
-  if (configuredUrl) {
-    endpoint = validatePaymentEndpoint(configuredUrl, { configured: true, development: import.meta.env.DEV });
-  } else {
-    // Never discover a token destination from client-writable machine fields.
-    const snapshot = await getDocFromServer(doc(db, "serviceEndpoints", "pointPayments"));
-    endpoint = validatePaymentEndpoint(snapshot.data()?.url);
-  }
-  const idToken = await auth.currentUser.getIdToken();
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 45000);
-  try {
-    const response = await fetch(`${endpoint}/api/points/${encodeURIComponent(name)}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
-      body: JSON.stringify(data),
-      signal: controller.signal,
-      redirect: "error",
-      credentials: "omit",
-    });
-    const result = await response.json();
-    if (!response.ok || result.error) {
-      const error = new Error(result.error?.message || "The payment service is unavailable.");
-      error.code = result.error?.code || "unavailable";
-      throw error;
-    }
-    return result.data;
-  } finally {
-    clearTimeout(timeout);
-  }
+  return callPiService(`/api/points/${encodeURIComponent(name)}`, data, {
+    unavailableMessage: "The payment service is unavailable.",
+  });
 }
 
 export function paymentError(error) {

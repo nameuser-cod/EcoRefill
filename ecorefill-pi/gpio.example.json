@@ -11,6 +11,7 @@
   "water_500_seconds": 30,
   "water_1000_seconds": 45,
   "bottle_wait_seconds": 30,
+  "container_return_seconds": 5,
   "trigger_distance_cm": 10,
   "remove_distance_cm": 14
 }

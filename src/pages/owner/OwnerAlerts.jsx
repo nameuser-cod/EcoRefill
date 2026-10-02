@@ -1,4 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { clearPendingNotification } from "../../firebase/phoneNotifications";
+import PhoneNotificationSettings from "./components/PhoneNotificationSettings";
 import { Bell } from "lucide-react";
 import { db } from "../../firebase/firebase";
 import OwnerAlertRow from "./components/OwnerAlertRow";
@@ -15,6 +17,7 @@ import { getAlertStatus, updateMachineAlertStatus } from "./utils/ownerAlerts";
 const FILTERS = ["all", "unread", "read", "resolved"];
 
 function OwnerAlerts() {
+  useEffect(() => { clearPendingNotification(); }, []);
   const [activeFilter, setActiveFilter] = useState("all");
   const { currentUser, machine, loading: machineLoading, error: machineError } =
     useOwnerMachine();
@@ -43,6 +46,7 @@ function OwnerAlerts() {
       unreadAlerts={unreadAlerts}
     >
       <OwnerError message={machineError || alertsError} />
+      <PhoneNotificationSettings />
 
       <div className="owner-list-toolbar">
         <div>

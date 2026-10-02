@@ -11,6 +11,7 @@ node_modules
 dist
 ecorefill-pi/kiosk-dist/
 dist-ssr
+release-artifacts/
 *.local
 
 # Editor directories and files

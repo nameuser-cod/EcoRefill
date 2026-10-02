@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "121994549339",
+    "firebase_url": "https://ecorefill-911ba-default-rtdb.firebaseio.com",
+    "project_id": "ecorefill-911ba",
+    "storage_bucket": "ecorefill-911ba.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:121994549339:android:7b6923cf87e6392c28477e",
+        "android_client_info": {
+          "package_name": "com.ecorefill.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAB0rPl6qm65bewpk3s5uTbrCpuhTmvDhQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

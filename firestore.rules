@@ -40,6 +40,15 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Push registrations and delivery receipts are managed by authenticated
+    // Pi Admin SDK. Phone tokens must never be readable by app clients.
+    match /push_devices/{deviceId} {
+      allow read, write: if false;
+    }
+    match /alert_push_deliveries/{document=**} {
+      allow read, write: if false;
+    }
+
     // EcoRefill machines
     match /machines/{machineId} {
       allow read: if isSignedIn();

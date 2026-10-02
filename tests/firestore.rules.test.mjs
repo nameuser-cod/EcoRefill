@@ -31,6 +31,20 @@ after(async () => { await environment?.cleanup(); });
 
 const machineQuery = (db, machineId = 'machine_001') => query(collection(db, 'transactions'), where('machineId', '==', machineId));
 
+test('phone tokens and delivery receipts are inaccessible to app clients', async () => {
+  const paths = ['push_devices/phone', 'alert_push_deliveries/alert/devices/phone'];
+  await environment.withSecurityRulesDisabled(async (context) => {
+    for (const path of paths) await setDoc(doc(context.firestore(), path), { ownerId: 'owner', token: 'private-phone-token' });
+  });
+  for (const db of [environment.unauthenticatedContext().firestore(), environment.authenticatedContext('owner').firestore()]) {
+    for (const path of paths) {
+      await assertFails(getDoc(doc(db, path)));
+      await assertFails(setDoc(doc(db, path), { ownerId: 'owner', token: 'forged-token' }));
+      await assertFails(deleteDoc(doc(db, path)));
+    }
+  }
+});
+
 const locationUpdate = () => ({
   location: 'Barangay hall entrance',
   coordinates: { latitude: 14.5995, longitude: 120.9842 },

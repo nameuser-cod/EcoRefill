@@ -99,6 +99,10 @@ class MaterialDetection:
                 "item": "unknown",
                 "points": 0,
                 "confidence": 0,
+                "rejection_reason": (
+                    "Unknown item detected at 0% confidence. "
+                    "Please use a plastic bottle or aluminum can."
+                ),
             }
 
         frame_height, frame_width = frame.shape[:2]
@@ -154,6 +158,10 @@ class MaterialDetection:
                 "item": "unknown",
                 "points": 0,
                 "confidence": 0,
+                "rejection_reason": (
+                    "Unknown item detected at 0% confidence. "
+                    "Please use a plastic bottle or aluminum can."
+                ),
             }
 
         # Strongest meaningful detection in the frame.

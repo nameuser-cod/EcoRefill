@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import StartupAnimation from "./components/StartupAnimation";
+import PhoneNotificationBridge from "./components/PhoneNotificationBridge";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import Welcome from "./pages/auth/Welcome";
@@ -22,6 +23,7 @@ import UserWaterRefill from "./pages/user/UserWaterRefill";
 function App() {
   return (
     <StartupAnimation>
+      <PhoneNotificationBridge />
       <Routes>
         <Route path="/" element={<Welcome />} />
         <Route path="/welcome" element={<Welcome />} />

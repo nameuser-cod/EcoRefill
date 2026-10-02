@@ -1,7 +1,7 @@
 # Free Cloudflare redemption tunnel
 
 EcoRefill uses a Cloudflare Quick Tunnel to expose the authenticated recycling
-redemption and GCash payment endpoints. Machine-control routes remain available only on
+redemption, GCash payment, and phone-registration endpoints. Machine-control routes remain available only on
 the local network.
 
 ## Install `cloudflared` on the Raspberry Pi
@@ -36,6 +36,13 @@ The same public app on port 5001 now accepts `/api/points/<action>`. Every payme
 request requires a verified Firebase ID token; the server checks the caller's
 account role and purchase ownership before changing data. No additional tunnel
 or Firebase Cloud Functions deployment is needed.
+
+Phone notifications also use this connection through
+`/api/notifications/register` and `/api/notifications/unregister`. Both routes
+verify a Firebase ID token. Registration checks the caller's machine-owner
+role, and removal affects only a phone registered to that caller. The Pi sends
+machine alerts directly through Firebase Cloud Messaging. See the
+[phone notification installation guide](../docs/PHONE_NOTIFICATIONS.md).
 
 When the tunnel starts, the Pi publishes its URL to
 `serviceEndpoints/pointPayments` using the Admin SDK. Signed-in clients may read

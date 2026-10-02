@@ -53,19 +53,19 @@ flowchart TD
 2. **Automatic detection starts.** The Pi uses camera motion detection to notice an item and waits for a stable view before capturing it. No start button is needed.
 3. **The model checks the item.** YOLO predicts its class. The machine accepts configured material classes only when the prediction passes its confidence and object-area thresholds. Optional visual inspection can add further checks.
 4. **The machine sorts or rejects it.** The Pi runs `BOTTLE`, `CAN`, or `REJECT` directly through its GPIO controller. Rejected items earn no points.
-5. **Accepted items build one session total.** Each accepted plastic bottle adds **0.5 EcoPoints** (2 bottles = 1 point), and each accepted aluminum can adds **1 EcoPoint**. The screen shows the item count and points. The user can continue inserting items.
+5. **Accepted items build one session total.** Each accepted plastic bottle or aluminum can adds **0.5 EcoPoints** (2 accepted items = 1 point). The screen shows the item count and points. The user can continue inserting items.
 6. **The user presses the green button.** The machine creates one reward for the entire batch and displays a QR code. Account points are credited when that code is successfully claimed.
 7. **The user claims the reward.** A signed-in user opens the app's scanner and scans the QR. The redemption service verifies the Firebase login token and reward availability, then updates the balance and records a transaction.
 8. **The session ends.** A claimed reward cannot be claimed again. Unclaimed reward codes have a **60-second** validity period, after which the machine prepares for another customer.
 
-For example, three accepted plastic bottles and two accepted aluminum cans produce one reward QR worth **3.5 EcoPoints**. Half-points are preserved when claiming rewards, buying points, spending on refills, and refunding failed refills.
+For example, three accepted plastic bottles and two accepted aluminum cans produce one reward QR worth **2.5 EcoPoints**. Half-points are preserved when claiming rewards, buying points, spending on refills, and refunding failed refills.
 
 ### Accepted materials and inspection
 
 | Detected class | Category | Points per accepted item |
 | --- | --- | --- |
 | `plastic_bottle` or `pet_bottle` | Plastic bottle | 0.5 |
-| `aluminum_can` or `aluminium_can` | Aluminum can | 1 |
+| `aluminum_can` or `aluminium_can` | Aluminum can | 0.5 |
 | Unsupported, unknown, or insufficiently confident detection | Rejected | 0 |
 
 The current detector uses an inference image size of **416**, an acceptance confidence threshold of **0.65**, and a minimum bounding-box area of **5%** of the camera frame. Confidence is a model score, not a guarantee of material identity or real-world accuracy. Generic class names such as `bottle` and `can` are not accepted by the material rules.
@@ -308,6 +308,20 @@ npx cap open android
 ```
 
 Build and run the Android project through Android Studio. A phone's `127.0.0.1` address refers to the phone itself, so use the appropriate Pi address or redemption endpoint.
+
+### Android machine alert notifications
+
+The Android app displays machine alerts through Firebase Cloud Messaging while
+closed. The existing Raspberry Pi backend registers owner phones, watches its
+machine's recent alerts, and sends notifications with persistent retries. This
+setup works with the current Spark plan and uses the same trusted public
+connection as payments.
+
+Install the updated Pi backend and Android APK, then select **Enable
+notifications** on the owner Dashboard or Alerts. Follow the
+[phone notification installation and testing guide](docs/PHONE_NOTIFICATIONS.md).
+
+Verify with `npm run test:notifications` and `npm run test:rules`.
 
 ## Current implementation limits
 

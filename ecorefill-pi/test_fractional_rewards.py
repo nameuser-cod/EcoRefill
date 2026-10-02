@@ -49,7 +49,8 @@ class FractionalRewardTests(unittest.TestCase):
     def test_single_even_odd_and_mixed_batches_credit_exactly_once(self):
         with patch.dict('sys.modules', {'firebase_admin': SimpleNamespace(firestore=self.firestore)}):
             balance = 0.5
-            for bottles, cans, points in ((1, 0, 0.5), (2, 0, 1), (3, 0, 1.5), (3, 2, 3.5)):
+            for bottles, cans, points in ((1, 0, 0.5), (2, 0, 1), (3, 0, 1.5),
+                                         (0, 1, 0.5), (0, 2, 1), (3, 2, 2.5)):
                 with self.subTest(bottles=bottles, cans=cans):
                     session_id = f'batch-{bottles}-{cans}'
                     self.machine.update_state(

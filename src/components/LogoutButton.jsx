@@ -3,6 +3,7 @@ import { signOut } from "firebase/auth";
 import { AlertTriangle, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../firebase/firebase";
+import { removePhoneNotifications } from "../firebase/phoneNotifications";
 
 function LogoutButton({
   className,
@@ -50,11 +51,12 @@ function LogoutButton({
     try {
       setLoggingOut(true);
       setError("");
+      await removePhoneNotifications();
       await signOut(auth);
       navigate("/login", { replace: true });
     } catch (logoutError) {
       console.error("Unable to log out:", logoutError);
-      setError("We could not log you out. Please try again.");
+      setError("We could not finish logging out. Check your connection and try again.");
       setLoggingOut(false);
     }
   };

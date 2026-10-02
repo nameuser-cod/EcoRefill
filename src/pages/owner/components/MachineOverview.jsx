@@ -1,11 +1,7 @@
 import {
-  AlertTriangle,
-  CheckCircle2,
   CircleHelp,
   Gauge,
   MapPin,
-  ShieldAlert,
-  ShieldCheck,
   WifiOff,
 } from "lucide-react";
 import {
@@ -19,31 +15,10 @@ function MachineOverview({ machine, owner }) {
     machine.machineName || machine.machineId || machine.id || "EcoRefill machine";
   const machineStatus = machine.machineStatus || "Unknown";
   const statusTone = getStatusTone(machineStatus);
-  const qualityStatus = machine.waterQualityStatus || "Unknown";
-  const qualityTone = getStatusTone(qualityStatus);
-  const hasSecurityReading = typeof machine.isTampered === "boolean";
-  const securityLabel = hasSecurityReading
-    ? machine.isTampered
-      ? "Tampered"
-      : "Secured"
-    : "Unknown";
-  const securityTone = hasSecurityReading
-    ? machine.isTampered
-      ? "danger"
-      : "good"
-    : "neutral";
 
   const StatusIcon = normalizeText(machineStatus) === "online"
     ? Gauge
     : normalizeText(machineStatus) === "offline" ? WifiOff : CircleHelp;
-  const QualityIcon =
-    qualityTone === "good" ? CheckCircle2
-      : ["danger", "warning"].includes(qualityTone) ? AlertTriangle : CircleHelp;
-  const SecurityIcon = hasSecurityReading
-    ? machine.isTampered
-      ? ShieldAlert
-      : ShieldCheck
-    : CircleHelp;
 
   return (
     <section className="owner-machine-overview" aria-label="Connected machine status">
@@ -69,18 +44,6 @@ function MachineOverview({ machine, owner }) {
         </div>
       </div>
 
-      <div className="owner-health-summary">
-        <div className={`owner-health-item health-${qualityTone}`}>
-          <QualityIcon size={22} aria-hidden="true" />
-          <span>Water quality</span>
-          <strong className={`text-${qualityTone}`}>{qualityStatus}</strong>
-        </div>
-        <div className={`owner-health-item health-${securityTone}`}>
-          <SecurityIcon size={22} aria-hidden="true" />
-          <span>Security</span>
-          <strong className={`text-${securityTone}`}>{securityLabel}</strong>
-        </div>
-      </div>
       <OwnerPoints owner={owner} embedded />
     </section>
   );

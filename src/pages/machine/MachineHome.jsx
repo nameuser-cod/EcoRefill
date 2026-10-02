@@ -202,7 +202,7 @@ function MachineHome() {
       case "rejected":
         return {
           eyebrow: "Not accepted",
-          title: "Try another item",
+          title: machineState.unknownItemAlert ? "Unknown item detected" : "Try another item",
           message:
             machineState.message ||
             "Please insert one clean, empty plastic bottle or aluminum can.",
@@ -470,6 +470,13 @@ function MachineHome() {
 
           {machineState.phase === "rejected" && (
             <>
+              {machineState.unknownItemAlert && (
+                <div className="machine-detection-pill" role="alert">
+                  {machineState.firebaseSaved
+                    ? "Alert sent to the owner's dashboard."
+                    : "Owner alert saved. Waiting to send when connected."}
+                </div>
+              )}
               {(machineState.materialType ||
                 machineState.confidence) && (
                 <div className="machine-detection-pill">
