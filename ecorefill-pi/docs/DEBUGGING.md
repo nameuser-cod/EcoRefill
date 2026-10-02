@@ -7,7 +7,9 @@ python3 machine_flow.py
 ```
 
 When copying the controller to the Pi, copy the **whole `machine/` directory**
-alongside `machine_flow.py`, `point_payments.py`, and `visual_inspection.py`.
+alongside `machine_flow.py`. Copy `tools/`, `tests/`, and `run_tests.py` for the
+diagnostics and tests. The payments, inspection, and scale modules are included
+in `machine/`.
 Keep the existing model, credentials, and local inspection configuration.
 The launcher is no longer a standalone copy of the controller.
 
@@ -98,7 +100,7 @@ same GPIO pins. From `ecorefill-pi`, use the same Python interpreter and
 environment as the controller:
 
 ```sh
-python3 check_buttons.py
+python3 -m tools.check_buttons
 ```
 
 This uses the controller's button configuration and prints press/release events
@@ -142,7 +144,7 @@ Pi 5, GPIO Zero documents `lgpio` as the supported backend; see
 To explicitly select it for a diagnostic run:
 
 ```sh
-GPIOZERO_PIN_FACTORY=lgpio python3 check_buttons.py
+GPIOZERO_PIN_FACTORY=lgpio python3 -m tools.check_buttons
 ```
 
 If both events appear in the standalone check, restart the controller and
@@ -155,23 +157,26 @@ which the kiosk must read to open the water screen.
 
 | Problem or change | Start here | Useful methods or settings |
 | --- | --- | --- |
-| Machine ID, GPIO pins, timeouts, prices, confidence thresholds | [`machine/config.py`](machine/config.py) | `MACHINE_ID`, `WATER_OPTIONS`, `ACCEPT_CONFIDENCE_LIMIT` |
-| Startup, shutdown, resource ownership | [`machine/runtime.py`](machine/runtime.py) | `MachineRuntime.start`, `run`, `close` |
-| Session totals, phases, green/blue button behavior | [`machine/state.py`](machine/state.py) | `update_state`, `reset_state`, `rearm_for_next_item`, `request_water_refill` |
-| GPIO controller startup, sorter commands, water results | [`machine/controller.py`](machine/controller.py) | `send_command`, `run_water_command` |
-| Camera failures, motion detection, repeated scans | [`machine/camera.py`](machine/camera.py) | `restart_camera`, `wait_for_item_motion`, `frame_has_motion` |
-| Material accepted or rejected incorrectly | [`machine/detection.py`](machine/detection.py) | `verify_item`, `sort_item` |
-| Size or cleanliness inspection | [`visual_inspection.py`](visual_inspection.py) | `VisualInspector`; see [inspection setup](INSPECTION.md) |
-| Recycling loop, saved items, batch reward creation | [`machine/recycling.py`](machine/recycling.py) | `machine_worker`, `save_recycling_to_firestore`, `finalize_recycling_session` |
-| Phone refill requests, deductions, refunds, completion | [`machine/water_worker.py`](machine/water_worker.py) | `water_request_worker`, `process_water_refill_request` |
-| Firebase credentials or bearer token verification | [`machine/firebase.py`](machine/firebase.py) | `initialize_firebase`, `require_firebase_user` |
-| Kiosk recycling API | [`machine/machine_api.py`](machine/machine_api.py) | `api_machine_*` |
-| Water session API | [`machine/water_api.py`](machine/water_api.py) | `api_*_water_refill_session` |
-| Claiming recycling points | [`machine/rewards_api.py`](machine/rewards_api.py) | `api_redeem_recycling_reward` |
-| Route paths and local/public exposure | [`machine/routes.py`](machine/routes.py) | `create_apps` |
-| Public endpoint/tunnel discovery | [`machine/tunnel.py`](machine/tunnel.py) | `start_redemption_tunnel`, `watch_redemption_tunnel` |
-| GCash point purchases and owner reviews | [`point_payments.py`](point_payments.py) | `PointPayments`, `register_payment_routes` |
-| Log formatting and tracebacks | [`machine/diagnostics.py`](machine/diagnostics.py) | `configure_logging`, `log` |
+| Machine ID, GPIO pins, timeouts, prices, confidence thresholds | [`machine/config.py`](../machine/config.py) | `MACHINE_ID`, `WATER_OPTIONS`, `ACCEPT_CONFIDENCE_LIMIT` |
+| Startup, shutdown, resource ownership | [`machine/runtime.py`](../machine/runtime.py) | `MachineRuntime.start`, `run`, `close` |
+| Session totals, phases, green/blue button behavior | [`machine/state.py`](../machine/state.py) | `update_state`, `reset_state`, `rearm_for_next_item`, `request_water_refill` |
+| GPIO controller startup, sorter commands, water results | [`machine/controller.py`](../machine/controller.py) | `send_command`, `run_water_command` |
+| Camera failures, motion detection, repeated scans | [`machine/camera.py`](../machine/camera.py) | `restart_camera`, `wait_for_item_motion`, `frame_has_motion` |
+| Material accepted or rejected incorrectly | [`machine/detection.py`](../machine/detection.py) | `verify_item`, `sort_item` |
+| Size or cleanliness inspection | [`machine/visual_inspection.py`](../machine/visual_inspection.py) | `VisualInspector`; see [inspection setup](INSPECTION.md) |
+| Recycling loop, saved items, batch reward creation | [`machine/recycling.py`](../machine/recycling.py) | `machine_worker`, `save_recycling_to_firestore`, `finalize_recycling_session` |
+| Phone refill requests, deductions, refunds, completion | [`machine/water_worker.py`](../machine/water_worker.py) | `water_request_worker`, `process_water_refill_request` |
+| Firebase credentials or bearer token verification | [`machine/firebase.py`](../machine/firebase.py) | `initialize_firebase`, `require_firebase_user` |
+| Kiosk recycling API | [`machine/machine_api.py`](../machine/machine_api.py) | `api_machine_*` |
+| Water session API | [`machine/water_api.py`](../machine/water_api.py) | `api_*_water_refill_session` |
+| Claiming recycling points | [`machine/rewards_api.py`](../machine/rewards_api.py) | `api_redeem_recycling_reward` |
+| Route paths and local/public exposure | [`machine/routes.py`](../machine/routes.py) | `create_apps` |
+| Public endpoint/tunnel discovery | [`machine/tunnel.py`](../machine/tunnel.py) | `start_redemption_tunnel`, `watch_redemption_tunnel` |
+| GCash point purchases and owner reviews | [`machine/point_payments.py`](../machine/point_payments.py) | `PointPayments`, `register_payment_routes` |
+| Owner balance recovery from refill history | [`machine/owner_refill_history.py`](../machine/owner_refill_history.py) | `sync_owner_refills` |
+| Scale reads and calibration | [`machine/weight_sensor.py`](../machine/weight_sensor.py) | `HX711`, `CalibratedScale` |
+| Phone registration and alert delivery | [`machine/push_notifications.py`](../machine/push_notifications.py) | `PhoneRegistrations`, `MachineAlertNotifications` |
+| Log formatting and tracebacks | [`machine/diagnostics.py`](../machine/diagnostics.py) | `configure_logging`, `log` |
 
 ## How the modules fit together
 
@@ -296,8 +301,12 @@ From the repository root, using a Python environment with Flask, Flask-CORS,
 NumPy, and OpenCV installed:
 
 ```sh
-python3 -m unittest discover -s ecorefill-pi -p 'test_*.py' -v
+python3 ecorefill-pi/run_tests.py
 ```
+
+From inside `ecorefill-pi`, use `python3 run_tests.py`. To run only the runtime
+tests, use `python3 run_tests.py test_machine_runtime.py`. The runner resolves
+the test directory from its own location.
 
 The tests use fake serial connections, camera/model objects, and Firebase
 services. They do not connect to the live machine or modify real balances.
@@ -309,7 +318,7 @@ extracting functions from source text.
 To step through a focused test from `ecorefill-pi`:
 
 ```sh
-python3 -m pdb -m unittest test_machine_runtime.ControllerCommandTests.test_failed_water_is_not_retried
+python3 -m pdb -m unittest tests.test_machine_runtime.ControllerCommandTests.test_failed_water_is_not_retried
 ```
 
 These checks do not validate physical camera timing, GPIO wiring, PWM output,

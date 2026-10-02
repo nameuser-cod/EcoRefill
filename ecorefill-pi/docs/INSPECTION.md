@@ -1,6 +1,6 @@
 # Camera inspection
 
-The existing material detector stays in place. `visual_inspection.py` adds
+The existing material detector stays in place. `machine/visual_inspection.py` adds
 optional approximate size measurement and a **separate** trained appearance
 classifier before sorting and awarding points. No existing checkpoint has
 been retrained. This module leaves weight `not_checked`; the controller then
@@ -12,7 +12,7 @@ Weight is never simulated.
 ## Start by collecting real examples
 
 Run from the `ecorefill-pi` directory on the Pi. Copy
-`inspection.example.json` to `inspection.local.json`, and set
+`config/inspection.example.json` to `inspection.local.json`, and set
 `capture_directory` to `inspection_samples`. Leave `mode` as `off` and both
 checks disabled. Start the existing machine service with this environment:
 
@@ -23,8 +23,8 @@ python3 machine_flow.py
 
 If you normally use a service manager, set the same environment variable in
 that service instead of starting a second process. Paths inside the JSON are
-relative to the JSON file. Copy `visual_inspection.py`, `point_payments.py`,
-`machine_flow.py`, and the complete `machine/` directory when transferring
+relative to the JSON file. Copy `machine_flow.py` and the complete `machine/`
+directory when transferring
 the controller to the Pi. See [the controller file map](DEBUGGING.md).
 
 Each scan with one confidently recognized material saves a square, padded

@@ -9,7 +9,8 @@
     "build:kiosk": "vite build --mode kiosk",
     "lint": "eslint .",
     "test:dashboard": "node --test tests/owner-dashboard.test.mjs",
-    "test:notifications": "node --test tests/phone-notifications.test.mjs && python3 -m unittest discover -s ecorefill-pi -p 'test_push_notifications.py' -v",
+    "test:notifications": "node --test tests/phone-notifications.test.mjs && python3 ecorefill-pi/run_tests.py test_push_notifications.py",
+    "test:pi": "python3 ecorefill-pi/run_tests.py",
     "test:rules": "firebase emulators:exec --project demo-ecorefill-rules --only firestore \"node --test tests/firestore.rules.test.mjs\"",
     "preview": "vite preview"
   },

@@ -3,8 +3,8 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from check_weight import calibration_factor
-from weight_sensor import HX711, CalibratedScale, WeightReadingError
+from tools.check_weight import calibration_factor
+from machine.weight_sensor import HX711, CalibratedScale, WeightReadingError
 
 
 class WeightSensorTests(unittest.TestCase):
@@ -13,7 +13,7 @@ class WeightSensorTests(unittest.TestCase):
         bits = [(word >> bit) & 1 for bit in range(23, -1, -1)]
         gpio.gpio_read.side_effect = [0, *bits, final_level]
         sensor = HX711(gpio, 0)
-        with patch("weight_sensor.time.monotonic_ns", return_value=0):
+        with patch("machine.weight_sensor.time.monotonic_ns", return_value=0):
             result = sensor.read_raw()
         self.assertEqual(gpio.gpio_write.call_count, 50)
         self.assertEqual(gpio.gpio_write.call_args.args, (0, 6, 0))
@@ -37,14 +37,14 @@ class WeightSensorTests(unittest.TestCase):
     def test_stuck_high_times_out_without_clocking(self):
         gpio = Mock()
         gpio.gpio_read.return_value = 1
-        with patch("weight_sensor.time.monotonic", side_effect=[0, 3]):
+        with patch("machine.weight_sensor.time.monotonic", side_effect=[0, 3]):
             with self.assertRaises(TimeoutError):
                 HX711(gpio, 0).read_raw()
         gpio.gpio_write.assert_not_called()
 
     def test_long_clock_pulse_is_rejected_and_clock_lowered(self):
         gpio = Mock()
-        with patch("weight_sensor.time.monotonic_ns", side_effect=[0, 61000]):
+        with patch("machine.weight_sensor.time.monotonic_ns", side_effect=[0, 61000]):
             with self.assertRaisesRegex(RuntimeError, "timing"):
                 HX711(gpio, 0).pulse()
         self.assertEqual(gpio.gpio_write.call_args.args, (0, 6, 0))
@@ -98,7 +98,7 @@ class CalibratedScaleTests(unittest.TestCase):
 
     def test_sample_window_has_overall_deadline(self):
         scale = self.scale([0] * 11)
-        with patch("weight_sensor.time.monotonic", side_effect=[0, 0, 5]):
+        with patch("machine.weight_sensor.time.monotonic", side_effect=[0, 0, 5]):
             with self.assertRaises(WeightReadingError) as caught:
                 scale.read_weight()
         self.assertEqual(caught.exception.status, "unavailable")
@@ -115,7 +115,7 @@ class CalibratedScaleTests(unittest.TestCase):
         gpio.gpio_claim_output.side_effect = RuntimeError("GPIO busy")
         scale = CalibratedScale(-639408, 414.59)
         with patch.dict(sys.modules, {"lgpio": gpio}), \
-             patch("weight_sensor.open_header", return_value=0):
+             patch("machine.weight_sensor.open_header", return_value=0):
             with self.assertRaisesRegex(RuntimeError, "GPIO busy"):
                 scale.open()
         gpio.gpiochip_close.assert_called_once_with(0)

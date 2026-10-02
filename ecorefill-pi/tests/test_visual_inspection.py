@@ -7,7 +7,7 @@ import unittest
 
 import numpy as np
 
-from visual_inspection import VisualInspector, square_crop
+from machine.visual_inspection import VisualInspector, square_crop
 from machine.runtime import MachineRuntime
 from machine.scan_region import scan_region_bounds
 

@@ -78,11 +78,11 @@ An optional inspection module supports approximate exterior size checks and a se
 
 Size checking requires camera calibration and measured size profiles. Cleanliness checking requires a separately trained and validated model. Neither visual check is enabled by the example configuration. A required HX711 weight check rejects plastic bottles and aluminum cans above **300 g**, before sorting or awarding points. Exactly 300 g passes the weight limit for either material. Missing, invalid, or unstable weight readings also reject the item. This weight rule applies in every visual-inspection mode.
 
-See [camera inspection setup](ecorefill-pi/INSPECTION.md) and [material model evaluation](MODEL_EVALUATION.md) for configuration, evidence, and measurement limits.
+See [camera inspection setup](ecorefill-pi/docs/INSPECTION.md) and [material model evaluation](MODEL_EVALUATION.md) for configuration, evidence, and measurement limits.
 
 For retraining with TACO and Waste Segregation, follow the [dataset preparation and training guide](DATASET_TRAINING.md). It preserves the deployed model, requires reviewed material labels, and includes a comparison using the machine's detection rules.
 
-For the 1 kg load cell and HX711 wired to a Raspberry Pi 5, use the [weight setup and calibration guide](ecorefill-pi/WEIGHT_SENSOR.md). The controller uses DT on GPIO 5, SCK on GPIO 6, and the supplied calibration of offset **-639408** and **414.59 counts/gram**. Measurements and rejection reasons are recorded with each inspected item.
+For the 1 kg load cell and HX711 wired to a Raspberry Pi 5, use the [weight setup and calibration guide](ecorefill-pi/docs/WEIGHT_SENSOR.md). The controller uses DT on GPIO 5, SCK on GPIO 6, and the supplied calibration of offset **-639408** and **414.59 counts/gram**. Measurements and rejection reasons are recorded with each inspected item.
 
 ## Water refill flow
 
@@ -138,11 +138,11 @@ The map uses [Leaflet](https://leafletjs.com/reference.html) and online OpenStre
 
 Users enter the number of EcoPoints they want at **1 point = ₱1**, with a minimum of 1 whole point. For example, 150 points costs ₱150.
 
-Owners see their live **Available points** balance on Dashboard and Transactions. Each successful refill processed by the Pi credits the owner with the actual points spent by the customer. Approving a GCash purchase transfers that many points from the owner's balance to the buyer. Both creating an order and approving payment require enough owner points; failed refills and rejected payments do not increase the owner balance. Opening the balance card automatically syncs eligible past completed refills once. Update both the Pi service (including `machine/owner_points.py`, `owner_refill_history.py`, and `point_payments.py`) and the frontend to enable this flow.
+Owners see their live **Available points** balance on Dashboard and Transactions. Each successful refill processed by the Pi credits the owner with the actual points spent by the customer. Approving a GCash purchase transfers that many points from the owner's balance to the buyer. Both creating an order and approving payment require enough owner points; failed refills and rejected payments do not increase the owner balance. Opening the balance card automatically syncs eligible past completed refills once. Update both the Pi service (including `machine/owner_points.py`, `machine/owner_refill_history.py`, and `machine/point_payments.py`) and the frontend to enable this flow.
 
 After scanning a water refill QR, users can tap **Buy Points** on the water amount page. The app automatically selects that machine's owner and provides a return button to resume the refill with the selected water amount. The refill balance updates when the owner approves payment. If the QR expires during payment verification, users can scan a new one.
 
-Point purchases are available only through the scanned water refill page; there is no dashboard purchase shortcut or owner selector. Users enter their points amount, send GCash to the displayed account, and submit their receipt reference. The owner verifies the received payment in **Transactions** before approving it. Only approval credits points. Owners configure their GCash account in **Profile**. Payments run on the existing Raspberry Pi and do not require the Firebase Blaze plan. See [GCash setup and required Firestore protections](docs/GCASH_PAYMENTS.md) before accepting real payments.
+Point purchases are available only through the scanned water refill page; there is no dashboard purchase shortcut or owner selector. Users enter their points amount, send GCash to the displayed account, and submit their receipt reference. The owner verifies the received payment in **Transactions** before approving it. Only approval credits points. Owners configure their GCash account in **Profile**. Payments run on the existing Raspberry Pi and do not require the Firebase Blaze plan. See [GCash setup and required Firestore protections](#gcash-point-purchases) before accepting real payments.
 
 ## How the components communicate
 
@@ -160,11 +160,11 @@ flowchart LR
 ```
 
 - **The Raspberry Pi** runs the camera, material model, inspection module, machine state, reward redemption API, and refill request worker.
-- **Direct Pi 5 control** drives the servos with hardware PWM, reads the HC-SR04, and controls one active-low pump relay directly on GPIO22 (physical pin 15). See the [complete wiring, calibration, and launch guide](ecorefill-pi/DIRECT_GPIO.md). No ESP32 connection or controller-selection variable is needed.
+- **Direct Pi 5 control** drives the servos with hardware PWM, reads the HC-SR04, and controls one active-low pump relay directly on GPIO22 (physical pin 15). See the [complete wiring, calibration, and launch guide](ecorefill-pi/docs/DIRECT_GPIO.md). No ESP32 connection or controller-selection variable is needed.
 - **The kiosk** reads the Pi's local API on port **5000**. Its home screen polls machine state every **500 ms**.
 - **The user app** uses Firebase Authentication, reads Firestore records, submits refill requests, and calls the Pi's authenticated reward redemption endpoint.
 - **The owner dashboard** subscribes to Firestore records for the owner's assigned machine.
-- **Optional public redemption** uses the existing tunnel integration and a separate redemption server on port **5001**. See [the tunnel setup notes](ecorefill-pi/CLOUDFLARE_TUNNEL.md).
+- **Optional public redemption** uses the existing tunnel integration and a separate redemption server on port **5001**. See [the tunnel setup notes](ecorefill-pi/docs/CLOUDFLARE_TUNNEL.md).
 - **Firebase Cloud Functions** also define `confirmWaterRefill` and `redeemRecyclingReward`. The current React flows use Firestore requests for refills and the Pi HTTP endpoint for reward claims; those callable functions are a separate implementation path.
 
 ### Hardware interfaces in the Pi code
@@ -216,14 +216,15 @@ ecorefill-app/
 │   └── styles/                 # Application CSS
 ├── ecorefill-pi/
 │   ├── machine_flow.py         # Controller launcher; safe to import in tests
-│   ├── machine/                # Config, hardware, state, workflows, APIs, lifecycle
-│   ├── DEBUGGING.md            # File map, logs, and hardware-free test commands
-│   ├── point_payments.py       # Owner-verified GCash point purchases
-│   ├── visual_inspection.py    # Optional size and cleanliness checks
-│   ├── inspection.example.json
+│   ├── run_tests.py            # Test runner; resolves its own test directory
+│   ├── machine/                # Runtime, hardware, payments, inspection, notifications
+│   ├── tools/                  # Standalone hardware diagnostics
+│   ├── tests/                  # Controller regression tests
+│   ├── docs/                   # Setup, wiring, calibration, and debugging guides
+│   ├── config/                 # Example configurations
 │   ├── models/ecorefill_best.pt
-│   ├── INSPECTION.md
-│   └── CLOUDFLARE_TUNNEL.md
+│   ├── kiosk-dist/             # Built kiosk frontend
+│   └── data/                   # Persistent queues and recovery journal
 ├── functions/                  # Firebase callable functions
 ├── android/                    # Capacitor Android project
 ├── ecorefill_dataset/          # Material detection dataset
@@ -236,7 +237,7 @@ ecorefill-app/
 
 ## Running the project
 
-For weak connections, use the [local kiosk and recovery setup](ecorefill-pi/LOW_CONNECTIVITY.md).
+For weak connections, use the [local kiosk and recovery setup](ecorefill-pi/docs/LOW_CONNECTIVITY.md).
 Finished rewards and refill outcomes are journaled on the Pi and synced in the
 background. New point-funded refills and reward claims still require Firebase.
 
@@ -284,7 +285,7 @@ The physical workflow requires a configured Raspberry Pi camera, the material ch
 1. Prepare a Python environment on the Pi with the packages in `requirements.txt` including **`firebase-admin`**. Picamera2 also requires a working Raspberry Pi camera software installation.
 2. Ensure the checkpoint is available at `ecorefill-pi/models/ecorefill_best.pt`.
 3. Configure `FIREBASE_SERVICE_ACCOUNT` with an absolute path to the Firebase service-account JSON outside the repository, or use Application Default Credentials.
-4. Connect the servos, HC-SR04, relay drivers, buttons, and optional calibrated HX711 scale using the [Pi wiring guide](ecorefill-pi/DIRECT_GPIO.md). Enable the PWM overlay, reboot, and run `sudo python3 direct_gpio.py --prepare-pwm` once per boot. Follow the [weight setup guide](ecorefill-pi/WEIGHT_SENSOR.md) to make `lgpio` available in the machine's Python environment. Stop `check_weight.py` before starting the controller. The default machine ID is `machine_001` in `machine/config.py`; it must match the intended Firestore machine document. Copy the complete `machine/` directory, `weight_sensor.py`, and `visual_inspection.py` along with the launcher when updating the Pi. See the [machine debugging guide](ecorefill-pi/DEBUGGING.md) for the controller file map and test commands.
+4. Connect the servos, HC-SR04, relay drivers, buttons, and optional calibrated HX711 scale using the [Pi wiring guide](ecorefill-pi/docs/DIRECT_GPIO.md). Enable the PWM overlay, reboot, and run `sudo python3 -m tools.direct_gpio --prepare-pwm` once per boot. Follow the [weight setup guide](ecorefill-pi/docs/WEIGHT_SENSOR.md) to make `lgpio` available in the machine's Python environment. Stop `tools/check_weight.py` before starting the controller. The default machine ID is `machine_001` in `machine/config.py`; it must match the intended Firestore machine document. Copy the complete `machine/` package and `machine_flow.py` when updating the Pi; include `tools/` for diagnostics. See the [machine debugging guide](ecorefill-pi/docs/DEBUGGING.md) for the controller file map and test commands.
 5. Start the service from its own directory so relative model paths resolve correctly:
 
    ```bash
@@ -319,7 +320,7 @@ connection as payments.
 
 Install the updated Pi backend and Android APK, then select **Enable
 notifications** on the owner Dashboard or Alerts. Follow the
-[phone notification installation and testing guide](docs/PHONE_NOTIFICATIONS.md).
+[phone notification installation and testing guide](ecorefill-pi/docs/PHONE_NOTIFICATIONS.md).
 
 Verify with `npm run test:notifications` and `npm run test:rules`.
 
@@ -327,7 +328,7 @@ Verify with `npm run test:notifications` and `npm run test:rules`.
 
 - **250 mL pricing is inconsistent** between the app/Cloud Function and the active Pi worker, as documented in the price table.
 - **GCash verification is manual.** Owners check received payments themselves before approving the point transfer.
-- **GPIO control needs machine calibration.** The [Pi controller and wiring guide](ecorefill-pi/DIRECT_GPIO.md) include diagnostics and simulated-hardware regression tests. Servo travel, container detection, relay operation, and measured dispensing volumes still need validation on the machine.
+- **GPIO control needs machine calibration.** The [Pi controller and wiring guide](ecorefill-pi/docs/DIRECT_GPIO.md) include diagnostics and simulated-hardware regression tests. Servo travel, container detection, relay operation, and measured dispensing volumes still need validation on the machine.
 - **Cleanliness and size checks are optional.** They require real training data or calibration before enforcement. Camera appearance checks do not measure weight or establish water quality.
 - **Monitoring depends on supplied data.** Water level, water-quality status, tamper status, and alerts need an appropriate source writing those records; the dashboard alone does not produce sensor readings.
 - **Firebase setup is external.** Authentication, credentials, access rules, and machine records must be configured for the installation. Internet access is needed for the described cloud account, reward, and refill workflows.

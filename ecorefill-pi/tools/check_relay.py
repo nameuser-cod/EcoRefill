@@ -7,7 +7,7 @@ import signal
 import time
 
 from machine.gpio_hardware import RELAY1_GPIO, RELAY_OFF, RELAY_ON
-from weight_sensor import open_header
+from machine.weight_sensor import open_header
 
 
 def test_relay(gpio):

@@ -1,6 +1,6 @@
 """Launch the EcoRefill Pi controller: python3 machine_flow.py.
 
-Implementation and debugging notes: machine/ and DEBUGGING.md.
+Implementation and debugging notes: machine/ and docs/DEBUGGING.md.
 Importing this entry point does not initialize hardware or start workers.
 """
 

@@ -1,6 +1,6 @@
 # Test the 1 kg HX711 scale on Raspberry Pi 5
 
-Copy `check_weight.py` and `weight_sensor.py` to the Pi's `ecorefill-pi` directory. This standalone
+Copy the `tools/` and `machine/` packages to the Pi's `ecorefill-pi` directory. This standalone
 diagnostic uses DT on GPIO 5 (physical pin 29), SCK on GPIO 6 (pin 31),
 3.3 V on pin 1, and GND on pin 6. Follow the HX711's printed labels.
 Only one program should use these two signal pins at a time.
@@ -10,7 +10,7 @@ On Raspberry Pi OS, install the GPIO dependency and run from that directory:
 ```bash
 sudo apt update
 sudo apt install python3-lgpio
-/usr/bin/python3 check_weight.py
+/usr/bin/python3 -m tools.check_weight
 ```
 
 The script identifies the Pi 5 RP1 chip by its label, because its device number
@@ -24,7 +24,7 @@ numbers are not grams. Press Ctrl+C to stop.
 Next, use a known mass, such as a 100 g calibration weight:
 
 ```bash
-/usr/bin/python3 check_weight.py --calibrate
+/usr/bin/python3 -m tools.check_weight --calibrate
 ```
 
 Follow the prompts to measure the empty platform and the known mass. The script
@@ -98,8 +98,8 @@ export WEIGHT_SENSOR_ENABLED=true
 python3 machine_flow.py
 ```
 
-After updating the Pi, transfer the complete `machine/` directory and the files
-`weight_sensor.py`, `visual_inspection.py`, and `check_weight.py`. Stop the
+After updating the Pi, transfer the complete `machine/` and `tools/` packages.
+Stop the
 diagnostic with Ctrl+C before starting `machine_flow.py`; they use the same GPIO
 pins. Use the usual machine Python environment and Firebase setup. The example
 above does not replace the existing Firebase environment variables. If `lgpio`

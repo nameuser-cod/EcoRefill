@@ -158,7 +158,7 @@ files on the Pi, run:
 
 ```sh
 cd ~/ecorefill-app/ecorefill-pi
-python3 check_relay.py
+python3 -m tools.check_relay
 ```
 
 The test uses only GPIO22 and `lgpio`; it does not require PWM preparation,
@@ -204,7 +204,7 @@ sudo reboot
 After reboot, from the repository's `ecorefill-pi` directory:
 
 ```sh
-sudo python3 direct_gpio.py --prepare-pwm
+sudo python3 -m tools.direct_gpio --prepare-pwm
 ```
 
 Run that preparation command **once after each boot, with the controller
@@ -222,15 +222,15 @@ initializes the pump relay OFF and centers both servos.
 
 ```sh
 cd ~/ecorefill-app/ecorefill-pi
-cp gpio.example.json gpio.local.json
-python3 direct_gpio.py --config gpio.local.json --distance
+cp config/gpio.example.json gpio.local.json
+python3 -m tools.direct_gpio --config gpio.local.json --distance
 ```
 
 This prints fresh distances or `NO ECHO`; use Ctrl+C to exit. Then start the
 command console:
 
 ```sh
-python3 direct_gpio.py --config gpio.local.json
+python3 -m tools.direct_gpio --config gpio.local.json
 ```
 
 Enter one command at a time:
@@ -251,7 +251,7 @@ Other commands while busy are rejected. `QUIT`, Ctrl+C, EOF, and SIGTERM cancel
 work, turn the pump relay off, and disable servo PWM. You can also run a single command:
 
 ```sh
-python3 direct_gpio.py --config gpio.local.json --command BOTTLE
+python3 -m tools.direct_gpio --config gpio.local.json --command BOTTLE
 ```
 
 For the first sorting tests, detach the mechanical linkage. For the first relay
@@ -263,10 +263,10 @@ Stop the full machine app. With the linkages detached, run this diagnostic from
 the Pi's `ecorefill-pi` directory:
 
 ```sh
-python3 check_servos.py --diagnose-only
-sudo python3 direct_gpio.py --prepare-pwm
-python3 check_servos.py --servo gate
-python3 check_servos.py --servo sort
+python3 -m tools.check_servos --diagnose-only
+sudo python3 -m tools.direct_gpio --prepare-pwm
+python3 -m tools.check_servos --servo gate
+python3 -m tools.check_servos --servo sort
 ```
 
 The diagnostic checks live pin routing using `pinctrl get`. GPIO18 must report
@@ -300,7 +300,7 @@ to narrow down power, wiring, signal-level compatibility, or mechanical issues.
 
 ### Measure the actual PWM without a scope
 
-`check_pwm_signal.py` uses a temporary jumper to measure the output's pulse
+`tools/check_pwm_signal.py` uses a temporary jumper to measure the output's pulse
 timing on a second Pi input. It does not rely on PWM sysfs readback.
 
 Stop the app and power down before changing connections. Disconnect both servo
@@ -310,8 +310,8 @@ no external voltage connects to the jumper. GPIO16 is unused by the normal
 controller. Power the Pi, prepare PWM if rebooted, then run:
 
 ```sh
-sudo python3 direct_gpio.py --prepare-pwm
-python3 check_pwm_signal.py --servo gate
+sudo python3 -m tools.direct_gpio --prepare-pwm
+python3 -m tools.check_pwm_signal --servo gate
 ```
 
 The input should measure approximately 50 Hz at each requested pulse width:
@@ -322,7 +322,7 @@ has not been verified; the temporary jumper and edge capture also need checking.
 
 To measure the sort output, power down and move the jumper's output end from
 physical pin 12 to physical pin 35; keep its input end on physical pin 36. Use
-`python3 check_pwm_signal.py --servo sort`. Remove the temporary jumper and
+`python3 -m tools.check_pwm_signal --servo sort`. Remove the temporary jumper and
 restore servo signals with power off before returning to normal operation.
 
 ## Run with the existing EcoRefill app
@@ -337,7 +337,7 @@ ECOREFILL_GPIO_CONFIG=./gpio.local.json python3 machine_flow.py
 Set `ECOREFILL_GPIO_CONFIG` in your existing service configuration to load your
 calibration file, and run PWM preparation before the service starts after each
 boot. Without a calibration file, `python3 machine_flow.py` uses the defaults in
-`gpio.example.json`. The obsolete `ECOREFILL_CONTROLLER` and `ECOREFILL_ESP32_PORT` variables
+`config/gpio.example.json`. The obsolete `ECOREFILL_CONTROLLER` and `ECOREFILL_ESP32_PORT` variables
 are ignored and can be removed. Relative calibration paths resolve from the working directory;
 use an absolute path in a service if needed.
 
@@ -408,5 +408,5 @@ was checked with simulated hardware and has not been electrically tested here.
 Run local regressions without Pi hardware:
 
 ```sh
-python3 -m unittest test_gpio_controller test_machine_runtime test_weight_sensor
+python3 -m unittest tests.test_gpio_controller tests.test_machine_runtime tests.test_weight_sensor
 ```

@@ -6,7 +6,7 @@ def create_apps(runtime):
     from pathlib import Path
     from flask import Flask, send_from_directory
     from flask_cors import CORS
-    from point_payments import register_payment_routes
+    from machine.point_payments import register_payment_routes
     from .push_notifications import register_notification_routes
 
     runtime.app = Flask("ecorefill.machine")

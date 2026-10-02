@@ -1,6 +1,6 @@
 """Pi 5 servos, ultrasonic sensor, and one direct active-low pump relay.
 
-Importing this module does not claim pins. See DIRECT_GPIO.md.
+Importing this module does not claim pins. See docs/DIRECT_GPIO.md.
 """
 
 import grp
@@ -9,7 +9,7 @@ from pathlib import Path
 import threading
 import time
 
-from weight_sensor import open_header
+from machine.weight_sensor import open_header
 
 
 GATE_GPIO = 18  # Physical 12, RP1 PWM0 channel 2
@@ -31,7 +31,7 @@ def find_pwm_chip(root=Path("/sys/class/pwm")):
             return chip
     raise RuntimeError(
         "RP1 PWM0 not found. Add dtoverlay=pwm-2chan under [all] in "
-        "/boot/firmware/config.txt, then reboot. See DIRECT_GPIO.md."
+        "/boot/firmware/config.txt, then reboot. See docs/DIRECT_GPIO.md."
     )
 
 
@@ -63,7 +63,7 @@ class HardwareServo:
     def __init__(self, chip, channel):
         self.path = chip / f"pwm{channel}"
         if not (self.path / "enable").exists():
-            raise RuntimeError("Run sudo python3 direct_gpio.py --prepare-pwm after boot.")
+            raise RuntimeError("Run sudo python3 -m tools.direct_gpio --prepare-pwm after boot.")
         self.write("enable", 0)
         self.write("duty_cycle", 0)
         self.write("polarity", "normal")

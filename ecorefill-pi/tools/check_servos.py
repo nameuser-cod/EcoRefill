@@ -43,7 +43,7 @@ def show_pwm_state(chip, name):
     channel = SERVO_PINS[name][2]
     path = chip / f"pwm{channel}"
     if not path.exists():
-        print(f"{path} is not exported. Run sudo python3 direct_gpio.py --prepare-pwm.", flush=True)
+        print(f"{path} is not exported. Run sudo python3 -m tools.direct_gpio --prepare-pwm.", flush=True)
         return
     values = " ".join(
         f"{key}={(path / key).read_text().strip()}"

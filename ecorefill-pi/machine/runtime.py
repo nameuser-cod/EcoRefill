@@ -162,7 +162,7 @@ class MachineRuntime(
             log("Weight sensor disabled by configuration; skipping weight checks.")
             return
 
-        from weight_sensor import CalibratedScale
+        from machine.weight_sensor import CalibratedScale
 
         try:
             scale = CalibratedScale(HX711_OFFSET, HX711_COUNTS_PER_GRAM, HX711_MAX_SPREAD_G)
@@ -181,7 +181,7 @@ class MachineRuntime(
         from .gpio_hardware import CONTROL_PINS, create_hardware
 
         if CONTROL_PINS & {GREEN_BUTTON_GPIO, BLUE_BUTTON_GPIO}:
-            raise ValueError("A button GPIO conflicts with the direct controller. See DIRECT_GPIO.md.")
+            raise ValueError("A button GPIO conflicts with the direct controller. See docs/DIRECT_GPIO.md.")
         settings = ControllerSettings.from_file(os.getenv("ECOREFILL_GPIO_CONFIG"))
         self.gpio_controller = GPIOController(create_hardware(), settings, emit=log)
         self.gpio_controller.open()
@@ -195,7 +195,7 @@ class MachineRuntime(
             return
         try:
             from ultralytics import YOLO
-            from visual_inspection import VisualInspector
+            from machine.visual_inspection import VisualInspector
 
             self.db = self.initialize_firebase()
             if not os.path.exists(MODEL_PATH):

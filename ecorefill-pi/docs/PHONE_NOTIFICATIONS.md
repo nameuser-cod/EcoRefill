@@ -38,7 +38,7 @@ publishes this trusted URL in `serviceEndpoints/pointPayments`. Phone
 registration uses the same connection as payments, with new authenticated
 routes at `/api/notifications/register` and `/api/notifications/unregister`.
 For a stable HTTPS endpoint, set `VITE_PAYMENT_API_URL` when building the app.
-See [the tunnel guide](../ecorefill-pi/CLOUDFLARE_TUNNEL.md).
+See [the tunnel guide](CLOUDFLARE_TUNNEL.md).
 
 ## Install and enable notifications on the phone
 
@@ -89,14 +89,19 @@ firebase deploy --only firestore:rules,firestore:indexes --project ecorefill-911
 Android **Force stop**, denied notification permission, Do Not Disturb, and
 device power-management settings can block or suppress phone notifications.
 
-Automated checks:
+Automated checks from the application repository root:
 
 ```bash
 npm run test:notifications
 npm run test:rules
-python3 -m unittest discover -s ecorefill-pi -p test_machine_runtime.py -v
-python3 -m unittest discover -s ecorefill-pi -p test_point_payments.py -v
+python3 ecorefill-pi/run_tests.py test_machine_runtime.py -v
+python3 ecorefill-pi/run_tests.py test_point_payments.py -v
 ```
+
+From inside `ecorefill-pi`, use `python3 run_tests.py test_machine_runtime.py`
+or `python3 run_tests.py test_push_notifications.py`. Tests now live in
+`ecorefill-pi/tests/`; the runner locates them automatically. The Pi archive
+also includes `tools/`, `tests/`, `run_tests.py`, and the reorganized guides.
 
 The FCM message-adapter test runs when `firebase-admin` is installed in the
 selected Python environment. Other notification tests use fake cloud services

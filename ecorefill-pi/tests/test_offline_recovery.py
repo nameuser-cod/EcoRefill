@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 from machine.journal import MachineJournal
 from machine.runtime import MachineRuntime
 from machine.routes import create_apps
-from test_point_payments import Database
+from tests.test_point_payments import Database
 
 
 class OfflineRecoveryTests(unittest.TestCase):

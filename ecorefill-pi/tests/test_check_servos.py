@@ -5,9 +5,7 @@ from pathlib import Path
 import unittest
 from unittest.mock import Mock, patch
 
-import check_servos
-
-
+from tools import check_servos
 class ServoDiagnosticTests(unittest.TestCase):
     def test_rejects_gpio_that_is_not_routed_to_pwm(self):
         result = SimpleNamespace(returncode=0, stdout="18: ip pd | lo // GPIO18 = input", stderr="")
@@ -46,7 +44,7 @@ class ServoDiagnosticTests(unittest.TestCase):
         hardware.servos["gate"].close.assert_called_once()
 
     def test_diagnose_only_never_opens_hardware(self):
-        with patch("sys.argv", ["check_servos.py", "--diagnose-only"]), \
+        with patch("sys.argv", ["tools.check_servos.py", "--diagnose-only"]), \
              patch.object(check_servos, "check_routing", return_value=True), \
              patch.object(check_servos, "find_pwm_chip", return_value=Path('/sys/class/pwm/pwmchip0')), \
              patch.object(check_servos, "show_pwm_state"), \

@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch
 from flask import Flask
 from machine.runtime import MachineRuntime
 from machine.points import read_points
-from test_point_payments import Database
+from tests.test_point_payments import Database
 
 
 class FractionalRewardTests(unittest.TestCase):

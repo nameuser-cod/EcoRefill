@@ -3,9 +3,9 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import unittest
 
-from owner_refill_history import SYNC_BATCH_SIZE
-from point_payments import PaymentError, PointPayments
-from test_point_payments import Database
+from machine.owner_refill_history import SYNC_BATCH_SIZE
+from machine.point_payments import PaymentError, PointPayments
+from tests.test_point_payments import Database
 
 
 class RefillHistoryTests(unittest.TestCase):

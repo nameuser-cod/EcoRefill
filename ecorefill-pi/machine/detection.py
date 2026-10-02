@@ -3,7 +3,7 @@
 import math
 from time import monotonic, sleep
 
-from weight_sensor import WeightReadingError
+from machine.weight_sensor import WeightReadingError
 
 from .config import (
     ACCEPT_CONFIDENCE_LIMIT,

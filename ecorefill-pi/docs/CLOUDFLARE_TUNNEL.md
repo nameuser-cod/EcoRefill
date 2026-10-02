@@ -42,13 +42,13 @@ Phone notifications also use this connection through
 verify a Firebase ID token. Registration checks the caller's machine-owner
 role, and removal affects only a phone registered to that caller. The Pi sends
 machine alerts directly through Firebase Cloud Messaging. See the
-[phone notification installation guide](../docs/PHONE_NOTIFICATIONS.md).
+[phone notification installation guide](PHONE_NOTIFICATIONS.md).
 
 When the tunnel starts, the Pi publishes its URL to
 `serviceEndpoints/pointPayments` using the Admin SDK. Signed-in clients may read
 this document, but **all client writes must be denied**, including through broad
 Firestore rules. The app fetches this document before sending its token. See
-[GCash setup and rule requirements](../docs/GCASH_PAYMENTS.md).
+[GCash setup and rule requirements](../../README.md#gcash-point-purchases).
 
 Quick Tunnels are intended for development/testing and provide no uptime
 promise. A stable tunnel is preferable for regular operation; set

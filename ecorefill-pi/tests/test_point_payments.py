@@ -7,7 +7,7 @@ import unittest
 import uuid
 from unittest.mock import patch
 
-from point_payments import PointPayments, PaymentError, register_payment_routes
+from machine.point_payments import PointPayments, PaymentError, register_payment_routes
 
 
 class Snapshot:

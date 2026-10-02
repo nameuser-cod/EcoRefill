@@ -12,7 +12,7 @@ import statistics
 import threading
 import time
 
-from check_servos import check_routing
+from tools.check_servos import check_routing
 from machine.gpio_hardware import PiGPIOHardware
 
 

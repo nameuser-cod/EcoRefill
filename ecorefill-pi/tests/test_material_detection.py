@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import MagicMock, Mock, call, patch
 
 from machine.detection import MaterialDetection
-from weight_sensor import WeightReadingError
+from machine.weight_sensor import WeightReadingError
 
 
 class MaterialDetectionTests(unittest.TestCase):

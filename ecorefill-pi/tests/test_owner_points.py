@@ -11,7 +11,7 @@ from machine.runtime import MachineRuntime
 from machine.journal import MachineJournal
 from tempfile import TemporaryDirectory
 from pathlib import Path
-from test_point_payments import Database
+from tests.test_point_payments import Database
 
 
 class OwnerPointsTests(unittest.TestCase):

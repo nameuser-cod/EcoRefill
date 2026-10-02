@@ -11,7 +11,7 @@ from machine.gpio_hardware import create_hardware, prepare_pwm
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--config", help="Calibration JSON; defaults match gpio.example.json")
+    parser.add_argument("--config", help="Calibration JSON; defaults match config/gpio.example.json")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--prepare-pwm", action="store_true", help="Export PWM and grant gpio group access (sudo, once per boot)")
     mode.add_argument("--distance", action="store_true", help="Print fresh sensor readings; Ctrl+C exits")

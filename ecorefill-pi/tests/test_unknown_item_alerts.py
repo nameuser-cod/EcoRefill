@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 from machine.runtime import MachineRuntime
 from machine.upload_queue import RecyclingUploadQueue
-from test_recycling_uploads import FakeFirestore, Increment, payload
+from tests.test_recycling_uploads import FakeFirestore, Increment, payload
 
 
 class UnknownItemAlertTests(unittest.TestCase):

@@ -3,16 +3,16 @@
 import unittest
 from unittest.mock import Mock, call, patch
 
-from check_relay import test_relay
+from tools.check_relay import test_relay
 
 
 class RelayDiagnosticTests(unittest.TestCase):
     def setUp(self):
         self.gpio = Mock()
-        header = patch("check_relay.open_header", return_value=9)
+        header = patch("tools.check_relay.open_header", return_value=9)
         header.start()
         self.addCleanup(header.stop)
-        sleep = patch("check_relay.time.sleep")
+        sleep = patch("tools.check_relay.time.sleep")
         self.sleep = sleep.start()
         self.addCleanup(sleep.stop)
 

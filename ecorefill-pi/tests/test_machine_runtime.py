@@ -32,7 +32,7 @@ assert not {'picamera2', 'gpiozero', 'ultralytics', 'serial', 'cv2',
 assert machine.db is None and machine.app is None
 machine.close()
 """],
-            cwd=Path(__file__).parent, capture_output=True, text=True,
+            cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
 
@@ -232,8 +232,7 @@ class ButtonTests(unittest.TestCase):
                 machine.close()
 
     def test_standalone_check_reports_presses_without_initializing_other_hardware(self):
-        import check_buttons
-
+        from tools import check_buttons
         machine = MachineRuntime()
         green, blue = Mock(is_pressed=False), Mock(is_pressed=False)
         green.pin.state = blue.pin.state = 1
@@ -260,8 +259,7 @@ class ButtonTests(unittest.TestCase):
         self.assertIsNone(machine.gpio_controller)
 
     def test_diagnostic_reads_changes_even_when_callbacks_do_not_fire(self):
-        import check_buttons
-
+        from tools import check_buttons
         green, blue = Mock(), Mock()
         green.pin.state = blue.pin.state = 1
 
@@ -499,7 +497,7 @@ class LifecycleTests(unittest.TestCase):
     def test_disabled_weight_sensor_does_not_open_gpio(self):
         machine = MachineRuntime()
         with patch("machine.runtime.WEIGHT_SENSOR_ENABLED", False), \
-             patch("weight_sensor.CalibratedScale") as factory:
+             patch("machine.weight_sensor.CalibratedScale") as factory:
             machine.initialize_weight_sensor()
             factory.assert_not_called()
         self.assertIsNone(machine.weight_scale)
@@ -507,7 +505,7 @@ class LifecycleTests(unittest.TestCase):
 
     def test_weight_initialization_and_shutdown_use_saved_calibration(self):
         machine = MachineRuntime()
-        with patch("weight_sensor.CalibratedScale") as factory:
+        with patch("machine.weight_sensor.CalibratedScale") as factory:
             machine.initialize_weight_sensor()
             self.assertIs(machine.weight_scale, factory.return_value)
             factory.return_value.open.assert_called_once_with()
@@ -517,7 +515,7 @@ class LifecycleTests(unittest.TestCase):
 
     def test_weight_initialization_failure_keeps_sensor_unavailable(self):
         machine = MachineRuntime()
-        with patch("weight_sensor.CalibratedScale") as factory, \
+        with patch("machine.weight_sensor.CalibratedScale") as factory, \
              self.assertLogs("ecorefill.machine", level="ERROR"):
             factory.return_value.open.side_effect = OSError("GPIO busy")
             machine.initialize_weight_sensor()

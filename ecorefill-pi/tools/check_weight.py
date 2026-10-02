@@ -4,7 +4,7 @@ import argparse
 import math
 import sys
 
-from weight_sensor import HX711, open_header
+from machine.weight_sensor import HX711, open_header
 
 
 def calibration_factor(zero, loaded, grams, noise):

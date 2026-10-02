@@ -1,7 +1,7 @@
 """Owner-verified payments on the existing Pi, without Cloud Functions."""
 import hashlib
 import re
-from owner_refill_history import sync_owner_refills
+from machine.owner_refill_history import sync_owner_refills
 
 from machine.points import MAX_POINTS, valid_points
 

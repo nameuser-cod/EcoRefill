@@ -2,7 +2,7 @@
 
 import unittest
 
-from check_pwm_signal import EdgeCapture, measure_edges
+from tools.check_pwm_signal import EdgeCapture, measure_edges
 
 
 def edges(width_us=1500, period_us=20000, count=30):
