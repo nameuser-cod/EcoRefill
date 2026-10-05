@@ -85,10 +85,20 @@ service cloud.firestore {
           !("ownerId" in resource.data)
           || resource.data.ownerId == ""
         )
+        && resource.data.get('ownershipStatus', 'available') != 'claimed'
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['machineId', 'ownerId', 'ownerEmail', 'ownerName',
+                       'ownershipStatus', 'claimedAt', 'updatedAt'])
         && request.resource.data.ownerId
              == request.auth.uid
         && request.resource.data.machineId
-             == machineId;
+             == machineId
+        && request.resource.data.ownerEmail is string
+        && request.resource.data.ownerName is string
+        && request.resource.data.ownerName.size() > 0
+        && request.resource.data.ownershipStatus == 'claimed'
+        && request.resource.data.claimedAt == request.time
+        && request.resource.data.updatedAt == request.time;
 
       allow create, delete: if false;
     }

@@ -1,26 +1,14 @@
 import { Coins } from "lucide-react";
 import { useEffect, useState } from "react";
-import { callPoints } from "../../../firebase/pointPurchases";
-
-async function syncPastRefills(isActive) {
-  let cursor = null;
-  let pointsAdded = 0;
-  let refillsCredited = 0;
-  do {
-    const result = await callPoints("syncOwnerRefillPoints", { cursor });
-    pointsAdded += result.pointsAdded;
-    refillsCredited += result.refillsCredited;
-    cursor = result.hasMore ? result.nextCursor : null;
-  } while (cursor && isActive());
-  return { pointsAdded, refillsCredited };
-}
+import useOwnerMachine from "../hooks/useOwnerMachine";
 
 function RefillHistorySync() {
+  const { syncRefillHistory } = useOwnerMachine();
   const [result, setResult] = useState({ busy: true, message: "", error: "" });
 
   useEffect(() => {
     let active = true;
-    syncPastRefills(() => active).then(({ pointsAdded, refillsCredited }) => {
+    syncRefillHistory().then(({ pointsAdded, refillsCredited }) => {
       if (active) setResult({ busy: false, error: "", message: pointsAdded
         ? `Added ${pointsAdded.toLocaleString("en-PH")} points from ${refillsCredited} past completed refill${refillsCredited === 1 ? "" : "s"}.`
         : "Past refills checked. No additional eligible points to add." });
@@ -30,7 +18,7 @@ function RefillHistorySync() {
         : "" });
     });
     return () => { active = false; };
-  }, []);
+  }, [syncRefillHistory]);
 
   if (!result.busy && !result.error && !result.message) return null;
 

@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react";
-import { callPoints } from "../../../firebase/pointPurchases";
+import { useEffect, useMemo, useState } from "react";
+import useOwnerMachine from "./useOwnerMachine";
 
 // Resolve legacy records through the authenticated Pi API: owners cannot read
 // other users' private profile documents directly.
 export default function useActivityNames(activity, machineId) {
+  const { resolveActivityNames } = useOwnerMachine();
   const [result, setResult] = useState({ key: "", names: {}, failed: [] });
   const recordIds = activity
     .filter((record) => !String(record.userName || "").trim() && (record.userId || record.claimedBy))
-    .map((record) => record.id);
+    .map((record) => [record.id, record.userId || record.claimedBy]);
   const key = JSON.stringify([machineId || "", recordIds]);
 
   useEffect(() => {
@@ -21,26 +22,28 @@ export default function useActivityNames(activity, machineId) {
       for (let offset = 0; offset < ids.length && active; offset += 50) {
         const batch = ids.slice(offset, offset + 50);
         try {
-          const response = await callPoints("getOwnerActivityNames", { machineId: machine, recordIds: batch });
-          Object.assign(names, response.names);
+          Object.assign(names, await resolveActivityNames(batch.map(([id, userId]) => ({ id, userId }))));
         } catch (error) {
           console.error("Unable to load activity names:", error);
-          failed.push(...batch);
+          failed.push(...batch.map(([id]) => id));
         }
         if (active) setResult({ key, names: { ...names }, failed: [...failed] });
       }
     }
     resolveNames();
     return () => { active = false; };
-  }, [key]);
+  }, [key, resolveActivityNames]);
 
-  const names = result.key === key ? result.names : {};
-  const failed = new Set(result.key === key ? result.failed : []);
-  const requested = new Set(recordIds);
-  return activity.map((record) => ({
-    ...record,
-    userName: names[record.id] || record.userName,
-    nameLoading: Boolean(machineId) && requested.has(record.id) && !(record.id in names) && !failed.has(record.id),
-    nameUnavailable: failed.has(record.id),
-  }));
+  return useMemo(() => {
+    const names = result.key === key ? result.names : {};
+    const failed = new Set(result.key === key ? result.failed : []);
+    const [, ids] = JSON.parse(key);
+    const requested = new Set(ids.map(([id]) => id));
+    return activity.map((record) => ({
+      ...record,
+      userName: names[record.id] || record.userName,
+      nameLoading: Boolean(machineId) && requested.has(record.id) && !(record.id in names) && !failed.has(record.id),
+      nameUnavailable: failed.has(record.id),
+    }));
+  }, [activity, result, key, machineId]);
 }

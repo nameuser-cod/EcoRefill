@@ -1596,6 +1596,11 @@ button.filter-material-button.active span {
   outline-offset: 3px;
 }
 
+.owner-activity-pagination {
+  flex-shrink: 0;
+  margin-top: 12px;
+}
+
 .owner-alert-record-icon {
   background: #fff4ce;
   color: #8a5a00;

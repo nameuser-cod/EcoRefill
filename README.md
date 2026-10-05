@@ -126,6 +126,8 @@ Select **Find machines** on the user dashboard or **Map** in the bottom navigati
 
 ### Device owner
 
+For the owner workspace's loading, caching, and transaction pagination behavior, see [owner performance notes](docs/OWNER_PERFORMANCE.md).
+
 Owners register using an existing, available machine ID. Registration links the machine to the owner's Firebase account. The dashboard then loads records for that machine.
 
 Owners can view machine details, accepted bottle and can counts, rejected items, acceptance rate, recent scan images, transactions, and alerts. The interface also displays water level, water-quality status, and tamper status when those fields are provided in Firestore. These displays depend on actual data being supplied; their presence in the interface does not establish that the corresponding sensors are implemented here.
@@ -282,6 +284,7 @@ Other available commands:
 npm run build
 npm run preview
 npm run lint
+npm test
 ```
 
 ### Raspberry Pi machine service
@@ -332,7 +335,6 @@ Verify with `npm run test:notifications` and `npm run test:rules`.
 
 ## Current implementation limits
 
-- **250 mL pricing is inconsistent** between the app/Cloud Function and the active Pi worker, as documented in the price table.
 - **GCash verification is manual.** Owners check received payments themselves before approving the point transfer.
 - **GPIO control needs machine calibration.** The [Pi controller and wiring guide](ecorefill-pi/docs/DIRECT_GPIO.md) include diagnostics and simulated-hardware regression tests. Servo travel, container detection, relay operation, and measured dispensing volumes still need validation on the machine.
 - **Cleanliness and size checks are optional.** They require real training data or calibration before enforcement. Camera appearance checks do not measure weight or establish water quality.

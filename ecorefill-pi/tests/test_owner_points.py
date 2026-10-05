@@ -97,6 +97,9 @@ class OwnerPointsTests(unittest.TestCase):
 
 class WorkerPointsTests(unittest.TestCase):
     def setUp(self):
+        self.prepare_machine()
+
+    def prepare_machine(self):
         self.db = Database()
         self.db.transaction = lambda: None
         self.db.records['water_refill_sessions/refill'] = {
@@ -104,7 +107,7 @@ class WorkerPointsTests(unittest.TestCase):
         }
         self.db.records['water_refill_requests/request'] = {
             'machineId': 'machine_001', 'sessionId': 'refill', 'userId': 'buyer',
-            'waterAmountMl': 500, 'status': 'pending',
+            'waterAmountMl': 250, 'status': 'pending',
         }
         directory = TemporaryDirectory()
         self.addCleanup(directory.cleanup)
@@ -135,6 +138,17 @@ class WorkerPointsTests(unittest.TestCase):
         self.process(True)
         self.machine.run_water_command.assert_not_called()
         self.assertEqual(self.db.records['users/owner']['points'], 2005)
+
+    def test_each_refill_volume_deducts_and_credits_its_current_price(self):
+        for amount, price in ((250, 5), (500, 10), (1000, 15)):
+            with self.subTest(amount=amount):
+                self.prepare_machine()
+                self.db.records['users/buyer']['points'] = 20.5
+                self.db.records['water_refill_requests/request']['waterAmountMl'] = amount
+                self.process(True)
+                self.assertEqual(self.db.records['users/buyer']['points'], 20.5 - price)
+                self.assertEqual(self.db.records['users/owner']['points'], 2000 + price)
+                self.assertEqual(self.db.records['water_refill_sessions/refill']['pointsUsed'], price)
 
     def test_failure_refunds_buyer_without_crediting_owner(self):
         self.process(False)

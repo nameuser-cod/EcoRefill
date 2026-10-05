@@ -136,6 +136,10 @@ test('a missing index falls back to the full query and still caps the preview', 
   assert.equal(calls.length, 2);
   assert.equal(calls[0].stopped, true);
   assert.ok(queryEqual(calls[1].query, baseQuery('transactions')));
+  calls[0].next(snapshot([]));
+  calls[0].error({ code: 'permission-denied', message: 'Stale query' });
+  assert.equal(calls.length, 2);
+  assert.deepEqual(errors, []);
   calls[1].next(snapshot(Array.from({ length: 20 }, (_, i) => ({ id: String(i), createdAt: i + 1 }))));
   assert.deepEqual(results[0].map((record) => record.id), ['19', '18', '17', '16', '15']);
   assert.deepEqual(errors, []);
@@ -143,6 +147,15 @@ test('a missing index falls back to the full query and still caps the preview', 
   assert.equal(calls[1].stopped, true);
   calls[1].next(snapshot([]));
   assert.equal(results.length, 1);
+});
+
+test('the alerts page applies its fifty-record limit in the database query', (t) => {
+  const source = { collectionName: 'machine_alerts', maximum: 50, recent: true };
+  const { calls, results } = listenerHarness(t, source);
+  assert.ok(queryEqual(calls[0].query, query(baseQuery('machine_alerts'), orderBy('createdAt', 'desc'), limit(50))));
+  calls[0].next(snapshot(Array.from({ length: 50 }, (_, i) => ({ id: String(i), createdAt: i + 1 }))));
+  assert.equal(calls.length, 1);
+  assert.equal(results[0].length, 50);
 });
 
 test('permission failures are reported instead of being hidden by an index fallback', (t) => {

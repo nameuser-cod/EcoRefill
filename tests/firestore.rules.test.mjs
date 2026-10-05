@@ -51,6 +51,66 @@ const locationUpdate = () => ({
   locationUpdatedAt: serverTimestamp(),
 });
 
+const machineClaim = (machineId, ownerId = 'new-owner') => ({
+  machineId, ownerId, ownerEmail: 'owner@example.com', ownerName: 'New owner',
+  ownershipStatus: 'claimed', claimedAt: serverTimestamp(), updatedAt: serverTimestamp(),
+});
+
+test('registration can claim available machines while preserving their telemetry', async () => {
+  for (const [id, ownership] of [
+    ['claim-without-owner', {}], ['claim-empty-owner', { ownerId: '', ownershipStatus: 'available' }],
+  ]) {
+    await environment.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'machines', id), { ...ownership, machineStatus: 'online', waterLevel: 75 });
+    });
+    const ref = doc(environment.authenticatedContext('new-owner').firestore(), 'machines', id);
+    await assertSucceeds(updateDoc(ref, machineClaim(id)));
+    const saved = (await getDoc(ref)).data();
+    assert.equal(saved.ownerId, 'new-owner');
+    assert.equal(saved.machineStatus, 'online');
+    assert.equal(saved.waterLevel, 75);
+  }
+});
+
+test('claiming a machine cannot overwrite its readings, location, counters, or arbitrary fields', async () => {
+  const id = 'claim-protected-fields';
+  await environment.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), 'machines', id), { ownerId: '', machineStatus: 'offline', waterLevel: 75 });
+  });
+  const ref = doc(environment.authenticatedContext('new-owner').firestore(), 'machines', id);
+  for (const extra of [
+    { machineStatus: 'online' }, { waterLevel: 100 }, { totalItems: 999 },
+    { points: 999 }, { location: 'Forged location' }, { arbitrary: true }, { waterLevel: deleteField() },
+  ]) {
+    await assertFails(updateDoc(ref, { ...machineClaim(id), ...extra }));
+  }
+});
+
+test('machine claims require valid ownership metadata and fresh server timestamps', async () => {
+  const id = 'claim-validation';
+  await environment.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), 'machines', id), { ownerId: '' });
+  });
+  const ref = doc(environment.authenticatedContext('new-owner').firestore(), 'machines', id);
+  for (const override of [
+    { ownerId: 'someone-else' }, { machineId: 'another-machine' }, { ownershipStatus: 'available' },
+    { ownerName: '' }, { ownerEmail: null }, { claimedAt: new Date(0) }, { updatedAt: new Date(0) },
+  ]) {
+    await assertFails(updateDoc(ref, { ...machineClaim(id), ...override }));
+  }
+  await assertFails(updateDoc(doc(environment.unauthenticatedContext().firestore(), 'machines', id), machineClaim(id)));
+});
+
+test('existing owners and reserved machines cannot be claimed through registration', async () => {
+  const id = 'reserved-machine';
+  await environment.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), 'machines', id), { ownerId: '', ownershipStatus: 'claimed' });
+  });
+  const db = environment.authenticatedContext('new-owner').firestore();
+  await assertFails(updateDoc(doc(db, 'machines', id), machineClaim(id)));
+  await assertFails(updateDoc(doc(db, 'machines/machine_001'), machineClaim('machine_001')));
+});
+
 test('dashboard previews return the newest five records scoped to the selected machine', async () => {
   await environment.withSecurityRulesDisabled(async (context) => {
     const db = context.firestore();

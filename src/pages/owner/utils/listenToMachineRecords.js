@@ -8,11 +8,13 @@ export function listenToMachineRecords(db, source, machineId, onRecords, onError
     ? query(allRecords, orderBy("createdAt", "desc"), limit(maximum))
     : allRecords;
   let active = true;
+  let generation = 0;
   let unsubscribe = () => {};
 
   const subscribe = (recordsQuery, canFallBack) => {
+    const subscription = ++generation;
     unsubscribe = listen(recordsQuery, (snapshot) => {
-      if (!active) return;
+      if (!active || subscription !== generation) return;
       // Small/legacy collections may contain records without createdAt, which
       // orderBy excludes. Use the complete query to fill an undersized preview.
       if (canFallBack && snapshot.size < maximum) {
@@ -24,7 +26,7 @@ export function listenToMachineRecords(db, source, machineId, onRecords, onError
       records.sort((a, b) => timestampValue(b.createdAt) - timestampValue(a.createdAt));
       onRecords(records.slice(0, maximum));
     }, (error) => {
-      if (!active) return;
+      if (!active || subscription !== generation) return;
       // Keep deployed apps working while the composite indexes are building.
       if (canFallBack && error.code === "failed-precondition" && /index/i.test(error.message)) {
         console.warn(`Using the full ${collectionName} query until its index is ready.`, error.message);

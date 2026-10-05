@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { LocateFixed, MapPin, Pencil, Save, X } from "lucide-react";
 import { auth, db } from "../../../firebase/firebase";
 import { parseCoordinates } from "../utils/machineLocation";
-import MachineLocationMap from "./MachineLocationMap";
+const MachineLocationMap = lazy(() => import("./MachineLocationMap"));
 
 export default function MachineLocation({ machine }) {
   const [open, setOpen] = useState(false);
@@ -139,7 +139,9 @@ function MachineLocationDialog({ machine, onClose }) {
       </div>
       <p>{editing ? "Tap the map or drag the pin to where the machine is installed. Changes are saved only when you select Save location."
         : "Shows the owner’s saved pin and updates when the location changes."}</p>
-      <MachineLocationMap coordinates={coordinates} editable={editing && !saving && !locating} onSelect={select} />
+      <Suspense fallback={<p role="status">Loading map...</p>}>
+        <MachineLocationMap coordinates={coordinates} editable={editing && !saving && !locating} onSelect={select} />
+      </Suspense>
       {!editing && !savedCoordinates && <p>No pin saved yet. Set the machine’s location to pinpoint it on the map.</p>}
       {editing && <form onSubmit={save}>
         <fieldset disabled={saving || locating}>
