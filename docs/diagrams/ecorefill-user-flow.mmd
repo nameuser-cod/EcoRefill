@@ -1,0 +1,49 @@
+flowchart TB
+    start((Start)) --> login[Log in]
+    login --> account{Valid account?}
+    account -- No --> login
+    account -- Yes --> dashboard[View dashboard]
+    dashboard --> activity{Choose activity}
+
+    activity -- Recycle --> insert[Insert recyclable item]
+    insert --> more{More items?}
+    more -- Yes --> insert
+    more -- No --> green[Press green button]
+    green --> rewardQR[Scan recycling reward QR]
+    rewardQR --> rewardValid{Valid reward QR?}
+    rewardValid -- No: retry --> rewardQR
+    rewardValid -- Yes --> claim[Claim recycling points]
+    claim --> balance[View updated points]
+    balance --> home[Return to dashboard]
+
+    activity -- Buy points or water --> blue[Press blue button on machine]
+    blue --> scan[Scan machine refill QR]
+    scan --> valid{Valid, active QR?}
+    valid -- No --> scanError[Show error / request new QR]
+    scanError --> scan
+    valid -- Yes --> action{Buy points or buy water?}
+
+    action -- Buy points --> points[Enter number of points]
+    points --> pay[Pay machine owner via GCash]
+    pay --> receipt[Submit payment details]
+    receipt --> review[Wait for owner verification]
+    review --> approved{Payment approved?}
+    approved -- No --> contact[View rejection / contact owner]
+    contact --> home
+    approved -- Yes --> credit[Points added after approval]
+    credit --> updated[View updated balance]
+    updated --> continue{Buy water now?}
+    continue -- No --> home
+    continue -- Yes --> resume[Return to refill; rescan if QR expired]
+    resume --> amount
+
+    action -- Buy water --> amount[Select water amount]
+    amount --> enough{Enough points?}
+    enough -- No: buy points --> points
+    enough -- Yes --> confirm[Place container / confirm refill]
+    confirm --> dispense[Machine checks container and points; dispenses water]
+    dispense --> history[View refill result / history]
+    history --> home
+
+    home --> logout[Log out]
+    logout --> finish((End))

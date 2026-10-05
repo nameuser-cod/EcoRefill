@@ -38,6 +38,10 @@ class VisualInspector:
         for check in ("size", "cleanliness"):
             if not isinstance(self.config.get(check, {}).get("enabled", False), bool):
                 raise ValueError(f"{check}.enabled must be a JSON boolean")
+        materials = self.config.get("size", {}).get("materials")
+        if materials is not None and (not isinstance(materials, list) or not materials
+                                     or any(not isinstance(item, str) or not item for item in materials)):
+            raise ValueError("size.materials must be a nonempty list of material names")
         if self.mode != "off" and self.config.get("cleanliness", {}).get("enabled"):
             try:
                 if self.classifier is None:
@@ -64,6 +68,8 @@ class VisualInspector:
 
     def _size(self, frame, detection):
         settings = self.config["size"]
+        if "materials" in settings and detection["item"] not in settings["materials"]:
+            return {"status": "not_applicable"}
         if list(settings["frame_size_px"]) != [frame.shape[1], frame.shape[0]]:
             raise ValueError("Camera resolution differs from size calibration")
         x1, y1, x2, y2 = detection["box"]
@@ -83,6 +89,8 @@ class VisualInspector:
             raise ValueError("No size profiles for this container class")
         matches = []
         for group in groups:
+            if not isinstance(group.get("name"), str) or not group["name"].strip():
+                raise ValueError("Size profiles need a name")
             wmin, wmax = map(float, group["width_mm"])
             hmin, hmax = map(float, group["height_mm"])
             if not all(math.isfinite(v) for v in (wmin, wmax, hmin, hmax)) or not (
@@ -129,6 +137,9 @@ class VisualInspector:
         active = self.mode != "off" and bool(enabled)
         if len(detections) != 1:
             report["reason"] = "Insert one container at a time."
+            if active:
+                for name in enabled:
+                    report[name] = {"status": "uncertain", "reason": report["reason"]}
             return report
         detection = detections[0]
         try:
@@ -145,7 +156,8 @@ class VisualInspector:
                     if not cv2.imwrite(str(directory / f"{name}.jpg"), crop):
                         raise OSError("Could not save inspection crop")
                     with (directory / f"{name}.json").open("w", encoding="utf-8") as target:
-                        json.dump({"detection": detection, "human_label": None}, target)
+                        json.dump({"detection": detection, "human_label": None,
+                                   "frame_size_px": [frame.shape[1], frame.shape[0]]}, target)
                 except Exception as error:
                     report["capture_error"] = str(error)
             if active:
@@ -157,15 +169,21 @@ class VisualInspector:
                         report[name] = self._size(frame, detection) if name == "size" else self._cleanliness(crop)
                     except Exception as error:
                         report[name] = {"status": "unavailable", "detail": str(error)}
-                report["passed"] = all(report[name]["status"] == "pass" for name in enabled)
+                report["passed"] = all(report[name]["status"] in {"pass", "not_applicable"}
+                                       for name in enabled)
                 if not report["passed"]:
-                    failed = next(name for name in enabled if report[name]["status"] != "pass")
+                    failed = next(name for name in enabled
+                                  if report[name]["status"] not in {"pass", "not_applicable"})
                     report["reason"] = report[failed].get("reason", "Inspection unavailable. Please remove the item.")
             elif self.mode == "enforce":
                 report["reason"] = "Inspection unavailable. Please remove the item."
         except Exception as error:
             report["reason"] = "Unable to inspect the whole container. Please reposition it."
             report["detail"] = str(error)
+            if active:
+                for name in enabled:
+                    if report[name]["status"] == "not_checked":
+                        report[name] = {"status": "uncertain", "reason": report["reason"]}
         return report
 
     def apply(self, result, frame, detections):

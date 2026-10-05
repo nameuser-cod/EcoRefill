@@ -1,0 +1,130 @@
+flowchart TB
+    subgraph USER["User / EcoRefill App"]
+        direction TB
+        start((Start)) --> login[Log in]
+        login --> account{Valid account?}
+        account -- No --> login
+        account -- Yes --> dashboard[View dashboard]
+        dashboard --> activity{Choose activity}
+        activity -- Recycle --> insert[Insert recyclable item]
+        insert --> more{More items?}
+        more -- Yes --> insert
+        more -- No --> green[Press green button]
+        green --> rewardQR[Scan recycling reward QR]
+        rewardQR --> rewardValid{Valid reward QR?}
+        rewardValid -- No: retry --> rewardQR
+        rewardValid -- Yes --> claim[Claim recycling points]
+        claim --> balance[View updated points]
+        balance --> home[Return to dashboard]
+
+        activity -- Buy points or water --> blue[Press blue button on machine]
+        blue --> scan[Scan machine refill QR]
+        scan --> valid{Valid, active QR?}
+        valid -- No --> scanError[Show error / request new QR]
+        scanError --> scan
+        valid -- Yes --> action{Buy points or buy water?}
+        action -- Buy points --> points[Enter number of points]
+        points --> pay[Pay machine owner via GCash]
+        pay --> receipt[Submit payment details]
+        receipt --> review[Wait for owner verification]
+        review --> approved{Payment approved?}
+        approved -- No --> contact[View rejection / contact owner]
+        contact --> home
+        approved -- Yes --> credit[Points added after approval]
+        credit --> updated[View updated balance]
+        updated --> continue{Buy water now?}
+        continue -- No --> home
+        continue -- Yes --> resume[Return to refill; rescan if QR expired]
+        resume --> amount
+        action -- Buy water --> amount[Select water amount]
+        amount --> enough{Enough points?}
+        enough -- No: buy points --> points
+        enough -- Yes --> confirm[Place container / confirm refill]
+        confirm --> dispense[Machine checks container and points; dispenses water]
+        dispense --> history[View refill result / history]
+        history --> home
+        home --> logout[Log out]
+        logout --> finish((End))
+    end
+
+    subgraph MACHINE["EcoRefill Machine"]
+        direction TB
+        mStart((Start)) --> power[Power on]
+        power --> initialize[Initialize]
+        initialize --> ready{Ready?}
+        ready -- No --> mError[Show error]
+        mError --> retry[Retry]
+        retry --> ready
+        ready -- Yes --> showQR[Show machine QR]
+        showQR --> recycling[Recycling]
+        showQR --> water[Water refill]
+        showQR --> reward[Claim reward]
+        recycling --> detect[Detect item]
+        detect --> weight[Check weight]
+        weight --> itemValid{Valid item?}
+        itemValid -- No --> itemMessage[Show message]
+        itemValid -- Yes --> sort[Sort item]
+        sort --> recyclePoints[Add points]
+        recyclePoints --> recycleRecord[Update record]
+        itemMessage --> recycleRecord
+        water --> bottle[Detect bottle]
+        bottle --> bottleReady{Bottle ready?}
+        bottleReady -- No --> bottleMessage[Show message]
+        bottleReady -- Yes --> waterDispense[Dispense water]
+        waterDispense --> waterRecord[Update record]
+        bottleMessage --> waterRecord
+        reward --> mScan[Scan QR]
+        mScan --> validate[Validate]
+        validate --> mValid{Valid QR?}
+        mValid -- No --> rewardMessage[Show message]
+        mValid -- Yes --> rewardPoints[Add points]
+        rewardPoints --> rewardRecord[Update record]
+        rewardMessage --> rewardRecord
+        recycleRecord --> sync[Sync data]
+        waterRecord --> sync
+        rewardRecord --> sync
+        sync --> mHome[Return to home]
+        mHome --> mEnd((End))
+    end
+
+    subgraph OWNER["Device Owner / EcoRefill App"]
+        direction TB
+        oStart((Start)) --> oLogin[Log in]
+        oLogin --> oAccount{Valid account?}
+        oAccount -- No --> oLogin
+        oAccount -- Yes --> oDashboard[View dashboard]
+        oDashboard --> oAction[Choose action]
+        oAction --> monitor[Monitor]
+        monitor --> status[View status]
+        status --> waterLevel[View water]
+        waterLevel --> quality[View quality]
+        quality --> events[View activity]
+        oAction --> alerts[Alerts]
+        alerts --> viewAlerts[View alerts]
+        viewAlerts --> details[Review details]
+        details --> takeAction[Take action]
+        oAction --> collection[Collection]
+        collection --> items[View items]
+        items --> records[View records]
+        oAction --> payments[Payments]
+        payments --> requests[View requests]
+        requests --> verify[Verify payment]
+        verify --> approve{Approve?}
+        approve -- No --> reject[Reject]
+        reject --> notifyRejected[Notify user]
+        approve -- Yes --> accept[Approve]
+        accept --> updatePoints[Update points]
+        updatePoints --> notifyApproved[Notify user]
+        events --> oLogout[Log out]
+        takeAction --> oLogout
+        records --> oLogout
+        notifyRejected --> oLogout
+        notifyApproved --> oLogout
+        oLogout --> oEnd((End))
+    end
+
+    showQR -. Machine QR .-> scan
+    rewardQR -. Recycling reward claim .-> mScan
+    confirm -. Refill request .-> bottle
+    receipt -. Payment request .-> requests
+    notifyApproved -. Owner approval .-> credit

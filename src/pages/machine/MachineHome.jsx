@@ -17,6 +17,7 @@ import {
 import "../../styles/machine/machine.css";
 
 import { pollMachine, requestMachine } from "./utils/machineApi";
+import { bottleSizeLabel } from "./utils/bottleSize";
 
 function MachineHome() {
   const navigate = useNavigate();
@@ -42,6 +43,7 @@ function MachineHome() {
   ];
 
   const isBusy = busyPhases.includes(machineState.phase);
+  const sizeLabel = connectionError ? null : bottleSizeLabel(machineState);
 
   useEffect(() => pollMachine(async (signal) => {
     if (actionRef.current) return;
@@ -339,6 +341,7 @@ function MachineHome() {
             <h2>{screen.title}</h2>
 
             <p>{screen.message}</p>
+            {sizeLabel && <p><strong>{sizeLabel}</strong></p>}
           </div>
 
           {showWaterChoice && (

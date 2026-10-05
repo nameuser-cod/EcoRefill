@@ -1,0 +1,17 @@
+flowchart LR
+    U["Users<br/>User / Recycler · Device Owner"]
+    A["Mobile / Web App<br/>Rewards · Refills · Owner approvals"]
+    F["Firebase<br/>Authentication · Cloud Firestore"]
+    G["GCash<br/>User pays owner<br/>Owner verifies through app"]
+    subgraph RVM["EcoRefill Reverse Vending Machine"]
+        H["Hardware<br/>Camera · Scale · Buttons · Sensors<br/>Screen / QR · Pump · Sorting bins"]
+        P["Raspberry Pi<br/>AI · Hardware control · Backend services"]
+        H <-->|Control and readings| P
+    end
+    U -->|Use app| A
+    U -->|Insert items / place container / press buttons| H
+    A -.->|Scan QR on machine screen| H
+    A <-->|Sign-in and app data| F
+    A <-->|Requests and results| P
+    P <-->|Sync Firestore records| F
+    U -.->|Manual payment| G

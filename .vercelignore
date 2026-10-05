@@ -1,0 +1,21 @@
+# Only the web frontend is deployed to Vercel.
+.git
+.vercel
+node_modules
+dist
+dist-kiosk
+android
+functions
+ecorefill-pi
+datasets
+ecorefill_dataset
+yolo-env
+runs
+release-artifacts
+tests
+docs
+*.py
+requirements*.txt
+*.pt
+*.log
+.env*

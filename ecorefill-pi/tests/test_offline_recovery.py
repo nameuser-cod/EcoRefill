@@ -22,6 +22,7 @@ class OfflineRecoveryTests(unittest.TestCase):
         self.machine.journal = MachineJournal(self.path)
         self.machine.get_redemption_tunnel_url = Mock(return_value="https://example.test")
         self.db = Database()
+        self.db.records["users/buyer"]["points"] = 12
         self.db.transaction = lambda: None
         self.machine.db = self.db
         self.clock = datetime.now(timezone.utc)
@@ -90,7 +91,7 @@ class OfflineRecoveryTests(unittest.TestCase):
         })
         self.assertEqual(self.machine.get_state()["rewardExpiresAt"],
                          self.clock.timestamp() + original["claimWindowSeconds"])
-        self.assertEqual(self.db.records["users/buyer"]["points"], 7)
+        self.assertEqual(self.db.records["users/buyer"]["points"], 12)
 
     def test_withdrawn_reward_cannot_be_revived_by_next_finalization(self):
         old_id = self.finish_reward()
@@ -153,7 +154,7 @@ class OfflineRecoveryTests(unittest.TestCase):
         with self.assertRaises(TimeoutError):
             self.sync_refill()
         self.sync_refill()
-        self.assertEqual(self.db.records["users/owner"]["points"], 2005)
+        self.assertEqual(self.db.records["users/owner"]["points"], 2010)
         self.machine.run_water_command.assert_called_once()
         self.assertEqual(self.machine.journal.entries("refill"), [])
 
@@ -163,7 +164,7 @@ class OfflineRecoveryTests(unittest.TestCase):
         with self.assertRaises(TimeoutError):
             self.sync_refill()
         self.sync_refill()
-        self.assertEqual(self.db.records["users/buyer"]["points"], 7)
+        self.assertEqual(self.db.records["users/buyer"]["points"], 12)
         self.assertEqual(self.db.records["users/owner"]["points"], 2000)
         self.machine.run_water_command.assert_called_once()
 
@@ -173,14 +174,14 @@ class OfflineRecoveryTests(unittest.TestCase):
         self.assertEqual(self.db.records["users/buyer"]["points"], 2)
         self.machine.run_water_command.assert_not_called()
         self.sync_refill()
-        self.assertEqual(self.db.records["users/buyer"]["points"], 7)
+        self.assertEqual(self.db.records["users/buyer"]["points"], 12)
 
     def test_failed_reservation_never_creates_a_refund_or_dispenses(self):
         self.fail_before = "reserve_refill"
         self.request_refill()
         self.sync_refill()
         self.machine.run_water_command.assert_not_called()
-        self.assertEqual(self.db.records["users/buyer"]["points"], 7)
+        self.assertEqual(self.db.records["users/buyer"]["points"], 12)
         self.assertEqual(self.db.records["water_refill_requests/request"]["status"], "failed")
 
     def test_restart_during_dispensing_requires_review_without_replay_or_refund(self):

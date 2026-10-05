@@ -53,7 +53,7 @@ flowchart TD
 2. **Automatic detection starts.** The Pi uses camera motion detection to notice an item and waits for a stable view before capturing it. No start button is needed.
 3. **The model checks the item.** YOLO predicts its class. The machine accepts configured material classes only when the prediction passes its confidence and object-area thresholds. Optional visual inspection can add further checks.
 4. **The machine sorts or rejects it.** The Pi runs `BOTTLE`, `CAN`, or `REJECT` directly through its GPIO controller. Rejected items earn no points.
-5. **Accepted items build one session total.** Each accepted plastic bottle or aluminum can adds **0.5 EcoPoints** (2 accepted items = 1 point). The screen shows the item count and points. The user can continue inserting items.
+5. **Accepted items build one session total.** A confirmed calibrated size earns **0.5 EcoPoints for Small**, **1 for Medium**, or **1.5 for Large**. Accepted items without a confirmed size receive the **0.5-point base reward**. The screen shows the item count and accumulated points. The user can continue inserting items.
 6. **The user presses the green button.** The machine creates one reward for the entire batch and displays a QR code. Account points are credited when that code is successfully claimed.
 7. **The user claims the reward.** A signed-in user opens the app's scanner and scans the QR. The redemption service verifies the Firebase login token and reward availability, then updates the balance and records a transaction.
 8. **The session ends.** A claimed reward cannot be claimed again. Unclaimed reward codes have a **60-second** validity period, after which the machine prepares for another customer.
@@ -64,8 +64,8 @@ For example, three accepted plastic bottles and two accepted aluminum cans produ
 
 | Detected class | Category | Points per accepted item |
 | --- | --- | --- |
-| `plastic_bottle` or `pet_bottle` | Plastic bottle | 0.5 |
-| `aluminum_can` or `aluminium_can` | Aluminum can | 0.5 |
+| `plastic_bottle` or `pet_bottle` | Plastic bottle | Small: 0.5; Medium: 1; Large: 1.5; unclassified: 0.5 |
+| `aluminum_can` or `aluminium_can` | Aluminum can | 0.5 with the bottle-only size configuration |
 | Unsupported, unknown, or insufficiently confident detection | Rejected | 0 |
 
 The current detector uses an inference image size of **416**, an acceptance confidence threshold of **0.65**, and a minimum bounding-box area of **5%** of the camera frame. Confidence is a model score, not a guarantee of material identity or real-world accuracy. Generic class names such as `bottle` and `can` are not accepted by the material rules.
@@ -79,6 +79,8 @@ An optional inspection module supports approximate exterior size checks and a se
 Size checking requires camera calibration and measured size profiles. Cleanliness checking requires a separately trained and validated model. Neither visual check is enabled by the example configuration. A required HX711 weight check rejects plastic bottles and aluminum cans above **300 g**, before sorting or awarding points. Exactly 300 g passes the weight limit for either material. Missing, invalid, or unstable weight readings also reject the item. This weight rule applies in every visual-inspection mode.
 
 See [camera inspection setup](ecorefill-pi/docs/INSPECTION.md) and [material model evaluation](MODEL_EVALUATION.md) for configuration, evidence, and measurement limits.
+
+After calibration, the recycling screen can show **Small**, **Medium**, or **Large** for plastic bottles and store the result in each scan record. Use the [bottle-size setup tool and instructions](ecorefill-pi/docs/INSPECTION.md#show-small-medium-and-large-on-the-recycling-screen) with measured bottle profiles. Uncertain measurements show **Bottle size uncertain**. The supplied template needs real measurements before it can be enabled.
 
 For retraining with TACO and Waste Segregation, follow the [dataset preparation and training guide](DATASET_TRAINING.md). It preserves the deployed model, requires reviewed material labels, and includes a comparison using the machine's detection rules.
 
@@ -98,13 +100,13 @@ For the 1 kg load cell and HX711 wired to a Raspberry Pi 5, use the [weight setu
 
 | Water amount | App display and Cloud Function | Active Raspberry Pi worker |
 | --- | --- | --- |
-| 250 mL | 3 points | 2 points |
-| 500 mL | 5 points | 5 points |
-| 1,000 mL | 10 points | 10 points |
+| 250 mL | 5 points | 5 points |
+| 500 mL | 10 points | 10 points |
+| 1,000 mL | 15 points | 15 points |
 
-**There is an existing 250 mL pricing mismatch.** The app checks against 3 points, while the Pi worker charges 2 points. The current app submits refill requests to the Pi through Firestore, so the Pi calculates the actual deduction. Align `WATER_OPTIONS` in [the app constants](src/pages/user/constants.js), [the Pi settings](ecorefill-pi/machine/config.py), and [the Cloud Functions](functions/index.js) when selecting the intended price.
+The current app submits refill requests to the Pi through Firestore, so the Pi calculates the actual deduction. Prices are aligned in [the app constants](src/pages/user/constants.js), [the Pi settings](ecorefill-pi/machine/config.py), and [the Cloud Functions](functions/index.js).
 
-Five accepted recyclable items earn 5 points, enough for a **500 mL refill** under both price tables.
+A **500 mL refill** requires 10 points.
 
 ## Accounts and application features
 
@@ -236,6 +238,10 @@ ecorefill-app/
 ```
 
 ## Running the project
+
+For Vercel hosting, follow the [web deployment guide](docs/VERCEL_DEPLOYMENT.md).
+The [Vercel deployment diagram](docs/diagrams/ecorefill-vercel-deployment.png)
+shows the hosted web app, Firebase, and the Raspberry Pi services.
 
 For weak connections, use the [local kiosk and recovery setup](ecorefill-pi/docs/LOW_CONNECTIVITY.md).
 Finished rewards and refill outcomes are journaled on the Pi and synced in the

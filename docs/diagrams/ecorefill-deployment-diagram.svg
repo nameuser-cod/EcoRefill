@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050" role="img" aria-labelledby="title desc">
+<title id="title">EcoRefill system architecture</title>
+<desc id="desc">Users access the mobile or web app and interact with the reverse vending machine. The app uses Firebase Authentication and Cloud Firestore. The Raspberry Pi runs AI, hardware control and backend services, and synchronizes records with Firestore. GCash payments are manually verified by the owner through the app.</desc>
+<rect width="1600" height="1050" fill="white"/>
+<text x="80" y="65" font-family="Arial,Helvetica,sans-serif" font-size="38" font-weight="700" fill="#173b32" text-anchor="start" dominant-baseline="central">EcoRefill</text>
+<text x="80" y="111" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#51665e" text-anchor="start" dominant-baseline="central">DEPLOYMENT DIAGRAM</text>
+<rect x="80" y="210" width="420" height="280" rx="16" fill="#f7f9f8" stroke="#75877f" stroke-width="2"/>
+<text x="290" y="241" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">«device»</text>
+<text x="290" y="278" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="700" fill="#173b32" text-anchor="middle" dominant-baseline="central">Phone / Computer</text>
+<rect x="105" y="311" width="370" height="150" rx="16" fill="#ffffff" stroke="#b6ccc0" stroke-width="2"/>
+<text x="290" y="339" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">«execution environment»</text>
+<text x="290" y="370" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="700" fill="#173b32" text-anchor="middle" dominant-baseline="central">Browser / Android WebView</text>
+<text x="290" y="407" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">React app · Capacitor on Android</text>
+<text x="290" y="439" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">User &amp; owner dashboards</text>
+<rect x="1080" y="210" width="440" height="280" rx="16" fill="#f3f8f5" stroke="#23765b" stroke-width="2"/>
+<text x="1300" y="241" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">«cloud service»</text>
+<text x="1300" y="278" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="700" fill="#173b32" text-anchor="middle" dominant-baseline="central">Firebase</text>
+<rect x="1105" y="311" width="390" height="150" rx="16" fill="#ffffff" stroke="#b6ccc0" stroke-width="2"/>
+<text x="1300" y="343" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Authentication · account sign-in</text>
+<text x="1300" y="388" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Cloud Firestore · system records</text>
+<text x="1300" y="433" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Cloud Messaging · Android alerts</text>
+<rect x="80" y="680" width="420" height="170" rx="16" fill="#f7f9f8" stroke="#75877f" stroke-width="2"/>
+<text x="290" y="711" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">«deployment target»</text>
+<text x="290" y="749" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="700" fill="#173b32" text-anchor="middle" dominant-baseline="central">Web Host</text>
+<text x="290" y="790" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">«artifact» React production build</text>
+<text x="290" y="824" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Serves HTML, JavaScript &amp; CSS</text>
+<rect x="610" y="640" width="560" height="270" rx="16" fill="#f3f8f5" stroke="#23765b" stroke-width="2"/>
+<text x="890" y="671" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">«device»</text>
+<text x="890" y="707" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="700" fill="#173b32" text-anchor="middle" dominant-baseline="central">Raspberry Pi 5</text>
+<rect x="635" y="737" width="220" height="145" rx="16" fill="#ffffff" stroke="#b6ccc0" stroke-width="2"/>
+<text x="745" y="765" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">«runtime» Browser</text>
+<text x="745" y="803" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="700" fill="#173b32" text-anchor="middle" dominant-baseline="central">React Kiosk</text>
+<text x="745" y="837" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Local machine interface</text>
+<text x="745" y="864" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Screen &amp; QR display</text>
+<rect x="920" y="737" width="225" height="145" rx="16" fill="#ffffff" stroke="#b6ccc0" stroke-width="2"/>
+<text x="1032" y="765" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">«runtime» Python</text>
+<text x="1032" y="802" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="700" fill="#173b32" text-anchor="middle" dominant-baseline="central">Flask Backend</text>
+<text x="1032" y="837" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">AI · rewards · refills</text>
+<text x="1032" y="863" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">machine_flow.py + YOLO</text>
+<rect x="1290" y="640" width="230" height="270" rx="16" fill="#f7f9f8" stroke="#75877f" stroke-width="2"/>
+<text x="1405" y="671" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">«devices»</text>
+<text x="1405" y="707" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="700" fill="#173b32" text-anchor="middle" dominant-baseline="central">Hardware</text>
+<text x="1405" y="757" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Camera &amp; scale</text>
+<text x="1405" y="798" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Buttons &amp; sensors</text>
+<text x="1405" y="839" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Servos &amp; pump</text>
+<text x="1405" y="878" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Machine display</text>
+<polyline points="500,327 1080,327" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="1080,327 1068.0,322.0 1068.0,332.0" fill="#75877f"/>
+<polygon points="500,327 512.0,332.0 512.0,322.0" fill="#75877f"/>
+<text x="790" y="302" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">HTTPS · Firebase SDK</text>
+<text x="790" y="350" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">Sign-in, records &amp; refill requests</text>
+<polyline points="1080,393 500,393" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="500,393 512.0,398.0 512.0,388.0" fill="#75877f"/>
+<text x="790" y="376" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">FCM · Android push notifications</text>
+<polyline points="290,490 290,680" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="290,680 295.0,668.0 285.0,668.0" fill="#75877f"/>
+<polygon points="290,490 285.0,502.0 295.0,502.0" fill="#75877f"/>
+<text x="310" y="565" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#51665e" text-anchor="start" dominant-baseline="central">HTTPS · web app files</text>
+<text x="310" y="598" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#51665e" text-anchor="start" dominant-baseline="central">Android bundles the app locally</text>
+<polyline points="500,441 790,441 790,640" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="790,640 795.0,628.0 785.0,628.0" fill="#75877f"/>
+<polygon points="500,441 512.0,446.0 512.0,436.0" fill="#75877f"/>
+<text x="806" y="520" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#51665e" text-anchor="start" dominant-baseline="central">HTTPS · Pi API</text>
+<text x="806" y="551" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#51665e" text-anchor="start" dominant-baseline="central">Cloudflare tunnel for remote access</text>
+<polyline points="1095,640 1095,490" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="1095,490 1090.0,502.0 1100.0,502.0" fill="#75877f"/>
+<polygon points="1095,640 1100.0,628.0 1090.0,628.0" fill="#75877f"/>
+<text x="1117" y="555" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#51665e" text-anchor="start" dominant-baseline="central">HTTPS · Admin SDK</text>
+<text x="1117" y="584" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#51665e" text-anchor="start" dominant-baseline="central">Records, token checks &amp; alert delivery</text>
+<polyline points="855,818 920,818" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="920,818 908.0,813.0 908.0,823.0" fill="#75877f"/>
+<polygon points="855,818 867.0,823.0 867.0,813.0" fill="#75877f"/>
+<text x="887" y="794" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">HTTP</text>
+<text x="887" y="844" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">:5000</text>
+<polyline points="1170,798 1290,798" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="1290,798 1278.0,793.0 1278.0,803.0" fill="#75877f"/>
+<polygon points="1170,798 1182.0,803.0 1182.0,793.0" fill="#75877f"/>
+<text x="1230" y="762" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">GPIO / PWM</text>
+<text x="1230" y="783" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">Camera</text>
+<text x="800" y="965" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">Machine controller, backend and local kiosk are deployed on the same Raspberry Pi.</text>
+<text x="800" y="1003" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">Web hosting provider is unspecified; the diagram shows the deployment target.</text>
+</svg>

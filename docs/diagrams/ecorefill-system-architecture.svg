@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050" role="img" aria-labelledby="title desc">
+<title id="title">EcoRefill system architecture</title>
+<desc id="desc">Users access the mobile or web app and interact with the reverse vending machine. The app uses Firebase Authentication and Cloud Firestore. The Raspberry Pi runs AI, hardware control and backend services, and synchronizes records with Firestore. GCash payments are manually verified by the owner through the app.</desc>
+<rect width="1600" height="1050" fill="white"/>
+<text x="80" y="65" font-family="Arial,Helvetica,sans-serif" font-size="38" font-weight="700" fill="#173b32" text-anchor="start" dominant-baseline="central">EcoRefill</text>
+<text x="80" y="111" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#51665e" text-anchor="start" dominant-baseline="central">SYSTEM ARCHITECTURE</text>
+<rect x="1050" y="235" width="470" height="615" rx="24" fill="#f3f8f5" stroke="#b6ccc0" stroke-width="2"/>
+<text x="1285" y="273" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="700" fill="#173b32" text-anchor="middle" dominant-baseline="central">REVERSE VENDING MACHINE</text>
+<rect x="80" y="325" width="300" height="210" rx="16" fill="#f7f9f8" stroke="#75877f" stroke-width="2"/>
+<text x="230" y="370" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="700" fill="#173b32" text-anchor="middle" dominant-baseline="central">Users</text>
+<text x="230" y="426" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">User / recycler</text>
+<text x="230" y="464" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Device owner</text>
+<rect x="520" y="325" width="370" height="210" rx="16" fill="#f3f8f5" stroke="#23765b" stroke-width="2"/>
+<text x="705" y="370" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="700" fill="#173b32" text-anchor="middle" dominant-baseline="central">Mobile / Web App</text>
+<text x="705" y="421" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Rewards, refills &amp; history</text>
+<text x="705" y="459" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Owner approvals &amp; monitoring</text>
+<rect x="1090" y="325" width="390" height="210" rx="16" fill="#ffffff" stroke="#75877f" stroke-width="2"/>
+<text x="1285" y="370" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="700" fill="#173b32" text-anchor="middle" dominant-baseline="central">Machine Hardware</text>
+<text x="1285" y="415" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Camera, scale, buttons &amp; sensors</text>
+<text x="1285" y="453" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Screen / QR, pump &amp; sorting bins</text>
+<rect x="1090" y="650" width="390" height="155" rx="16" fill="#ffffff" stroke="#23765b" stroke-width="2"/>
+<text x="1285" y="690" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="700" fill="#173b32" text-anchor="middle" dominant-baseline="central">Raspberry Pi</text>
+<text x="1285" y="735" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">AI + hardware control</text>
+<text x="1285" y="771" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Backend: rewards &amp; refill processing</text>
+<rect x="520" y="650" width="370" height="200" rx="16" fill="#f7f9f8" stroke="#75877f" stroke-width="2"/>
+<text x="705" y="691" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="700" fill="#173b32" text-anchor="middle" dominant-baseline="central">Firebase</text>
+<text x="705" y="733" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Authentication · sign-in</text>
+<text x="705" y="774" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Cloud Firestore · records</text>
+<text x="705" y="813" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">Accounts, points, refills &amp; machine data</text>
+<rect x="80" y="680" width="300" height="170" rx="16" fill="#f7f9f8" stroke="#75877f" stroke-width="2"/>
+<text x="230" y="719" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="700" fill="#173b32" text-anchor="middle" dominant-baseline="central">GCash</text>
+<text x="230" y="759" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">User pays the owner</text>
+<text x="230" y="797" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#173b32" text-anchor="middle" dominant-baseline="central">Owner verifies in the app</text>
+<polyline points="230,325 230,205 1285,205 1285,235" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="1285,235 1290.0,223.0 1280.0,223.0" fill="#75877f"/>
+<text x="750" y="184" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">Insert items · place container · press buttons</text>
+<polyline points="380,428 520,428" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="520,428 508.0,423.0 508.0,433.0" fill="#75877f"/>
+<text x="450" y="404" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">Use app</text>
+<polyline points="890,368 1090,368" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round" stroke-dasharray="9 7"/>
+<polygon points="1090,368 1078.0,363.0 1078.0,373.0" fill="#75877f"/>
+<polygon points="890,368 902.0,373.0 902.0,363.0" fill="#75877f"/>
+<text x="990" y="342" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">Scan QR</text>
+<polyline points="705,535 705,650" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="705,650 710.0,638.0 700.0,638.0" fill="#75877f"/>
+<polygon points="705,535 700.0,547.0 710.0,547.0" fill="#75877f"/>
+<text x="725" y="591" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#51665e" text-anchor="start" dominant-baseline="central">Sign-in &amp; app data</text>
+<polyline points="890,487 970,487 970,686 1090,686" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="1090,686 1078.0,681.0 1078.0,691.0" fill="#75877f"/>
+<polygon points="890,487 902.0,492.0 902.0,482.0" fill="#75877f"/>
+<text x="982" y="540" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#51665e" text-anchor="start" dominant-baseline="central">Requests</text>
+<text x="982" y="566" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#51665e" text-anchor="start" dominant-baseline="central">&amp; results</text>
+<polyline points="1090,765 890,765" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="890,765 902.0,770.0 902.0,760.0" fill="#75877f"/>
+<polygon points="1090,765 1078.0,760.0 1078.0,770.0" fill="#75877f"/>
+<text x="990" y="742" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">Sync records</text>
+<polyline points="1285,535 1285,650" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="1285,650 1290.0,638.0 1280.0,638.0" fill="#75877f"/>
+<polygon points="1285,535 1280.0,547.0 1290.0,547.0" fill="#75877f"/>
+<text x="1307" y="591" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#51665e" text-anchor="start" dominant-baseline="central">Control &amp; readings</text>
+<polyline points="230,535 230,680" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round" stroke-dasharray="9 7"/>
+<polygon points="230,680 235.0,668.0 225.0,668.0" fill="#75877f"/>
+<text x="250" y="595" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#51665e" text-anchor="start" dominant-baseline="central">Manual payment</text>
+<text x="800" y="905" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#51665e" text-anchor="middle" dominant-baseline="central">Controller and backend services run on the same Raspberry Pi.</text>
+<polyline points="465,967 525,967" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="525,967 513.0,962.0 513.0,972.0" fill="#75877f"/>
+<text x="541" y="967" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" fill="#51665e" text-anchor="start" dominant-baseline="central">Data / hardware</text>
+<polyline points="790,967 850,967" fill="none" stroke="#75877f" stroke-width="2" stroke-linejoin="round" stroke-dasharray="9 7"/>
+<polygon points="850,967 838.0,962.0 838.0,972.0" fill="#75877f"/>
+<text x="866" y="967" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" fill="#51665e" text-anchor="start" dominant-baseline="central">QR / manual action</text>
+</svg>

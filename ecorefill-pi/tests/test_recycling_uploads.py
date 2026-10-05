@@ -19,7 +19,8 @@ def payload(item_id="item-1"):
         "item_id": item_id,
         "result": {"accepted": True, "category": "bottle", "item": "plastic_bottle",
                    "confidence": 0.95, "points": 0.5,
-                   "inspection": {"weight": {"grams": 20, "status": "pass"}}},
+                   "inspection": {"weight": {"grams": 20, "status": "pass"},
+                                  "size": {"status": "pass", "size_group": "Medium"}}},
         "image_data_url": "data:image/jpeg;base64,test",
         "batch_session_id": "batch-1",
         "created_at": "2026-09-10T01:02:03+00:00",
@@ -120,6 +121,7 @@ class UploadTests(unittest.TestCase):
             machine.machine_worker()
         state = machine.get_state()
         self.assertEqual(state["phase"], "item_accepted")
+        self.assertEqual(state["inspection"], payload()["result"]["inspection"])
         self.assertEqual((state["itemCount"], state["pointsEarned"]), (3, 1.5))
         self.assertFalse(state["firebaseSaved"])
         queued = machine.recycling_upload_queue.peek()

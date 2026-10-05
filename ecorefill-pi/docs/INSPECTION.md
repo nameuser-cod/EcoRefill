@@ -110,6 +110,65 @@ view also requires recalibration even if the output resolution stays the same.
 These groups describe exterior dimensions, not verified capacity or an exact
 empty weight. Crushed or tilted containers can fall outside their size group.
 
+## Show Small, Medium, and Large on the recycling screen
+
+The kiosk displays `Bottle size: Small`, `Medium`, or `Large` after a matched
+plastic-bottle scan. The group and measured dimensions are also stored under
+`inspection.size` in the recycling record. An unmatched, ambiguous, or unavailable
+measurement displays `Bottle size uncertain`. With inspection off, no size label
+is displayed. Accepted items with a confirmed size earn **0.5 points for Small**,
+**1 point for Medium**, or **1.5 points for Large**. Profile names are matched
+without regard to capitalization or surrounding spaces. Accepted items without
+a confirmed Small/Medium/Large group retain the 0.5-point base reward, including
+cans when size checking targets only bottles. Rejected items earn zero.
+
+Use the fixed upright position and calibration procedure above. The following
+helper prepares a **new observation config** without starting any hardware:
+
+1. Install the updated controller and collect reference scans using the capture
+   instructions above. New capture JSON files include the original `frame_size_px`
+   as well as the full-frame detection box. Choose a clear reference scan and
+   measure that upright bottle's horizontal width and vertical height in mm.
+2. Copy `config/bottle-profiles.example.json` to `bottle-profiles.local.json`.
+   Replace every `null` with measured minimum and maximum dimensions for your
+   Small, Medium, and Large groups. Include multiple bottles and repeat placements
+   to understand the variation. Limits apply to the camera's horizontal and vertical
+   axes. Each minimum must be below its maximum. Do not use guessed values.
+3. Run this command from `ecorefill-pi`, substituting the reference filename and
+   your two measurements for the uppercase placeholders:
+
+   ```sh
+   python3 -m tools.calibrate_bottle_size \
+     --reference inspection_samples/REFERENCE.json \
+     --width-mm MEASURED_WIDTH_MM \
+     --height-mm MEASURED_HEIGHT_MM \
+     --profiles bottle-profiles.local.json \
+     --output bottle-size.local.json
+   ```
+
+   The helper refuses missing measurements and overlapping profiles, including
+   shared boundaries that could match two groups. Existing output files are
+   preserved; choose a new output filename when recalibrating.
+4. Set `ECOREFILL_INSPECTION_CONFIG` to the **absolute path** of
+   `bottle-size.local.json` in your machine service and restart it. Deploy the
+   updated kiosk build too (`npm run build:kiosk` from the repository root).
+   Do not start a second controller alongside the service.
+5. Test other physical bottles in each group on the running machine. Compare
+   the reported `inspection.size.width_mm` and `height_mm` with ruler measurements,
+   and check the displayed groups. Improve positioning or adjust measured limits
+   if the results vary. Real-machine accuracy is not established by software tests.
+
+The generated config targets both `plastic_bottle` and `pet_bottle`. Cans receive
+`size.status: not_applicable`, and their existing material checks still apply.
+It starts in `observe` mode, so size alone does not change acceptance. Confirmed
+size groups affect rewards in both `observe` and `enforce` modes; use supervised
+calibration sessions before offering these rewards to users. Keep observation
+mode to label sizes, or switch to `enforce` only after validation if unsupported
+bottle sizes should be rejected. For pre-existing inspection configurations,
+merge the generated `size` section into your config to retain other checks.
+The optional `size.materials` list scopes only the size check; cleanliness checks
+still apply independently. Without that list, size checking applies to all materials.
+
 ## Enable rejection after validation
 
 Set `mode` to `enforce` and restart the process. **Every enabled check must

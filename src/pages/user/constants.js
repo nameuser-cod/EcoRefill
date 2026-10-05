@@ -1,9 +1,9 @@
 import { History, Home, MapPin, QrCode, User } from "lucide-react";
 
 export const WATER_OPTIONS = [
-  { waterAmountMl: 250, pointsRequired: 3, label: "Small" },
-  { waterAmountMl: 500, pointsRequired: 5, label: "Medium" },
-  { waterAmountMl: 1000, pointsRequired: 10, label: "Large" },
+  { waterAmountMl: 250, pointsRequired: 5, label: "Small" },
+  { waterAmountMl: 500, pointsRequired: 10, label: "Medium" },
+  { waterAmountMl: 1000, pointsRequired: 15, label: "Large" },
 ];
 
 export const USER_NAV_ITEMS = [

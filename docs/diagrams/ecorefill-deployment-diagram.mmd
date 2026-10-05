@@ -1,0 +1,27 @@
+flowchart TB
+    subgraph CLIENT["«device» Phone / Computer"]
+        APP["«execution environment» Browser / Android WebView<br/>React user and owner dashboards<br/>Capacitor Android wrapper"]
+    end
+    subgraph HOST["«deployment target» Web Host · provider unspecified"]
+        BUILD["«artifact» React production build<br/>HTML · JavaScript · CSS"]
+    end
+    subgraph CLOUD["«cloud service» Firebase"]
+        AUTH["Authentication"]
+        DB["Cloud Firestore"]
+        FCM["Cloud Messaging"]
+    end
+    subgraph PI["«device» Raspberry Pi 5"]
+        KIOSK["«runtime» Browser<br/>«artifact» React kiosk"]
+        BACKEND["«runtime» Python / Flask<br/>«artifact» machine_flow.py + machine package<br/>«artifact» YOLO model<br/>AI · hardware control · rewards · refills"]
+        KIOSK <-->|Local HTTP · port 5000| BACKEND
+    end
+    HW["«devices» Machine Hardware<br/>Camera · Scale · Buttons · Sensors<br/>Servos · Pump · Display"]
+    APP <-->|HTTPS · web app files| BUILD
+    APP <-->|HTTPS · Firebase SDK| AUTH
+    APP <-->|HTTPS · records and refill requests| DB
+    APP <-->|HTTPS · remote Pi API via Cloudflare tunnel| BACKEND
+    BACKEND -->|Admin SDK · token verification| AUTH
+    BACKEND <-->|Admin SDK · records and refill processing| DB
+    BACKEND -->|Admin SDK · send alerts| FCM
+    FCM -->|Push notifications · Android| APP
+    BACKEND <-->|GPIO / PWM / camera interface| HW

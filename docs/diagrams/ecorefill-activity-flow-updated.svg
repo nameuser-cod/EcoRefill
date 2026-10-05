@@ -1,0 +1,757 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4450" height="2260" viewBox="0 0 4450 2260" role="img" aria-labelledby="title desc">
+<title id="title">EcoRefill updated activity diagram</title>
+<desc id="desc">Three swimlanes: User / EcoRefill App, EcoRefill Machine, and Device Owner / EcoRefill App. The revised user flow requires scanning the machine QR before buying points or water. Points purchases require owner approval. Matching letter connectors indicate communication across lanes.</desc>
+<rect width="4450" height="2260" fill="white"/>
+<g transform="translate(20 100)">
+<ns0:circle xmlns:ns0="http://www.w3.org/2000/svg" cx="900" cy="125" r="13" fill="#242424" stroke="#242424" stroke-width="2" />
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="900,138 900,155" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="900,155 905.0,143.0 895.0,143.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="755.0,155.0 1045.0,155.0 1045.0,215.0 755.0,215.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="900" y="185.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Log in</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="900,215 900,245" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="900,245 905.0,233.0 895.0,233.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="900,245.0 1015.0,295 900,345.0 785.0,295" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="900" y="283.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Valid</ns0:text>
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="900" y="307.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">account?</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="785,295 695,295 695,185 755,185" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="755,185 743.0,180.0 743.0,190.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="715.75" y="262.5" width="38.5" height="27" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="735" y="276" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">No</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="900,345 900,370" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="900,370 905.0,358.0 895.0,358.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="903.5" y="346.0" width="43.0" height="24" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="925" y="358" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</ns0:text>
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="755.0,370.0 1045.0,370.0 1045.0,430.0 755.0,430.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="900" y="400.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View dashboard</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="900,430 900,450" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="900,450 905.0,438.0 895.0,438.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="900,450.0 1015.0,500 900,550.0 785.0,500" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="900" y="488.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Choose</ns0:text>
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="900" y="512.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">activity</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="785,500 250,500 250,540" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="250,540 255.0,528.0 245.0,528.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="447.0" y="467.5" width="86.0" height="27" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="490" y="481" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Recycle</ns0:text>
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="105.0,540.0 395.0,540.0 395.0,600.0 105.0,600.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="250" y="570.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Insert recyclable item</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="250,600 250,630" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="250,630 255.0,618.0 245.0,618.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="250,630.0 365.0,680 250,730.0 135.0,680" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="250" y="668.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">More</ns0:text>
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="250" y="692.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">items?</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="135,680 65,680 65,570 105,570" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="105,570 93.0,565.0 93.0,575.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="71.5" y="641.0" width="43.0" height="24" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="93" y="653" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="250,730 250,765" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="250,765 255.0,753.0 245.0,753.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="258.5" y="736.0" width="35.0" height="24" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="276" y="748" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">No</ns0:text>
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="105.0,765.0 395.0,765.0 395.0,825.0 105.0,825.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="250" y="795.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Press green button</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="250,825 250,855" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="250,855 255.0,843.0 245.0,843.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="105.0,855.0 395.0,855.0 395.0,915.0 105.0,915.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="250" y="885.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Scan recycling reward QR</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="250,915 250,945" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="250,945 255.0,933.0 245.0,933.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="250,945.0 365.0,995 250,1045.0 135.0,995" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="250" y="983.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Valid reward</ns0:text>
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="250" y="1007.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">QR?</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="135,995 65,995 65,885 105,885" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="105,885 93.0,880.0 93.0,890.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="73.5" y="953.0" width="35.0" height="24" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="91" y="965" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">No</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="250,1045 250,1080" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="250,1080 255.0,1068.0 245.0,1068.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="256.5" y="1051.0" width="43.0" height="24" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="278" y="1063" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</ns0:text>
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="105.0,1080.0 395.0,1080.0 395.0,1140.0 105.0,1140.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="250" y="1110.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Claim recycling points</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="250,1140 250,1170" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="250,1170 255.0,1158.0 245.0,1158.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="105.0,1170.0 395.0,1170.0 395.0,1230.0 105.0,1230.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="250" y="1200.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View updated points</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="1015,500 1100,500 1100,540" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1100,540 1105.0,528.0 1095.0,528.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="1150.5" y="469.5" width="179.0" height="27" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1240" y="483" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Buy points / water</ns0:text>
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="945.0,540.0 1255.0,540.0 1255.0,600.0 945.0,600.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1100" y="570.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Press blue button on machine</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="1100,600 1100,630" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1100,630 1105.0,618.0 1095.0,618.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="945.0,630.0 1255.0,630.0 1255.0,690.0 945.0,690.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1100" y="660.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Scan machine refill QR</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="1100,690 1100,720" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1100,720 1105.0,708.0 1095.0,708.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1100,720.0 1215.0,770 1100,820.0 985.0,770" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1100" y="758.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Valid,</ns0:text>
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1100" y="782.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">active QR?</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="1215,770 1410,770 1410,725" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1410,725 1405.0,737.0 1415.0,737.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="1247.5" y="738.0" width="35.0" height="24" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1265" y="750" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">No</ns0:text>
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1295.0,655.0 1525.0,655.0 1525.0,725.0 1295.0,725.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1410" y="677.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Show error /</ns0:text>
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1410" y="702.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">request new QR</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="1410,655 1410,625 1280,625 1280,660 1255,660" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1255,660 1267.0,665.0 1267.0,655.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="1100,820 1100,850" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1100,850 1105.0,838.0 1095.0,838.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="1105.5" y="823.0" width="43.0" height="24" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1127" y="835" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</ns0:text>
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1100,850.0 1230.0,900 1100,950.0 970.0,900" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1100" y="888.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Buy points</ns0:text>
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1100" y="912.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">or buy water?</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="970,900 850,900 850,970" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="850,970 855.0,958.0 845.0,958.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="801.5" y="869.0" width="105.0" height="26" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="854" y="882" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Buy points</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="1230,900 1350,900 1350,970" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1350,970 1355.0,958.0 1345.0,958.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="1299.5" y="869.0" width="101.0" height="26" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1350" y="882" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Buy water</ns0:text>
+
+<ns0:circle xmlns:ns0="http://www.w3.org/2000/svg" cx="1350" cy="938" r="18" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1350" y="938" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="central">B</ns0:text>
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="705.0,970.0 995.0,970.0 995.0,1030.0 705.0,1030.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="850" y="1000.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Enter number of points</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="850,1030 850,1060" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="850,1060 855.0,1048.0 845.0,1048.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="705.0,1060.0 995.0,1060.0 995.0,1120.0 705.0,1120.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="850" y="1090.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Pay owner via GCash</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="850,1120 850,1150" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="850,1150 855.0,1138.0 845.0,1138.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="705.0,1150.0 995.0,1150.0 995.0,1210.0 705.0,1210.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="850" y="1180.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Submit payment details</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="850,1210 850,1240" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="850,1240 855.0,1228.0 845.0,1228.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="705.0,1240.0 995.0,1240.0 995.0,1300.0 705.0,1300.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="850" y="1270.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Wait for owner verification</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="850,1300 850,1330" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="850,1330 855.0,1318.0 845.0,1318.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="850,1330.0 965.0,1380 850,1430.0 735.0,1380" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="850" y="1368.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Payment</ns0:text>
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="850" y="1392.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">approved?</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="735,1380 535,1380 535,1410" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="535,1410 540.0,1398.0 530.0,1398.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="632.5" y="1349.0" width="35.0" height="24" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="650" y="1361" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">No</ns0:text>
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="405.0,1410.0 665.0,1410.0 665.0,1490.0 405.0,1490.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="535" y="1437.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View rejection /</ns0:text>
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="535" y="1462.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">contact owner</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="850,1430 850,1460" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="850,1460 855.0,1448.0 845.0,1448.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="857.5" y="1435.0" width="43.0" height="24" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="879" y="1447" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</ns0:text>
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="705.0,1460.0 995.0,1460.0 995.0,1520.0 705.0,1520.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="850" y="1490.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Points added after approval</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="850,1520 850,1550" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="850,1550 855.0,1538.0 845.0,1538.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="705.0,1550.0 995.0,1550.0 995.0,1610.0 705.0,1610.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="850" y="1580.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View updated balance</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="850,1610 850,1640" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="850,1640 855.0,1628.0 845.0,1628.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="850,1640.0 965.0,1690 850,1740.0 735.0,1690" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="850" y="1678.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Buy water</ns0:text>
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="850" y="1702.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">now?</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="850,1740 850,1760" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="850,1760 855.0,1748.0 845.0,1748.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="858.5" y="1738.0" width="43.0" height="24" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="880" y="1750" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</ns0:text>
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="705.0,1760.0 995.0,1760.0 995.0,1840.0 705.0,1840.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="850" y="1787.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Return to refill /</ns0:text>
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="850" y="1812.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">rescan if QR expired</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="995,1800 1060,1800" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1060,1800 1048.0,1795.0 1048.0,1805.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:circle xmlns:ns0="http://www.w3.org/2000/svg" cx="1080" cy="1800" r="20" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1080" y="1800" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="central">B</ns0:text>
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1205.0,970.0 1495.0,970.0 1495.0,1030.0 1205.0,1030.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1350" y="1000.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Select water amount</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="1350,1030 1350,1060" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1350,1060 1355.0,1048.0 1345.0,1048.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1350,1060.0 1465.0,1110 1350,1160.0 1235.0,1110" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1350" y="1098.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Enough</ns0:text>
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1350" y="1122.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">points?</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="1235,1110 1150,1110 1150,1000 995,1000" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="995,1000 1007.0,1005.0 1007.0,995.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="1040.25" y="1042.5" width="133.5" height="25" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1107" y="1055" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" text-anchor="middle" dominant-baseline="central">No: buy points</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="1350,1160 1350,1200" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1350,1200 1355.0,1188.0 1345.0,1188.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="1358.5" y="1168.0" width="43.0" height="24" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1380" y="1180" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</ns0:text>
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1205.0,1200.0 1495.0,1200.0 1495.0,1280.0 1205.0,1280.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1350" y="1227.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Place container /</ns0:text>
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1350" y="1252.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">confirm refill</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="1350,1280 1350,1320" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1350,1320 1355.0,1308.0 1345.0,1308.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1175.0,1320.0 1525.0,1320.0 1525.0,1420.0 1175.0,1420.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1350" y="1357.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Machine checks container</ns0:text>
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1350" y="1382.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">and points; dispenses water</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="1350,1420 1350,1460" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1350,1460 1355.0,1448.0 1345.0,1448.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="1185.0,1460.0 1515.0,1460.0 1515.0,1540.0 1185.0,1540.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="1350" y="1500.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View refill result / history</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="250,1230 250,1880 900,1880 900,1900" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="900,1900 905.0,1888.0 895.0,1888.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="535,1490 535,1880 900,1880 900,1900" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="900,1900 905.0,1888.0 895.0,1888.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="735,1690 705,1690 705,1880 900,1880 900,1900" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="900,1900 905.0,1888.0 895.0,1888.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:rect xmlns:ns0="http://www.w3.org/2000/svg" x="691.5" y="1713.0" width="35.0" height="24" fill="white" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="709" y="1725" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">No</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="1350,1540 1350,1880 900,1880 900,1900" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="900,1900 905.0,1888.0 895.0,1888.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="755.0,1900.0 1045.0,1900.0 1045.0,1960.0 755.0,1960.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="900" y="1930.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Return to dashboard</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="900,1960 900,1975" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="900,1975 905.0,1963.0 895.0,1963.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="755.0,1975.0 1045.0,1975.0 1045.0,2011.0 755.0,2011.0" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:text xmlns:ns0="http://www.w3.org/2000/svg" x="900" y="1993.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Log out</ns0:text>
+
+<ns0:polyline xmlns:ns0="http://www.w3.org/2000/svg" points="900,2011 900,2030" fill="none" stroke="#242424" stroke-width="2" />
+
+<ns0:polygon xmlns:ns0="http://www.w3.org/2000/svg" points="900,2030 905.0,2018.0 895.0,2018.0" fill="#242424" stroke="#242424" stroke-width="1" />
+
+<ns0:circle xmlns:ns0="http://www.w3.org/2000/svg" cx="900" cy="2042" r="12" fill="white" stroke="#242424" stroke-width="2" />
+
+<ns0:circle xmlns:ns0="http://www.w3.org/2000/svg" cx="900" cy="2042" r="7" fill="#242424" stroke="#242424" stroke-width="2" />
+
+</g>
+<text x="2225.0" y="45" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="36" font-weight="700" text-anchor="middle" dominant-baseline="central">EcoRefill — Updated Activity Diagram</text>
+<text x="825" y="112" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="central">User / EcoRefill App</text>
+<text x="2260" y="112" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="central">EcoRefill Machine</text>
+<text x="3655" y="112" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="central">Device Owner / EcoRefill App</text>
+<circle cx="2250" cy="225" r="13" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polyline points="2250,238 2250,255" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,255 2255.0,243.0 2245.0,243.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2130.0,255.0 2370.0,255.0 2370.0,315.0 2130.0,315.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2250" y="285.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Power on</text>
+<polyline points="2250,315 2250,345" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,345 2255.0,333.0 2245.0,333.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2130.0,345.0 2370.0,345.0 2370.0,405.0 2130.0,405.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2250" y="375.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Initialize</text>
+<polyline points="2250,405 2250,440" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,440 2255.0,428.0 2245.0,428.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,440.0 2350.0,495 2250,550.0 2150.0,495" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2250" y="495.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Ready?</text>
+<polyline points="2350,495 2550,495" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2550,495 2538.0,490.0 2538.0,500.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<rect x="2444.5" y="463.0" width="31.0" height="24" fill="white"/>
+<text x="2460" y="475" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">No</text>
+<polygon points="2550.0,465.0 2790.0,465.0 2790.0,525.0 2550.0,525.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2670" y="495.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Show error</text>
+<polyline points="2670,525 2670,555" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2670,555 2675.0,543.0 2665.0,543.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2550.0,555.0 2790.0,555.0 2790.0,615.0 2550.0,615.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2670" y="585.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Retry</text>
+<polyline points="2550,585 2500,585 2500,420 2250,420 2250,440" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,440 2255.0,428.0 2245.0,428.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polyline points="2250,550 2250,600" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,600 2255.0,588.0 2245.0,588.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<rect x="2260.5" y="563.0" width="39.0" height="24" fill="white"/>
+<text x="2280" y="575" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</text>
+<polygon points="2130.0,600.0 2370.0,600.0 2370.0,660.0 2130.0,660.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2250" y="630.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Show machine QR</text>
+<polyline points="2370,630 2410,630" fill="none" stroke="#242424" stroke-width="2" stroke-dasharray="8 6"/>
+<polygon points="2410,630 2398.0,625.0 2398.0,635.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<circle cx="2430" cy="630" r="20" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2430" y="630" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="central">Q</text>
+<polyline points="2250,660 2250,700 1850,700 1850,730" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1850,730 1855.0,718.0 1845.0,718.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polyline points="2250,660 2250,730" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,730 2255.0,718.0 2245.0,718.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polyline points="2250,660 2250,700 2670,700 2670,730" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2670,730 2675.0,718.0 2665.0,718.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="1730.0,730.0 1970.0,730.0 1970.0,790.0 1730.0,790.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1850" y="760.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Recycling</text>
+<polygon points="2130.0,730.0 2370.0,730.0 2370.0,790.0 2130.0,790.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2250" y="760.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Water refill</text>
+<polygon points="2550.0,730.0 2790.0,730.0 2790.0,790.0 2550.0,790.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2670" y="760.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Claim reward</text>
+<polyline points="1850,790 1850,830" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1850,830 1855.0,818.0 1845.0,818.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="1730.0,830.0 1970.0,830.0 1970.0,890.0 1730.0,890.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1850" y="860.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Detect item</text>
+<polyline points="1850,890 1850,930" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1850,930 1855.0,918.0 1845.0,918.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="1730.0,930.0 1970.0,930.0 1970.0,990.0 1730.0,990.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1850" y="960.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Check weight</text>
+<polyline points="1850,990 1850,1025" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1850,1025 1855.0,1013.0 1845.0,1013.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="1850,1025.0 1950.0,1080 1850,1135.0 1750.0,1080" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1850" y="1068.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Valid</text>
+<text x="1850" y="1092.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">item?</text>
+<polyline points="1950,1080 2030,1080 2030,1125" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2030,1125 2035.0,1113.0 2025.0,1113.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<rect x="1984.5" y="1048.0" width="31.0" height="24" fill="white"/>
+<text x="2000" y="1060" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">No</text>
+<polygon points="1955.0,1125.0 2105.0,1125.0 2105.0,1185.0 1955.0,1185.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2030" y="1142.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Show</text>
+<text x="2030" y="1167.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">message</text>
+<polyline points="1850,1135 1850,1190" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1850,1190 1855.0,1178.0 1845.0,1178.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<rect x="1860.5" y="1148.0" width="39.0" height="24" fill="white"/>
+<text x="1880" y="1160" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</text>
+<polygon points="1730.0,1190.0 1970.0,1190.0 1970.0,1250.0 1730.0,1250.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1850" y="1220.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Sort item</text>
+<polyline points="1850,1250 1850,1290" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1850,1290 1855.0,1278.0 1845.0,1278.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="1730.0,1290.0 1970.0,1290.0 1970.0,1350.0 1730.0,1350.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1850" y="1320.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Add points</text>
+<polyline points="1850,1350 1850,1430" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1850,1430 1855.0,1418.0 1845.0,1418.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="1730.0,1430.0 1970.0,1430.0 1970.0,1490.0 1730.0,1490.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1850" y="1460.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Update record</text>
+<polyline points="2030,1185 2030,1460 1970,1460" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1970,1460 1982.0,1465.0 1982.0,1455.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polyline points="2250,790 2250,830" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,830 2255.0,818.0 2245.0,818.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2130.0,830.0 2370.0,830.0 2370.0,890.0 2130.0,890.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2250" y="860.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Detect bottle</text>
+<polyline points="2095,860 2130,860" fill="none" stroke="#242424" stroke-width="2" stroke-dasharray="8 6"/>
+<polygon points="2130,860 2118.0,855.0 2118.0,865.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<circle cx="2075" cy="860" r="20" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2075" y="860" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="central">W</text>
+<polyline points="2250,890 2250,975" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,975 2255.0,963.0 2245.0,963.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,975.0 2350.0,1030 2250,1085.0 2150.0,1030" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2250" y="1018.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Bottle</text>
+<text x="2250" y="1042.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">ready?</text>
+<polyline points="2350,1030 2430,1030 2430,1110" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2430,1110 2435.0,1098.0 2425.0,1098.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<rect x="2384.5" y="998.0" width="31.0" height="24" fill="white"/>
+<text x="2400" y="1010" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">No</text>
+<polygon points="2355.0,1110.0 2505.0,1110.0 2505.0,1170.0 2355.0,1170.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2430" y="1127.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Show</text>
+<text x="2430" y="1152.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">message</text>
+<polyline points="2250,1085 2250,1220" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,1220 2255.0,1208.0 2245.0,1208.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<rect x="2260.5" y="1138.0" width="39.0" height="24" fill="white"/>
+<text x="2280" y="1150" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</text>
+<polygon points="2130.0,1220.0 2370.0,1220.0 2370.0,1280.0 2130.0,1280.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2250" y="1250.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Dispense water</text>
+<polyline points="2250,1280 2250,1430" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,1430 2255.0,1418.0 2245.0,1418.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2130.0,1430.0 2370.0,1430.0 2370.0,1490.0 2130.0,1490.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2250" y="1460.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Update record</text>
+<polyline points="2430,1170 2430,1460 2370,1460" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2370,1460 2382.0,1465.0 2382.0,1455.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polyline points="2670,790 2670,830" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2670,830 2675.0,818.0 2665.0,818.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2550.0,830.0 2790.0,830.0 2790.0,890.0 2550.0,890.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2670" y="860.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Scan QR</text>
+<polyline points="2515,860 2550,860" fill="none" stroke="#242424" stroke-width="2" stroke-dasharray="8 6"/>
+<polygon points="2550,860 2538.0,855.0 2538.0,865.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<circle cx="2495" cy="860" r="20" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2495" y="860" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="central">R</text>
+<polyline points="2670,890 2670,930" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2670,930 2675.0,918.0 2665.0,918.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2550.0,930.0 2790.0,930.0 2790.0,990.0 2550.0,990.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2670" y="960.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Validate</text>
+<polyline points="2670,990 2670,1045" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2670,1045 2675.0,1033.0 2665.0,1033.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2670,1045.0 2770.0,1100 2670,1155.0 2570.0,1100" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2670" y="1088.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Valid</text>
+<text x="2670" y="1112.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">QR?</text>
+<polyline points="2770,1100 2800,1100 2800,1200" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2800,1200 2805.0,1188.0 2795.0,1188.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<rect x="2794.5" y="1128.0" width="31.0" height="24" fill="white"/>
+<text x="2810" y="1140" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">No</text>
+<polygon points="2735.0,1200.0 2865.0,1200.0 2865.0,1260.0 2735.0,1260.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2800" y="1217.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Show</text>
+<text x="2800" y="1242.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">message</text>
+<polyline points="2670,1155 2670,1290" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2670,1290 2675.0,1278.0 2665.0,1278.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<rect x="2680.5" y="1203.0" width="39.0" height="24" fill="white"/>
+<text x="2700" y="1215" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</text>
+<polygon points="2550.0,1290.0 2790.0,1290.0 2790.0,1350.0 2550.0,1350.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2670" y="1320.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Add points</text>
+<polyline points="2670,1350 2670,1430" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2670,1430 2675.0,1418.0 2665.0,1418.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2550.0,1430.0 2790.0,1430.0 2790.0,1490.0 2550.0,1490.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2670" y="1460.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Update record</text>
+<polyline points="2800,1260 2800,1460 2790,1460" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2790,1460 2802.0,1465.0 2802.0,1455.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polyline points="1850,1490 1850,1950 2250,1950 2250,2000" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,2000 2255.0,1988.0 2245.0,1988.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polyline points="2250,1490 2250,2000" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,2000 2255.0,1988.0 2245.0,1988.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polyline points="2670,1490 2670,1950 2250,1950 2250,2000" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,2000 2255.0,1988.0 2245.0,1988.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2130.0,2000.0 2370.0,2000.0 2370.0,2060.0 2130.0,2060.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2250" y="2030.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Sync data</text>
+<polyline points="2250,2060 2250,2090" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,2090 2255.0,2078.0 2245.0,2078.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2130.0,2090.0 2370.0,2090.0 2370.0,2150.0 2130.0,2150.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="2250" y="2120.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Return to home</text>
+<polyline points="2250,2150 2250,2172" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="2250,2172 2255.0,2160.0 2245.0,2160.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<circle cx="2250" cy="2185" r="13" fill="white" stroke="#242424" stroke-width="2"/>
+<circle cx="2250" cy="2185" r="8" fill="#242424" stroke="#242424" stroke-width="2"/>
+<circle cx="3660" cy="225" r="13" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polyline points="3660,238 3660,255" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3660,255 3665.0,243.0 3655.0,243.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="3540.0,255.0 3780.0,255.0 3780.0,315.0 3540.0,315.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3660" y="285.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Log in</text>
+<polyline points="3660,315 3660,360" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3660,360 3665.0,348.0 3655.0,348.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="3660,360.0 3760.0,415 3660,470.0 3560.0,415" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3660" y="403.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Valid</text>
+<text x="3660" y="427.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">account?</text>
+<polyline points="3560,415 3470,415 3470,285 3540,285" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3540,285 3528.0,280.0 3528.0,290.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<rect x="3494.5" y="383.0" width="31.0" height="24" fill="white"/>
+<text x="3510" y="395" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">No</text>
+<polyline points="3660,470 3660,530" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3660,530 3665.0,518.0 3655.0,518.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<rect x="3670.5" y="488.0" width="39.0" height="24" fill="white"/>
+<text x="3690" y="500" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</text>
+<polygon points="3540.0,530.0 3780.0,530.0 3780.0,590.0 3540.0,590.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3660" y="560.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View dashboard</text>
+<polyline points="3660,590 3660,630" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3660,630 3665.0,618.0 3655.0,618.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="3540.0,630.0 3780.0,630.0 3780.0,690.0 3540.0,690.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3660" y="660.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Choose action</text>
+<polyline points="3660,690 3660,730 3050,730 3050,770" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3050,770 3055.0,758.0 3045.0,758.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2930.0,770.0 3170.0,770.0 3170.0,830.0 2930.0,830.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3050" y="800.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Monitor</text>
+<polyline points="3660,690 3660,730 3380,730 3380,770" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3380,770 3385.0,758.0 3375.0,758.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="3260.0,770.0 3500.0,770.0 3500.0,830.0 3260.0,830.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3380" y="800.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Alerts</text>
+<polyline points="3660,690 3660,730 3710,730 3710,770" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3710,770 3715.0,758.0 3705.0,758.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="3590.0,770.0 3830.0,770.0 3830.0,830.0 3590.0,830.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3710" y="800.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Collection</text>
+<polyline points="3660,690 3660,730 4180,730 4180,770" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="4180,770 4185.0,758.0 4175.0,758.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="4060.0,770.0 4300.0,770.0 4300.0,830.0 4060.0,830.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="4180" y="800.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Payments</text>
+<polyline points="3050,830 3050,870" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3050,870 3055.0,858.0 3045.0,858.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2930.0,870.0 3170.0,870.0 3170.0,930.0 2930.0,930.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3050" y="900.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View status</text>
+<polyline points="3050,930 3050,970" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3050,970 3055.0,958.0 3045.0,958.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2930.0,970.0 3170.0,970.0 3170.0,1030.0 2930.0,1030.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3050" y="1000.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View water</text>
+<polyline points="3050,1030 3050,1070" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3050,1070 3055.0,1058.0 3045.0,1058.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2930.0,1070.0 3170.0,1070.0 3170.0,1130.0 2930.0,1130.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3050" y="1100.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View quality</text>
+<polyline points="3050,1130 3050,1170" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3050,1170 3055.0,1158.0 3045.0,1158.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="2930.0,1170.0 3170.0,1170.0 3170.0,1230.0 2930.0,1230.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3050" y="1200.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View activity</text>
+<polyline points="3050,1230 3050,2000 3660,2000 3660,2090" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3660,2090 3665.0,2078.0 3655.0,2078.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polyline points="3380,830 3380,870" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3380,870 3385.0,858.0 3375.0,858.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="3260.0,870.0 3500.0,870.0 3500.0,930.0 3260.0,930.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3380" y="900.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View alerts</text>
+<polyline points="3380,930 3380,970" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3380,970 3385.0,958.0 3375.0,958.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="3260.0,970.0 3500.0,970.0 3500.0,1030.0 3260.0,1030.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3380" y="1000.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Review details</text>
+<polyline points="3380,1030 3380,1070" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3380,1070 3385.0,1058.0 3375.0,1058.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="3260.0,1070.0 3500.0,1070.0 3500.0,1130.0 3260.0,1130.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3380" y="1100.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Take action</text>
+<polyline points="3380,1130 3380,2000 3660,2000 3660,2090" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3660,2090 3665.0,2078.0 3655.0,2078.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polyline points="3710,830 3710,870" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3710,870 3715.0,858.0 3705.0,858.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="3590.0,870.0 3830.0,870.0 3830.0,930.0 3590.0,930.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3710" y="900.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View items</text>
+<polyline points="3710,930 3710,970" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3710,970 3715.0,958.0 3705.0,958.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="3590.0,970.0 3830.0,970.0 3830.0,1030.0 3590.0,1030.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3710" y="1000.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View records</text>
+<polyline points="3710,1030 3710,2000 3660,2000 3660,2090" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3660,2090 3665.0,2078.0 3655.0,2078.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polyline points="4180,830 4180,870" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="4180,870 4185.0,858.0 4175.0,858.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="4060.0,870.0 4300.0,870.0 4300.0,930.0 4060.0,930.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="4180" y="900.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View requests</text>
+<polyline points="4025,900 4060,900" fill="none" stroke="#242424" stroke-width="2" stroke-dasharray="8 6"/>
+<polygon points="4060,900 4048.0,895.0 4048.0,905.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<circle cx="4005" cy="900" r="20" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="4005" y="900" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="central">P</text>
+<polyline points="4180,930 4180,970" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="4180,970 4185.0,958.0 4175.0,958.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="4060.0,970.0 4300.0,970.0 4300.0,1030.0 4060.0,1030.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="4180" y="1000.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Verify payment</text>
+<polyline points="4180,1030 4180,1075" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="4180,1075 4185.0,1063.0 4175.0,1063.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="4180,1075.0 4280.0,1130 4180,1185.0 4080.0,1130" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="4180" y="1130.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Approve?</text>
+<polyline points="4080,1130 4000,1130 4000,1210" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="4000,1210 4005.0,1198.0 3995.0,1198.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<rect x="4024.5" y="1098.0" width="31.0" height="24" fill="white"/>
+<text x="4040" y="1110" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">No</text>
+<polygon points="3905.0,1210.0 4095.0,1210.0 4095.0,1270.0 3905.0,1270.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="4000" y="1240.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Reject</text>
+<polyline points="4000,1270 4000,1310" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="4000,1310 4005.0,1298.0 3995.0,1298.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="3905.0,1310.0 4095.0,1310.0 4095.0,1370.0 3905.0,1370.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="4000" y="1340.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Notify user</text>
+<polyline points="4280,1130 4310,1130 4310,1210" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="4310,1210 4315.0,1198.0 4305.0,1198.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<rect x="4295.5" y="1158.0" width="39.0" height="24" fill="white"/>
+<text x="4315" y="1170" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</text>
+<polygon points="4215.0,1210.0 4405.0,1210.0 4405.0,1270.0 4215.0,1270.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="4310" y="1240.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Approve</text>
+<polyline points="4310,1270 4310,1310" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="4310,1310 4315.0,1298.0 4305.0,1298.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="4215.0,1310.0 4405.0,1310.0 4405.0,1370.0 4215.0,1370.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="4310" y="1340.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Update points</text>
+<polyline points="4310,1370 4310,1410" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="4310,1410 4315.0,1398.0 4305.0,1398.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="4215.0,1410.0 4405.0,1410.0 4405.0,1470.0 4215.0,1470.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="4310" y="1440.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Notify user</text>
+<polyline points="4215,1440 4150,1440" fill="none" stroke="#242424" stroke-width="2" stroke-dasharray="8 6"/>
+<polygon points="4150,1440 4162.0,1445.0 4162.0,1435.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<circle cx="4130" cy="1440" r="20" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="4130" y="1440" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="central">O</text>
+<polyline points="4000,1370 4000,2000 3660,2000 3660,2090" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3660,2090 3665.0,2078.0 3655.0,2078.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polyline points="4310,1470 4310,2000 3660,2000 3660,2090" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3660,2090 3665.0,2078.0 3655.0,2078.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polygon points="3540.0,2090.0 3780.0,2090.0 3780.0,2150.0 3540.0,2150.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="3660" y="2120.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Log out</text>
+<polyline points="3660,2150 3660,2172" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="3660,2172 3665.0,2160.0 3655.0,2160.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<circle cx="3660" cy="2185" r="13" fill="white" stroke="#242424" stroke-width="2"/>
+<circle cx="3660" cy="2185" r="8" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polyline points="935,760 965,760" fill="none" stroke="#242424" stroke-width="2" stroke-dasharray="8 6"/>
+<polygon points="965,760 953.0,755.0 953.0,765.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<circle cx="915" cy="760" r="20" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="915" y="760" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="central">Q</text>
+<polyline points="415,985 450,985" fill="none" stroke="#242424" stroke-width="2" stroke-dasharray="8 6"/>
+<polygon points="450,985 438.0,980.0 438.0,990.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<circle cx="470" cy="985" r="20" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="470" y="985" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="central">R</text>
+<polyline points="1015,1280 1060,1280" fill="none" stroke="#242424" stroke-width="2" stroke-dasharray="8 6"/>
+<polygon points="1060,1280 1048.0,1275.0 1048.0,1285.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<circle cx="1080" cy="1280" r="20" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1080" y="1280" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="central">P</text>
+<polyline points="1515,1340 1540,1340" fill="none" stroke="#242424" stroke-width="2" stroke-dasharray="8 6"/>
+<polygon points="1540,1340 1528.0,1335.0 1528.0,1345.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<circle cx="1560" cy="1340" r="20" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1560" y="1340" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="central">W</text>
+<polyline points="1060,1590 1015,1590" fill="none" stroke="#242424" stroke-width="2" stroke-dasharray="8 6"/>
+<polygon points="1015,1590 1027.0,1595.0 1027.0,1585.0" fill="#242424" stroke="#242424" stroke-width="2"/>
+<circle cx="1080" cy="1590" r="20" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1080" y="1590" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="central">O</text>
+<polyline points="25,85 4425,85 4425,2205 25,2205 25,85" fill="none" stroke="#242424" stroke-width="2"/>
+<polyline points="25,145 4425,145" fill="none" stroke="#242424" stroke-width="2"/>
+<polyline points="1640,85 1640,2205" fill="none" stroke="#242424" stroke-width="2"/>
+<polyline points="2885,85 2885,2205" fill="none" stroke="#242424" stroke-width="2"/>
+<text x="2225.0" y="2235" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="400" text-anchor="middle" dominant-baseline="central">Matching connectors: Q = machine QR · R = recycling reward claim · W = refill request · P = payment request · O = owner approval · B = resume user refill</text>
+</svg>

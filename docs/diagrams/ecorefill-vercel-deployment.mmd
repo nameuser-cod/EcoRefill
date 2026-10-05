@@ -1,0 +1,52 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#ffffff'
+    primaryTextColor: '#292929'
+    primaryBorderColor: '#292929'
+    lineColor: '#292929'
+    secondaryColor: '#ffffff'
+    tertiaryColor: '#ffffff'
+    clusterBkg: '#ffffff'
+    clusterBorder: '#292929'
+    edgeLabelBackground: '#ffffff'
+---
+flowchart TB
+    subgraph VERCEL["«cloud service» Vercel Web Hosting"]
+        USER["«artifact» User Dashboard<br/>React / Vite"]
+        OWNER["«artifact» Device Owner Dashboard<br/>React / Vite"]
+    end
+    subgraph FIREBASE["«cloud service» Firebase"]
+        AUTH["«artifact» Firebase Authentication"]
+        DATA["«artifact» Cloud Firestore Database<br/>Records · EcoPoints · alerts"]
+    end
+    subgraph FCM["«cloud service» FCM / Notifications"]
+        PUSH["«artifact» Firebase Cloud Messaging<br/>Push Notifications"]
+        ALERT["«artifact» Owner Android alerts<br/>Tap to open Alerts"]
+    end
+    subgraph CLIENT["«device» Phone"]
+        ANDROID["«artifact» Android App<br/>React / Capacitor"]
+    end
+    subgraph PI["«device» EcoRefill · Raspberry Pi 5"]
+        KIOSK["«artifact» Local React Kiosk<br/>Machine screen / QR display"]
+        subgraph PYTHON["«execution environment» Python / Flask"]
+            BACKEND["«artifact» machine_flow.py + YOLO<br/>Rewards · refills · alerts"]
+        end
+    end
+    subgraph HARDWARE["«device» Machine Hardware"]
+        SENSORS["«artifact» Camera · Scale<br/>Buttons · Sensors"]
+        OUTPUTS["«artifact» Sorting Servos · Pump<br/>Machine Screen"]
+    end
+    subgraph TUNNEL["«cloud service» Cloudflare Tunnel"]
+        API["«artifact» HTTPS Public Pi API<br/>Reward claims · payments<br/>Phone registration"]
+    end
+
+    VERCEL -->|Loads website · HTTPS| CLIENT
+    CLIENT <-->|Sign-in · read & write records| FIREBASE
+    PI <-->|Reads & updates records and alerts| FIREBASE
+    PI -->|Sends machine alerts| FCM
+    FCM -->|Push notifications to the owner's Android app| CLIENT
+    PI <-->|Controls| HARDWARE
+    CLIENT <-->|Secure requests · HTTPS / ID token| TUNNEL
+    TUNNEL <-->|Public Pi API| PI

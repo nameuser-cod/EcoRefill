@@ -112,19 +112,25 @@ CAN_ITEMS = {
 }
 
 POINTS = {
-    # Each accepted plastic bottle or aluminum can earns half a point.
+    # Base reward when an accepted item has no recognized, calibrated size.
     "plastic_bottle": 0.5,
     "pet_bottle": 0.5,
     "aluminum_can": 0.5,
     "aluminium_can": 0.5,
 }
 
+SIZE_POINTS = {
+    "small": 0.5,
+    "medium": 1,
+    "large": 1.5,
+}
+
 # Water prices are calculated on the SERVER.
 # The React app must never decide the final price.
 WATER_OPTIONS = {
-    250: 3,
-    500: 5,
-    1000: 10,
+    250: 5,
+    500: 10,
+    1000: 15,
 }
 
 # Water commands handled by the Raspberry Pi GPIO controller.

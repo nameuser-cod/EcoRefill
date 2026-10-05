@@ -48,6 +48,7 @@ machine.close()
             phase="accepted", itemCount=3, pointsEarned=3,
             bottleCount=2, canCount=1, batchSessionId="batch-1",
             sessionId="reward-1", qrCode="reward-qr",
+            inspection={"size": {"status": "pass", "size_group": "Medium"}},
         )
         self.machine.rearm_for_next_item()
         state = self.machine.get_state()
@@ -55,6 +56,7 @@ machine.close()
         self.assertEqual((state["itemCount"], state["pointsEarned"]), (3, 3))
         self.assertEqual(state["batchSessionId"], "batch-1")
         self.assertIsNone(state["qrCode"])
+        self.assertIsNone(state["inspection"])
         self.machine.finish_session_event.set()
         self.machine.reset_state()
         state = self.machine.get_state()

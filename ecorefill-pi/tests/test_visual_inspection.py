@@ -114,6 +114,7 @@ class InspectionTests(unittest.TestCase):
             import json
             metadata = json.loads(next(Path(directory).glob("*.json")).read_text())
             self.assertIsNone(metadata["human_label"])
+            self.assertEqual(metadata["frame_size_px"], [640, 480])
 
     @patch("machine.detection.WEIGHT_SENSOR_ENABLED", True)
     def test_machine_verification_routes_dirty_container_to_reject(self):

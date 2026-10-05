@@ -67,6 +67,8 @@
   font-weight: 750;
 }
 
+
+
 .logout-confirm-actions {
   margin-top: 24px;
   display: grid;
@@ -111,8 +113,8 @@ button.confirm-logout-button:disabled {
 }
 
 .confirm-logout-button {
-  background: #d8443b !important;
-  color: #ffffff !important;
+  background: #67c799 !important;
+  color: #190808 !important;
 }
 
 button.cancel-logout-button:focus-visible,

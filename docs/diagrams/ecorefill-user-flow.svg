@@ -1,0 +1,216 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="2080" viewBox="0 0 1600 2080" role="img" aria-labelledby="title desc">
+<title id="title">EcoRefill revised user activity flow</title>
+<desc id="desc">Buying points and buying water share a machine QR scan. GCash purchases require owner approval before points are added. Users with insufficient points can buy points and return to their refill, rescanning if the QR expired. Recycling uses a separate reward QR.</desc>
+<rect width="1600" height="2080" fill="white"/>
+<text x="800" y="42" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="central">User / EcoRefill App — Revised Activity Flow</text>
+<text x="800" y="80" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="400" text-anchor="middle" dominant-baseline="central">Scan the machine QR before buying points or buying water</text>
+<circle cx="900" cy="125" r="13" fill="#242424" stroke="#242424" stroke-width="2"/>
+<polyline points="900,138 900,155" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="900,155 905.0,143.0 895.0,143.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="755.0,155.0 1045.0,155.0 1045.0,215.0 755.0,215.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="900" y="185.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Log in</text>
+<polyline points="900,215 900,245" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="900,245 905.0,233.0 895.0,233.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="900,245.0 1015.0,295 900,345.0 785.0,295" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="900" y="283.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Valid</text>
+<text x="900" y="307.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">account?</text>
+<polyline points="785,295 695,295 695,185 755,185" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="755,185 743.0,180.0 743.0,190.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="715.75" y="262.5" width="38.5" height="27" fill="white"/>
+<text x="735" y="276" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">No</text>
+<polyline points="900,345 900,370" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="900,370 905.0,358.0 895.0,358.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="903.5" y="346.0" width="43.0" height="24" fill="white"/>
+<text x="925" y="358" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</text>
+<polygon points="755.0,370.0 1045.0,370.0 1045.0,430.0 755.0,430.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="900" y="400.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View dashboard</text>
+<polyline points="900,430 900,450" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="900,450 905.0,438.0 895.0,438.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="900,450.0 1015.0,500 900,550.0 785.0,500" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="900" y="488.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Choose</text>
+<text x="900" y="512.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">activity</text>
+<polyline points="785,500 250,500 250,540" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="250,540 255.0,528.0 245.0,528.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="447.0" y="467.5" width="86.0" height="27" fill="white"/>
+<text x="490" y="481" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Recycle</text>
+<polygon points="105.0,540.0 395.0,540.0 395.0,600.0 105.0,600.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="250" y="570.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Insert recyclable item</text>
+<polyline points="250,600 250,630" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="250,630 255.0,618.0 245.0,618.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="250,630.0 365.0,680 250,730.0 135.0,680" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="250" y="668.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">More</text>
+<text x="250" y="692.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">items?</text>
+<polyline points="135,680 65,680 65,570 105,570" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="105,570 93.0,565.0 93.0,575.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="71.5" y="641.0" width="43.0" height="24" fill="white"/>
+<text x="93" y="653" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</text>
+<polyline points="250,730 250,765" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="250,765 255.0,753.0 245.0,753.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="258.5" y="736.0" width="35.0" height="24" fill="white"/>
+<text x="276" y="748" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">No</text>
+<polygon points="105.0,765.0 395.0,765.0 395.0,825.0 105.0,825.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="250" y="795.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Press green button</text>
+<polyline points="250,825 250,855" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="250,855 255.0,843.0 245.0,843.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="105.0,855.0 395.0,855.0 395.0,915.0 105.0,915.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="250" y="885.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Scan recycling reward QR</text>
+<polyline points="250,915 250,945" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="250,945 255.0,933.0 245.0,933.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="250,945.0 365.0,995 250,1045.0 135.0,995" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="250" y="983.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Valid reward</text>
+<text x="250" y="1007.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">QR?</text>
+<polyline points="135,995 65,995 65,885 105,885" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="105,885 93.0,880.0 93.0,890.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="73.5" y="953.0" width="35.0" height="24" fill="white"/>
+<text x="91" y="965" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">No</text>
+<polyline points="250,1045 250,1080" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="250,1080 255.0,1068.0 245.0,1068.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="256.5" y="1051.0" width="43.0" height="24" fill="white"/>
+<text x="278" y="1063" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</text>
+<polygon points="105.0,1080.0 395.0,1080.0 395.0,1140.0 105.0,1140.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="250" y="1110.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Claim recycling points</text>
+<polyline points="250,1140 250,1170" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="250,1170 255.0,1158.0 245.0,1158.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="105.0,1170.0 395.0,1170.0 395.0,1230.0 105.0,1230.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="250" y="1200.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View updated points</text>
+<polyline points="1015,500 1100,500 1100,540" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1100,540 1105.0,528.0 1095.0,528.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="1150.5" y="469.5" width="179.0" height="27" fill="white"/>
+<text x="1240" y="483" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Buy points / water</text>
+<polygon points="945.0,540.0 1255.0,540.0 1255.0,600.0 945.0,600.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1100" y="570.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Press blue button on machine</text>
+<polyline points="1100,600 1100,630" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1100,630 1105.0,618.0 1095.0,618.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="945.0,630.0 1255.0,630.0 1255.0,690.0 945.0,690.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1100" y="660.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Scan machine refill QR</text>
+<polyline points="1100,690 1100,720" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1100,720 1105.0,708.0 1095.0,708.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="1100,720.0 1215.0,770 1100,820.0 985.0,770" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1100" y="758.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Valid,</text>
+<text x="1100" y="782.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">active QR?</text>
+<polyline points="1215,770 1410,770 1410,725" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1410,725 1405.0,737.0 1415.0,737.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="1247.5" y="738.0" width="35.0" height="24" fill="white"/>
+<text x="1265" y="750" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">No</text>
+<polygon points="1295.0,655.0 1525.0,655.0 1525.0,725.0 1295.0,725.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1410" y="677.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Show error /</text>
+<text x="1410" y="702.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">request new QR</text>
+<polyline points="1410,655 1410,625 1280,625 1280,660 1255,660" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1255,660 1267.0,665.0 1267.0,655.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polyline points="1100,820 1100,850" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1100,850 1105.0,838.0 1095.0,838.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="1105.5" y="823.0" width="43.0" height="24" fill="white"/>
+<text x="1127" y="835" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</text>
+<polygon points="1100,850.0 1230.0,900 1100,950.0 970.0,900" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1100" y="888.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Buy points</text>
+<text x="1100" y="912.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">or buy water?</text>
+<polyline points="970,900 850,900 850,970" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="850,970 855.0,958.0 845.0,958.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="801.5" y="869.0" width="105.0" height="26" fill="white"/>
+<text x="854" y="882" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Buy points</text>
+<polyline points="1230,900 1350,900 1350,970" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1350,970 1355.0,958.0 1345.0,958.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="1299.5" y="869.0" width="101.0" height="26" fill="white"/>
+<text x="1350" y="882" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Buy water</text>
+<circle cx="1350" cy="938" r="18" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1350" y="938" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="central">B</text>
+<polygon points="705.0,970.0 995.0,970.0 995.0,1030.0 705.0,1030.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="850" y="1000.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Enter number of points</text>
+<polyline points="850,1030 850,1060" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="850,1060 855.0,1048.0 845.0,1048.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="705.0,1060.0 995.0,1060.0 995.0,1120.0 705.0,1120.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="850" y="1090.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Pay owner via GCash</text>
+<polyline points="850,1120 850,1150" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="850,1150 855.0,1138.0 845.0,1138.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="705.0,1150.0 995.0,1150.0 995.0,1210.0 705.0,1210.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="850" y="1180.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Submit payment details</text>
+<polyline points="850,1210 850,1240" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="850,1240 855.0,1228.0 845.0,1228.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="705.0,1240.0 995.0,1240.0 995.0,1300.0 705.0,1300.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="850" y="1270.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Wait for owner verification</text>
+<polyline points="850,1300 850,1330" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="850,1330 855.0,1318.0 845.0,1318.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="850,1330.0 965.0,1380 850,1430.0 735.0,1380" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="850" y="1368.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Payment</text>
+<text x="850" y="1392.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">approved?</text>
+<polyline points="735,1380 535,1380 535,1410" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="535,1410 540.0,1398.0 530.0,1398.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="632.5" y="1349.0" width="35.0" height="24" fill="white"/>
+<text x="650" y="1361" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">No</text>
+<polygon points="405.0,1410.0 665.0,1410.0 665.0,1490.0 405.0,1490.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="535" y="1437.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View rejection /</text>
+<text x="535" y="1462.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">contact owner</text>
+<polyline points="850,1430 850,1460" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="850,1460 855.0,1448.0 845.0,1448.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="857.5" y="1435.0" width="43.0" height="24" fill="white"/>
+<text x="879" y="1447" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</text>
+<polygon points="705.0,1460.0 995.0,1460.0 995.0,1520.0 705.0,1520.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="850" y="1490.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Points added after approval</text>
+<polyline points="850,1520 850,1550" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="850,1550 855.0,1538.0 845.0,1538.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="705.0,1550.0 995.0,1550.0 995.0,1610.0 705.0,1610.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="850" y="1580.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View updated balance</text>
+<polyline points="850,1610 850,1640" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="850,1640 855.0,1628.0 845.0,1628.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="850,1640.0 965.0,1690 850,1740.0 735.0,1690" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="850" y="1678.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Buy water</text>
+<text x="850" y="1702.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">now?</text>
+<polyline points="850,1740 850,1760" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="850,1760 855.0,1748.0 845.0,1748.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="858.5" y="1738.0" width="43.0" height="24" fill="white"/>
+<text x="880" y="1750" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</text>
+<polygon points="705.0,1760.0 995.0,1760.0 995.0,1840.0 705.0,1840.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="850" y="1787.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Return to refill /</text>
+<text x="850" y="1812.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">rescan if QR expired</text>
+<polyline points="995,1800 1060,1800" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1060,1800 1048.0,1795.0 1048.0,1805.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<circle cx="1080" cy="1800" r="20" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1080" y="1800" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="central">B</text>
+<polygon points="1205.0,970.0 1495.0,970.0 1495.0,1030.0 1205.0,1030.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1350" y="1000.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Select water amount</text>
+<polyline points="1350,1030 1350,1060" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1350,1060 1355.0,1048.0 1345.0,1048.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="1350,1060.0 1465.0,1110 1350,1160.0 1235.0,1110" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1350" y="1098.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">Enough</text>
+<text x="1350" y="1122.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" text-anchor="middle" dominant-baseline="central">points?</text>
+<polyline points="1235,1110 1150,1110 1150,1000 995,1000" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="995,1000 1007.0,1005.0 1007.0,995.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="1040.25" y="1042.5" width="133.5" height="25" fill="white"/>
+<text x="1107" y="1055" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" text-anchor="middle" dominant-baseline="central">No: buy points</text>
+<polyline points="1350,1160 1350,1200" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1350,1200 1355.0,1188.0 1345.0,1188.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="1358.5" y="1168.0" width="43.0" height="24" fill="white"/>
+<text x="1380" y="1180" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">Yes</text>
+<polygon points="1205.0,1200.0 1495.0,1200.0 1495.0,1280.0 1205.0,1280.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1350" y="1227.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Place container /</text>
+<text x="1350" y="1252.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">confirm refill</text>
+<polyline points="1350,1280 1350,1320" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1350,1320 1355.0,1308.0 1345.0,1308.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="1175.0,1320.0 1525.0,1320.0 1525.0,1420.0 1175.0,1420.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1350" y="1357.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Machine checks container</text>
+<text x="1350" y="1382.5" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">and points; dispenses water</text>
+<polyline points="1350,1420 1350,1460" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="1350,1460 1355.0,1448.0 1345.0,1448.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="1185.0,1460.0 1515.0,1460.0 1515.0,1540.0 1185.0,1540.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="1350" y="1500.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">View refill result / history</text>
+<polyline points="250,1230 250,1880 900,1880 900,1900" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="900,1900 905.0,1888.0 895.0,1888.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polyline points="535,1490 535,1880 900,1880 900,1900" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="900,1900 905.0,1888.0 895.0,1888.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polyline points="735,1690 705,1690 705,1880 900,1880 900,1900" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="900,1900 905.0,1888.0 895.0,1888.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<rect x="691.5" y="1713.0" width="35.0" height="24" fill="white"/>
+<text x="709" y="1725" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" text-anchor="middle" dominant-baseline="central">No</text>
+<polyline points="1350,1540 1350,1880 900,1880 900,1900" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="900,1900 905.0,1888.0 895.0,1888.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="755.0,1900.0 1045.0,1900.0 1045.0,1960.0 755.0,1960.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="900" y="1930.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Return to dashboard</text>
+<polyline points="900,1960 900,1975" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="900,1975 905.0,1963.0 895.0,1963.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<polygon points="755.0,1975.0 1045.0,1975.0 1045.0,2011.0 755.0,2011.0" fill="white" stroke="#242424" stroke-width="2"/>
+<text x="900" y="1993.0" fill="#242424" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" text-anchor="middle" dominant-baseline="central">Log out</text>
+<polyline points="900,2011 900,2030" fill="none" stroke="#242424" stroke-width="2"/>
+<polygon points="900,2030 905.0,2018.0 895.0,2018.0" fill="#242424" stroke="#242424" stroke-width="1"/>
+<circle cx="900" cy="2042" r="12" fill="white" stroke="#242424" stroke-width="2"/>
+<circle cx="900" cy="2042" r="7" fill="#242424" stroke="#242424" stroke-width="2"/>
+</svg>

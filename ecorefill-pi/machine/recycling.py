@@ -504,6 +504,7 @@ Created At: {time.time()}
                 self.update_state(
                     phase="capturing",
                     message="Item is still. Capturing image...",
+                    inspection=None,
                     error=None,
                 )
 
@@ -573,6 +574,7 @@ Created At: {time.time()}
                         ),
                         accepted=True,
                         materialType=result["item"],
+                        inspection=result.get("inspection"),
                         category=result["category"],
                         pointsEarned=new_total_points,
                         itemCount=new_item_count,
@@ -610,6 +612,7 @@ Created At: {time.time()}
                         ),
                         accepted=False,
                         materialType=result["item"],
+                        inspection=result.get("inspection"),
                         category="reject",
                         confidence=round(result["confidence"], 4),
                         sessionId=None,

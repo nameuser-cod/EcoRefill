@@ -76,6 +76,7 @@ class MachineRuntime(
             "message": "Insert bottles or cans. Press the green button when finished.",
             "accepted": False,
             "materialType": None,
+            "inspection": None,
             "category": None,
 
             # CUMULATIVE recycling-session totals.

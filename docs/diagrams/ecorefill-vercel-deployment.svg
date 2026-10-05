@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1490" viewBox="0 0 1700 1490" role="img" aria-labelledby="title desc">
+<title id="title">EcoRefill deployment diagram — UML style</title>
+<desc id="desc">Black-and-white UML deployment nodes with nested artifacts. Vercel hosts the web dashboards. The Android app on the phone uses Firebase for sign-in and records, and reaches the Raspberry Pi API through Cloudflare Tunnel. The Pi runs the kiosk, Flask, YOLO and hardware controls. It saves machine alerts to Firestore and sends owner notifications through Firebase Cloud Messaging to the Android app. Tapping a notification opens Alerts.</desc>
+<rect width="1700" height="1490" fill="white"/>
+<rect x="30" y="25" width="1640" height="1440" fill="white" stroke="#292929" stroke-width="3"/>
+<text x="850" y="61" font-family="Arial,Helvetica,sans-serif" font-size="34" font-weight="700" fill="#292929" text-anchor="middle" dominant-baseline="central">EcoRefill — Deployment Diagram</text>
+<polygon points="100,170 112,158 512,158 500,170" fill="#f6f6f6" stroke="#292929" stroke-width="2"/>
+<polygon points="500,170 512,158 512,478 500,490" fill="#f0f0f0" stroke="#292929" stroke-width="2"/>
+<rect x="100" y="170" width="400" height="320" fill="white" stroke="#292929" stroke-width="2"/>
+<text x="300.0" y="196" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«cloud service»</text>
+<text x="300.0" y="227" font-family="Arial,Helvetica,sans-serif" font-size="26" font-weight="700" fill="#292929" text-anchor="middle" dominant-baseline="central">Vercel Web Hosting</text>
+<rect x="120" y="265" width="360" height="85" fill="white" stroke="#292929" stroke-width="2"/>
+<polygon points="453,277 464,277 471,284 471,301 453,301" fill="white" stroke="#292929" stroke-width="1"/>
+<polyline points="464,277 464,284 471,284" fill="none" stroke="#292929" stroke-width="1"/>
+<text x="300.0" y="285" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«artifact»</text>
+<text x="300.0" y="310" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">User Dashboard</text>
+<text x="300.0" y="334" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">React / Vite</text>
+<rect x="120" y="365" width="360" height="100" fill="white" stroke="#292929" stroke-width="2"/>
+<polygon points="453,377 464,377 471,384 471,401 453,401" fill="white" stroke="#292929" stroke-width="1"/>
+<polyline points="464,377 464,384 471,384" fill="none" stroke="#292929" stroke-width="1"/>
+<text x="300.0" y="385" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«artifact»</text>
+<text x="300.0" y="410" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Device Owner Dashboard</text>
+<text x="300.0" y="434" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">React / Vite</text>
+<polygon points="720,170 732,158 1132,158 1120,170" fill="#f6f6f6" stroke="#292929" stroke-width="2"/>
+<polygon points="1120,170 1132,158 1132,478 1120,490" fill="#f0f0f0" stroke="#292929" stroke-width="2"/>
+<rect x="720" y="170" width="400" height="320" fill="white" stroke="#292929" stroke-width="2"/>
+<text x="920.0" y="196" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«cloud service»</text>
+<text x="920.0" y="227" font-family="Arial,Helvetica,sans-serif" font-size="26" font-weight="700" fill="#292929" text-anchor="middle" dominant-baseline="central">Firebase</text>
+<rect x="740" y="265" width="360" height="85" fill="white" stroke="#292929" stroke-width="2"/>
+<polygon points="1073,277 1084,277 1091,284 1091,301 1073,301" fill="white" stroke="#292929" stroke-width="1"/>
+<polyline points="1084,277 1084,284 1091,284" fill="none" stroke="#292929" stroke-width="1"/>
+<text x="920.0" y="285" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«artifact»</text>
+<text x="920.0" y="310" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Firebase Authentication</text>
+<rect x="740" y="365" width="360" height="100" fill="white" stroke="#292929" stroke-width="2"/>
+<polygon points="1073,377 1084,377 1091,384 1091,401 1073,401" fill="white" stroke="#292929" stroke-width="1"/>
+<polyline points="1084,377 1084,384 1091,384" fill="none" stroke="#292929" stroke-width="1"/>
+<text x="920.0" y="385" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«artifact»</text>
+<text x="920.0" y="410" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Cloud Firestore Database</text>
+<text x="920.0" y="434" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Records · EcoPoints · alerts</text>
+<polygon points="1300,170 1312,158 1632,158 1620,170" fill="#f6f6f6" stroke="#292929" stroke-width="2"/>
+<polygon points="1620,170 1632,158 1632,478 1620,490" fill="#f0f0f0" stroke="#292929" stroke-width="2"/>
+<rect x="1300" y="170" width="320" height="320" fill="white" stroke="#292929" stroke-width="2"/>
+<text x="1460.0" y="196" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«cloud service»</text>
+<text x="1460.0" y="227" font-family="Arial,Helvetica,sans-serif" font-size="26" font-weight="700" fill="#292929" text-anchor="middle" dominant-baseline="central">FCM / Notifications</text>
+<rect x="1320" y="265" width="280" height="85" fill="white" stroke="#292929" stroke-width="2"/>
+<polygon points="1573,277 1584,277 1591,284 1591,301 1573,301" fill="white" stroke="#292929" stroke-width="1"/>
+<polyline points="1584,277 1584,284 1591,284" fill="none" stroke="#292929" stroke-width="1"/>
+<text x="1460.0" y="285" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«artifact»</text>
+<text x="1460.0" y="310" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Firebase Cloud Messaging</text>
+<text x="1460.0" y="334" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Push Notifications</text>
+<rect x="1320" y="365" width="280" height="100" fill="white" stroke="#292929" stroke-width="2"/>
+<polygon points="1573,377 1584,377 1591,384 1591,401 1573,401" fill="white" stroke="#292929" stroke-width="1"/>
+<polyline points="1584,377 1584,384 1591,384" fill="none" stroke="#292929" stroke-width="1"/>
+<text x="1460.0" y="385" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«artifact»</text>
+<text x="1460.0" y="410" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Owner Android alerts</text>
+<text x="1460.0" y="434" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Tap to open Alerts</text>
+<polygon points="100,670 112,658 512,658 500,670" fill="#f6f6f6" stroke="#292929" stroke-width="2"/>
+<polygon points="500,670 512,658 512,958 500,970" fill="#f0f0f0" stroke="#292929" stroke-width="2"/>
+<rect x="100" y="670" width="400" height="300" fill="white" stroke="#292929" stroke-width="2"/>
+<text x="300.0" y="696" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«device»</text>
+<text x="300.0" y="727" font-family="Arial,Helvetica,sans-serif" font-size="26" font-weight="700" fill="#292929" text-anchor="middle" dominant-baseline="central">Phone</text>
+<rect x="120" y="805" width="360" height="100" fill="white" stroke="#292929" stroke-width="2"/>
+<polygon points="453,817 464,817 471,824 471,841 453,841" fill="white" stroke="#292929" stroke-width="1"/>
+<polyline points="464,817 464,824 471,824" fill="none" stroke="#292929" stroke-width="1"/>
+<text x="300.0" y="825" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«artifact»</text>
+<text x="300.0" y="850" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Android App</text>
+<text x="300.0" y="874" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">React / Capacitor</text>
+<polygon points="720,670 732,658 1132,658 1120,670" fill="#f6f6f6" stroke="#292929" stroke-width="2"/>
+<polygon points="1120,670 1132,658 1132,1078 1120,1090" fill="#f0f0f0" stroke="#292929" stroke-width="2"/>
+<rect x="720" y="670" width="400" height="420" fill="white" stroke="#292929" stroke-width="2"/>
+<text x="920.0" y="696" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«device»</text>
+<text x="920.0" y="727" font-family="Arial,Helvetica,sans-serif" font-size="26" font-weight="700" fill="#292929" text-anchor="middle" dominant-baseline="central">EcoRefill — Raspberry Pi 5</text>
+<rect x="740" y="765" width="360" height="95" fill="white" stroke="#292929" stroke-width="2"/>
+<polygon points="1073,777 1084,777 1091,784 1091,801 1073,801" fill="white" stroke="#292929" stroke-width="1"/>
+<polyline points="1084,777 1084,784 1091,784" fill="none" stroke="#292929" stroke-width="1"/>
+<text x="920.0" y="785" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«artifact»</text>
+<text x="920.0" y="810" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Local React Kiosk</text>
+<text x="920.0" y="834" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Machine screen / QR display</text>
+<rect x="740" y="880" width="360" height="185" fill="white" stroke="#292929" stroke-width="2"/>
+<text x="920" y="902" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«execution environment»</text>
+<text x="920" y="930" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="700" fill="#292929" text-anchor="middle" dominant-baseline="central">Python / Flask</text>
+<rect x="758" y="950" width="324" height="95" fill="white" stroke="#292929" stroke-width="2"/>
+<polygon points="1055,962 1066,962 1073,969 1073,986 1055,986" fill="white" stroke="#292929" stroke-width="1"/>
+<polyline points="1066,962 1066,969 1073,969" fill="none" stroke="#292929" stroke-width="1"/>
+<text x="920.0" y="970" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«artifact»</text>
+<text x="920.0" y="995" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">machine_flow.py + YOLO</text>
+<text x="920.0" y="1019" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Rewards · refills · alerts</text>
+<polygon points="1300,670 1312,658 1632,658 1620,670" fill="#f6f6f6" stroke="#292929" stroke-width="2"/>
+<polygon points="1620,670 1632,658 1632,958 1620,970" fill="#f0f0f0" stroke="#292929" stroke-width="2"/>
+<rect x="1300" y="670" width="320" height="300" fill="white" stroke="#292929" stroke-width="2"/>
+<text x="1460.0" y="696" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«device»</text>
+<text x="1460.0" y="727" font-family="Arial,Helvetica,sans-serif" font-size="26" font-weight="700" fill="#292929" text-anchor="middle" dominant-baseline="central">Machine Hardware</text>
+<rect x="1320" y="765" width="280" height="85" fill="white" stroke="#292929" stroke-width="2"/>
+<polygon points="1573,777 1584,777 1591,784 1591,801 1573,801" fill="white" stroke="#292929" stroke-width="1"/>
+<polyline points="1584,777 1584,784 1591,784" fill="none" stroke="#292929" stroke-width="1"/>
+<text x="1460.0" y="785" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«artifact»</text>
+<text x="1460.0" y="810" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Camera · Scale</text>
+<text x="1460.0" y="834" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Buttons · Sensors</text>
+<rect x="1320" y="860" width="280" height="85" fill="white" stroke="#292929" stroke-width="2"/>
+<polygon points="1573,872 1584,872 1591,879 1591,896 1573,896" fill="white" stroke="#292929" stroke-width="1"/>
+<polyline points="1584,872 1584,879 1591,879" fill="none" stroke="#292929" stroke-width="1"/>
+<text x="1460.0" y="880" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«artifact»</text>
+<text x="1460.0" y="905" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Sorting Servos · Pump</text>
+<text x="1460.0" y="929" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Machine Screen</text>
+<polygon points="100,1140 112,1128 512,1128 500,1140" fill="#f6f6f6" stroke="#292929" stroke-width="2"/>
+<polygon points="500,1140 512,1128 512,1363 500,1375" fill="#f0f0f0" stroke="#292929" stroke-width="2"/>
+<rect x="100" y="1140" width="400" height="235" fill="white" stroke="#292929" stroke-width="2"/>
+<text x="300.0" y="1166" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«cloud service»</text>
+<text x="300.0" y="1197" font-family="Arial,Helvetica,sans-serif" font-size="26" font-weight="700" fill="#292929" text-anchor="middle" dominant-baseline="central">Cloudflare Tunnel</text>
+<rect x="120" y="1235" width="360" height="115" fill="white" stroke="#292929" stroke-width="2"/>
+<polygon points="453,1247 464,1247 471,1254 471,1271 453,1271" fill="white" stroke="#292929" stroke-width="1"/>
+<polyline points="464,1247 464,1254 471,1254" fill="none" stroke="#292929" stroke-width="1"/>
+<text x="300.0" y="1255" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">«artifact»</text>
+<text x="300.0" y="1280" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">HTTPS Public Pi API</text>
+<text x="300.0" y="1304" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Reward claims · payments</text>
+<text x="300.0" y="1328" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Phone registration</text>
+<polyline points="300,490 300,670" fill="none" stroke="#292929" stroke-width="2"/>
+<polygon points="300,670 305.0,658.0 295.0,658.0" fill="#292929"/>
+<rect x="228.5" y="548.5" width="143.0" height="31" fill="white"/>
+<text x="300" y="564" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Loads website</text>
+<rect x="264.25" y="578.5" width="71.5" height="29" fill="white"/>
+<text x="300" y="593" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">HTTPS</text>
+<polyline points="512,755 610,755 610,330 720,330" fill="none" stroke="#292929" stroke-width="2"/>
+<polygon points="720,330 708.0,325.0 708.0,335.0" fill="#292929"/>
+<polygon points="512,755 524.0,760.0 524.0,750.0" fill="#292929"/>
+<rect x="566.75" y="517.5" width="86.5" height="31" fill="white"/>
+<text x="610" y="533" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Sign-in /</text>
+<rect x="511.5" y="546.5" width="197.0" height="31" fill="white"/>
+<text x="610" y="562" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">read &amp; write records</text>
+<polyline points="920,490 920,670" fill="none" stroke="#292929" stroke-width="2"/>
+<polygon points="920,670 925.0,658.0 915.0,658.0" fill="#292929"/>
+<polygon points="920,490 915.0,502.0 925.0,502.0" fill="#292929"/>
+<rect x="835.0" y="536.5" width="170.0" height="31" fill="white"/>
+<text x="920" y="552" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Reads &amp; updates</text>
+<rect x="831.5" y="565.5" width="177.0" height="31" fill="white"/>
+<text x="920" y="581" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">records and alerts</text>
+<polyline points="1132,755 1230,755 1230,330 1300,330" fill="none" stroke="#292929" stroke-width="2"/>
+<polygon points="1300,330 1288.0,325.0 1288.0,335.0" fill="#292929"/>
+<rect x="1153.25" y="514.5" width="153.5" height="31" fill="white"/>
+<text x="1230" y="530" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Sends machine</text>
+<rect x="1199.5" y="543.5" width="61.0" height="31" fill="white"/>
+<text x="1230" y="559" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">alerts</text>
+<polyline points="1460,158 1460,119 60,119 60,830 100,830" fill="none" stroke="#292929" stroke-width="2"/>
+<polygon points="100,830 88.0,825.0 88.0,835.0" fill="#292929"/>
+<rect x="666.5078125" y="103.5" width="426.984375" height="31" fill="white"/>
+<text x="880" y="119" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Push notifications to the owner&#x27;s Android app</text>
+<polyline points="1132,870 1300,870" fill="none" stroke="#292929" stroke-width="2"/>
+<polygon points="1300,870 1288.0,865.0 1288.0,875.0" fill="#292929"/>
+<polygon points="1132,870 1144.0,875.0 1144.0,865.0" fill="#292929"/>
+<rect x="1171.25" y="820.5" width="87.5" height="31" fill="white"/>
+<text x="1215" y="836" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Controls</text>
+<polyline points="300,970 300,1128" fill="none" stroke="#292929" stroke-width="2"/>
+<polygon points="300,1128 305.0,1116.0 295.0,1116.0" fill="#292929"/>
+<polygon points="300,970 295.0,982.0 305.0,982.0" fill="#292929"/>
+<rect x="219.0" y="1021.5" width="162.0" height="31" fill="white"/>
+<text x="300" y="1037" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Secure requests</text>
+<rect x="220.5" y="1051.5" width="159.0" height="29" fill="white"/>
+<text x="300" y="1066" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">HTTPS / ID token</text>
+<polyline points="512,1255 630,1255 630,1030 720,1030" fill="none" stroke="#292929" stroke-width="2"/>
+<polygon points="720,1030 708.0,1025.0 708.0,1035.0" fill="#292929"/>
+<polygon points="512,1255 524.0,1260.0 524.0,1250.0" fill="#292929"/>
+<rect x="564.5078125" y="1125.5" width="130.984375" height="31" fill="white"/>
+<text x="630" y="1141" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="400" fill="#292929" text-anchor="middle" dominant-baseline="central">Public Pi API</text>
+</svg>

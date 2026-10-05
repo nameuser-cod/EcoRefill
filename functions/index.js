@@ -17,9 +17,9 @@ initializeApp();
 const db = getFirestore();
 
 const WATER_OPTIONS = {
-  250: 3,
-  500: 5,
-  1000: 10,
+  250: 5,
+  500: 10,
+  1000: 15,
 };
 
 exports.confirmWaterRefill = onCall(

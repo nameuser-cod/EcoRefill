@@ -14,6 +14,7 @@ from .config import (
     INFERENCE_IMAGE_SIZE,
     MIN_OBJECT_AREA_RATIO,
     POINTS,
+    SIZE_POINTS,
     BOTTLE_MAX_WEIGHT_G,
     CAN_MAX_WEIGHT_G,
     WEIGHT_SETTLE_SECONDS,
@@ -219,7 +220,7 @@ class MaterialDetection:
                 "points": POINTS.get(best_item, 1),
                 "confidence": best_confidence,
             }, frame, detections)
-            return self.apply_weight_check(result, settling_started)
+            return self.apply_size_reward(self.apply_weight_check(result, settling_started))
 
         log(
             "Material matched: aluminum can",
@@ -232,7 +233,21 @@ class MaterialDetection:
             "points": POINTS.get(best_item, 1),
             "confidence": best_confidence,
         }, frame, detections)
-        return self.apply_weight_check(result, settling_started)
+        return self.apply_size_reward(self.apply_weight_check(result, settling_started))
+
+    @staticmethod
+    def apply_size_reward(result):
+        """Price accepted items using a confirmed size; preserve the base reward otherwise."""
+        if not result.get("accepted"):
+            return result
+        report = result.get("inspection") or {}
+        size = report.get("size") or {}
+        if report.get("mode") not in {"observe", "enforce"} or size.get("status") != "pass":
+            return result
+        group = str(size.get("size_group") or "").strip().lower()
+        if group in SIZE_POINTS:
+            return dict(result, points=SIZE_POINTS[group])
+        return result
 
     def apply_weight_check(self, result, settling_started=None):
         """Enforce weight limits before sorting/rewards when the sensor is enabled."""
