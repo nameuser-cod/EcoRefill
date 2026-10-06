@@ -329,32 +329,34 @@ function MachineHome() {
         </header>
 
         <main
-          className={`machine-kiosk-card tone-${screen.tone}`}
+          className={`machine-kiosk-card tone-${screen.tone}${showWaterChoice ? " machine-home-choices" : ""}`}
         >
-          <div className="machine-kiosk-hero-icon">
-            {screen.icon}
-          </div>
+          <div className="machine-home-heading">
+            <div className="machine-kiosk-hero-icon">
+              {screen.icon}
+            </div>
 
-          <div className="machine-kiosk-copy" role="status" aria-live="polite" aria-atomic="true">
-            <span className="machine-kiosk-eyebrow">
-              {screen.eyebrow}
-            </span>
+            <div className="machine-kiosk-copy" role="status" aria-live="polite" aria-atomic="true">
+              <span className="machine-kiosk-eyebrow">
+                {screen.eyebrow}
+              </span>
 
-            <h2>{screen.title}</h2>
+              <h2>{screen.title}</h2>
 
-            <p>{screen.message}</p>
-            {screen.tone === "warning" && (
-              <>
-                {screen.weightLabel && (
-                  <p className="machine-rejection-weight">{screen.weightLabel}</p>
-                )}
-                <p className="machine-rejection-reassurance">
-                  No points added for this item.
-                  {Number(machineState.itemCount || 0) > 0 && " Your earned points are safe."}
-                </p>
-              </>
-            )}
-            {sizeLabel && machineState.phase !== "rejected" && <p><strong>{sizeLabel}</strong></p>}
+              <p>{screen.message}</p>
+              {screen.tone === "warning" && (
+                <>
+                  {screen.weightLabel && (
+                    <p className="machine-rejection-weight">{screen.weightLabel}</p>
+                  )}
+                  <p className="machine-rejection-reassurance">
+                    No points added for this item.
+                    {Number(machineState.itemCount || 0) > 0 && " Your earned points are safe."}
+                  </p>
+                </>
+              )}
+              {sizeLabel && machineState.phase !== "rejected" && <p><strong>{sizeLabel}</strong></p>}
+            </div>
           </div>
 
           {showWaterChoice && (
@@ -527,7 +529,7 @@ function MachineHome() {
           )}
         </main>
 
-        <footer className="machine-kiosk-footer">
+        <footer className="machine-kiosk-footer machine-home-footer">
           <span>
             👁 Insert bottles/cans one at a time
           </span>
