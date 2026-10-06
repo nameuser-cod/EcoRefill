@@ -201,6 +201,11 @@
   color: #a51e28;
 }
 
+.tone-warning .machine-kiosk-hero-icon {
+  background: #fff0b8;
+  color: #714500;
+}
+
 .machine-kiosk-copy {
   max-width: 780px;
 }
@@ -228,6 +233,16 @@
   margin-top: 10px;
   color: #102719;
   font-size: 22px;
+}
+
+.machine-kiosk-copy .machine-rejection-weight {
+  font-weight: 800;
+  color: #714500;
+}
+
+.machine-kiosk-copy .machine-rejection-reassurance {
+  font-size: 18px;
+  line-height: 1.4;
 }
 
 .try-another-item-button,

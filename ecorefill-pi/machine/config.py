@@ -26,6 +26,8 @@ STABLE_FRAMES_REQUIRED = 2
 SCAN_STABLE_SECONDS = 1.0
 MOTION_FRAME_DELAY = 0.03
 AUTO_REJECT_RESET_SECONDS = 0.7
+# Give customers time to read the reason before automatically trying again.
+REJECTION_DISPLAY_SECONDS = 6.0
 AUTO_REARM_DELAY = 0.20
 
 # Do not arm motion detection until the sorter/chute has become still.

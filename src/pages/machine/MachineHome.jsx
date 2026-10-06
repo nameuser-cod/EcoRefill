@@ -18,6 +18,7 @@ import "../../styles/machine/machine.css";
 
 import { pollMachine, requestMachine } from "./utils/machineApi";
 import { bottleSizeLabel } from "./utils/bottleSize";
+import { rejectionMessage } from "./utils/rejectionMessage";
 
 function MachineHome() {
   const navigate = useNavigate();
@@ -201,16 +202,17 @@ function MachineHome() {
           tone: "active",
         };
 
-      case "rejected":
+      case "rejected": {
+        const rejection = rejectionMessage(machineState);
         return {
-          eyebrow: "Not accepted",
-          title: machineState.unknownItemAlert ? "Unknown item detected" : "Try another item",
-          message:
-            machineState.message ||
-            "Please insert one clean, empty plastic bottle or aluminum can.",
+          eyebrow: "Item not accepted",
+          title: rejection.reason,
+          message: rejection.action,
+          weightLabel: rejection.weightLabel,
           icon: <AlertTriangle size={62} />,
-          tone: "error",
+          tone: "warning",
         };
+      }
 
       case "item_accepted":
         return {
@@ -341,7 +343,18 @@ function MachineHome() {
             <h2>{screen.title}</h2>
 
             <p>{screen.message}</p>
-            {sizeLabel && <p><strong>{sizeLabel}</strong></p>}
+            {screen.tone === "warning" && (
+              <>
+                {screen.weightLabel && (
+                  <p className="machine-rejection-weight">{screen.weightLabel}</p>
+                )}
+                <p className="machine-rejection-reassurance">
+                  No points added for this item.
+                  {Number(machineState.itemCount || 0) > 0 && " Your earned points are safe."}
+                </p>
+              </>
+            )}
+            {sizeLabel && machineState.phase !== "rejected" && <p><strong>{sizeLabel}</strong></p>}
           </div>
 
           {showWaterChoice && (
@@ -472,44 +485,23 @@ function MachineHome() {
             )}
 
           {machineState.phase === "rejected" && (
-            <>
-              {machineState.unknownItemAlert && (
-                <div className="machine-detection-pill" role="alert">
-                  {machineState.firebaseSaved
-                    ? "Alert sent to the owner's dashboard."
-                    : "Owner alert saved. Waiting to send when connected."}
-                </div>
+            <button
+              className="try-another-item-button"
+              onClick={resetMachine}
+              disabled={resetting}
+            >
+              {resetting ? (
+                <LoaderCircle
+                  size={28}
+                  className="machine-spin"
+                />
+              ) : (
+                <RotateCcw size={28} />
               )}
-              {(machineState.materialType ||
-                machineState.confidence) && (
-                <div className="machine-detection-pill">
-                  Detected:{" "}
-                  {machineState.materialType || "Unknown"} ·{" "}
-                  {Math.round(
-                    (machineState.confidence || 0) * 100
-                  )}
-                  %
-                </div>
-              )}
-
-              <button
-                className="try-another-item-button"
-                onClick={resetMachine}
-                disabled={resetting}
-              >
-                {resetting ? (
-                  <LoaderCircle
-                    size={28}
-                    className="machine-spin"
-                  />
-                ) : (
-                  <RotateCcw size={28} />
-                )}
-                {resetting
-                  ? "Resetting..."
-                  : "Try Another Item"}
-              </button>
-            </>
+              {resetting
+                ? "Getting ready..."
+                : "Try Again"}
+            </button>
           )}
 
           {machineState.phase === "error" &&

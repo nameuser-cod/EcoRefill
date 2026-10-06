@@ -8,6 +8,7 @@ from .config import (
     AUTO_REJECT_RESET_SECONDS,
     GREEN_BUTTON_GPIO,
     MACHINE_ID,
+    REJECTION_DISPLAY_SECONDS,
     REWARD_READY_TIMEOUT_SECONDS,
 )
 from .diagnostics import log
@@ -413,12 +414,15 @@ Created At: {time.time()}
         )
         log("========================================")
 
+        rejection_started = None
         while not self.shutdown_event.is_set():
             if self.recycling_paused.is_set():
                 time.sleep(0.2)
                 continue
 
             current_state = self.get_state()
+            if current_state["phase"] != "rejected":
+                rejection_started = None
 
             # Hold the final QR briefly. If nobody claims it within one minute,
             # expire it and automatically prepare the machine for the next user.
@@ -453,7 +457,14 @@ Created At: {time.time()}
 
             # Rejected items automatically rearm without clearing totals.
             if current_state["phase"] == "rejected":
-                time.sleep(AUTO_REJECT_RESET_SECONDS)
+                if rejection_started is None:
+                    rejection_started = time.monotonic()
+                remaining = REJECTION_DISPLAY_SECONDS - (time.monotonic() - rejection_started)
+                if remaining > 0:
+                    # Keep retry, finish, water, and shutdown responsive while
+                    # the customer reads the message.
+                    self.shutdown_event.wait(min(remaining, 0.1))
+                    continue
                 if self.get_state()["phase"] == "rejected":
                     self.rearm_for_next_item(
                         "Try another item, or press the green button when finished."

@@ -586,6 +586,63 @@ class LifecycleTests(unittest.TestCase):
         self.assertIn("camera failure", record.getMessage())
 
 
+class RejectionDisplayTests(unittest.TestCase):
+    def setUp(self):
+        self.machine = MachineRuntime()
+        self.machine.update_state(phase="rejected", itemCount=2, pointsEarned=1.5)
+        self.addCleanup(self.machine.close)
+
+    def run_worker(self):
+        with patch.dict(sys.modules, {
+            "firebase_admin": SimpleNamespace(firestore=Mock()),
+            "cv2": SimpleNamespace(),
+        }):
+            self.machine.machine_worker()
+
+    def test_rejection_stays_visible_for_six_seconds_and_keeps_points(self):
+        rearm = self.machine.rearm_for_next_item
+
+        def finish_waiting(message):
+            rearm(message)
+            self.machine.shutdown_event.set()
+
+        with patch("machine.recycling.time.monotonic", side_effect=[10, 10, 15.9, 16]), \
+             patch.object(self.machine.shutdown_event, "wait") as wait, \
+             patch.object(self.machine, "rearm_for_next_item", side_effect=finish_waiting) as retry:
+            self.run_worker()
+        self.assertEqual(wait.call_count, 2)
+        retry.assert_called_once()
+        state = self.machine.get_state()
+        self.assertEqual(state["phase"], "idle")
+        self.assertEqual((state["itemCount"], state["pointsEarned"]), (2, 1.5))
+
+    def test_touch_retry_can_start_before_the_display_timeout(self):
+        def touch_retry(_seconds):
+            self.machine.rearm_for_next_item()
+
+        def next_scan():
+            self.machine.shutdown_event.set()
+            return None
+
+        self.machine.wait_for_item_motion = Mock(side_effect=next_scan)
+        with patch("machine.recycling.time.monotonic", return_value=10), \
+             patch.object(self.machine.shutdown_event, "wait", side_effect=touch_retry):
+            self.run_worker()
+        self.machine.wait_for_item_motion.assert_called_once()
+        self.assertEqual(self.machine.get_state()["pointsEarned"], 1.5)
+
+    def test_green_button_can_finish_before_the_display_timeout(self):
+        def finish_press(_seconds):
+            self.machine.request_finish_recycling_session()
+
+        self.machine.finalize_recycling_session = Mock(side_effect=self.machine.shutdown_event.set)
+        with patch("machine.recycling.time.monotonic", return_value=10), \
+             patch("machine.recycling.time.sleep"), \
+             patch.object(self.machine.shutdown_event, "wait", side_effect=finish_press):
+            self.run_worker()
+        self.machine.finalize_recycling_session.assert_called_once()
+
+
 class RecyclingWeightTests(unittest.TestCase):
     def setUp(self):
         enabled = patch("machine.detection.WEIGHT_SENSOR_ENABLED", True)
