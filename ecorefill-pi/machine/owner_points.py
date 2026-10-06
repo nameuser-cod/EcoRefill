@@ -1,6 +1,23 @@
 """Atomically settle a confirmed refill and credit its owner's point balance."""
 
-MAX_POINTS = 9007199254740991
+from .points import MAX_POINTS, read_points, valid_points
+
+
+def prepare_owner_credit(db, tx, session, machine_id, points):
+    """Read the owner before any writes; callers apply this credit atomically."""
+    owner_id = session.get("ownerId")
+    if "ownerId" not in session:
+        machine = db.collection("machines").document(machine_id).get(transaction=tx).to_dict() or {}
+        owner_id = machine.get("ownerId")
+    owner_ref = db.collection("users").document(owner_id) if owner_id else None
+    owner = owner_ref.get(transaction=tx).to_dict() if owner_ref else None
+    credited = read_points(points) if owner and owner.get("role") == "device_owner" else 0
+    existing_balance = owner.get("points", 0) if owner else 0
+    # A full customer refund must not depend on an unrelated owner's balance.
+    balance = read_points(existing_balance) if credited else (existing_balance if valid_points(existing_balance) else 0)
+    read_points(balance + credited)
+    return owner_ref, balance, {"ownerId": owner_id or "", "ownerPointsEarned": credited,
+                                "ownerPointsSettled": True}
 
 
 def complete_refill(db, tx, timestamp, session_ref, request_ref, transaction_ref, machine_id):
@@ -13,28 +30,18 @@ def complete_refill(db, tx, timestamp, session_ref, request_ref, transaction_ref
         return
     if session.get("status") not in ("processing", "dispensing", "completed"):
         raise ValueError("This refill cannot be completed.")
-    # Older sessions did not capture ownership when the user's points were deducted.
-    owner_id = session.get("ownerId")
-    if "ownerId" not in session:
-        machine = db.collection("machines").document(machine_id).get(transaction=tx).to_dict() or {}
-        owner_id = machine.get("ownerId")
-    owner_ref = db.collection("users").document(owner_id) if owner_id else None
-    owner = owner_ref.get(transaction=tx).to_dict() if owner_ref else None
     points = session.get("pointsUsed")
     if type(points) is not int or not 0 < points <= MAX_POINTS:
         raise ValueError("This refill has an invalid point cost.")
-    credited = 0
-    balance = owner.get("points", 0) if owner else 0
-    if owner and owner.get("role") == "device_owner":
-        if type(balance) is not int or balance < 0 or balance + points > MAX_POINTS:
-            raise ValueError("The owner's point balance is invalid.")
-        credited = points
+    owner_ref, balance, owner_credit = prepare_owner_credit(db, tx, session, machine_id, points)
+    credited = owner_credit["ownerPointsEarned"]
+    if credited:
         tx.update(owner_ref, {"points": balance + points, "updatedAt": timestamp})
-    settlement = {"ownerId": owner_id or "", "ownerPointsEarned": credited,
-                  "ownerPointsSettled": True, "status": "completed", "updatedAt": timestamp}
+    settlement = {**owner_credit, "status": "completed", "updatedAt": timestamp,
+                  "pointsCharged": points, "pointsRefunded": 0, "accountingSettled": True}
     tx.update(session_ref, {**settlement, "message": "Water refill completed.", "error": None})
     if request:
-        tx.update(request_ref, {"status": "completed", "error": None, "updatedAt": timestamp})
+        tx.update(request_ref, {**settlement, "error": None})
     if record:
         tx.update(transaction_ref, {**settlement, "ownerPreviousPoints": balance,
                                     "ownerPointsAfter": balance + credited})

@@ -2,7 +2,7 @@ import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/f
 import { timestampValue } from "./ownerDashboard.js";
 
 export function listenToMachineRecords(db, source, machineId, onRecords, onError, listen = onSnapshot) {
-  const { collectionName, maximum, recent } = source;
+  const { collectionName, maximum, recent, bounded } = source;
   const allRecords = query(collection(db, collectionName), where("machineId", "==", machineId));
   const recentRecords = recent
     ? query(allRecords, orderBy("createdAt", "desc"), limit(maximum))
@@ -17,7 +17,7 @@ export function listenToMachineRecords(db, source, machineId, onRecords, onError
       if (!active || subscription !== generation) return;
       // Small/legacy collections may contain records without createdAt, which
       // orderBy excludes. Use the complete query to fill an undersized preview.
-      if (canFallBack && snapshot.size < maximum) {
+      if (canFallBack && !bounded && snapshot.size < maximum) {
         unsubscribe();
         subscribe(allRecords, false);
         return;
@@ -28,7 +28,7 @@ export function listenToMachineRecords(db, source, machineId, onRecords, onError
     }, (error) => {
       if (!active || subscription !== generation) return;
       // Keep deployed apps working while the composite indexes are building.
-      if (canFallBack && error.code === "failed-precondition" && /index/i.test(error.message)) {
+      if (canFallBack && !bounded && error.code === "failed-precondition" && /index/i.test(error.message)) {
         console.warn(`Using the full ${collectionName} query until its index is ready.`, error.message);
         unsubscribe();
         subscribe(allRecords, false);

@@ -1,6 +1,14 @@
 {
   "indexes": [
     {
+      "collectionGroup": "recycling_records",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "machineId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "transactions",
       "queryScope": "COLLECTION",
       "fields": [

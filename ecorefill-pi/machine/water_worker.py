@@ -8,6 +8,7 @@ from .config import (
 )
 from .diagnostics import log
 from .points import read_points
+from .refill_accounting import timed_refund
 
 
 class WaterRequestWorker:
@@ -541,19 +542,26 @@ class WaterRequestWorker:
             journal_record["outcome"] = "executing"
             self.journal.save("refill", request_id, journal_record)
 
+        timing = {}
         try:
             completed, error = self.run_water_command(
-                WATER_COMMANDS[water_amount_ml], on_dispensing=mark_refill_dispensing,
+                WATER_COMMANDS[water_amount_ml], on_dispensing=mark_refill_dispensing, timing=timing,
             )
         except Exception as error:
             # An unexpected driver exception cannot prove delivery or failure.
             self.journal.save("refill", request_id, {
-                **journal_record, "outcome": "uncertain", "error": str(error),
+                **journal_record, "outcome": "uncertain", "error": str(error), **timing,
             })
         else:
+            outcome = "completed" if completed else "failed"
+            if not completed:
+                try:
+                    # Validate timing before allowing any automatic refund.
+                    timed_refund(points_required, timing)
+                except ValueError:
+                    outcome = "uncertain"
             self.journal.save("refill", request_id, {
-                **journal_record, "outcome": "completed" if completed else "failed",
-                "error": error,
+                **journal_record, "outcome": outcome, "error": error, **timing,
             })
         finally:
             self.recycling_paused.clear()

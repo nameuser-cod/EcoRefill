@@ -6,6 +6,7 @@ import { ArrowLeft, History } from "lucide-react";
 import { auth, db } from "../../firebase/firebase";
 import TransactionIcon from "./components/TransactionIcon";
 import UserBottomNav from "./components/UserBottomNav";
+import { getRefillPointsCharged, getRefillRefundDescription } from "./utils/refillAccounting";
 import {
   formatTransactionDate,
   getTransactionTitle,
@@ -28,8 +29,11 @@ function TransactionDetails({ transaction }) {
   if (transaction.type === "water_refill") {
     return (
       <>
-        <p>Water Amount: {transaction.waterAmountMl || 0} ml</p>
-        <p className="points-used">-{transaction.pointsUsed || 0} points</p>
+        <p>Water {transaction.status === "failed" ? "Requested" : "Amount"}: {transaction.waterAmountMl || 0} ml</p>
+        <p className="points-used">
+          {transaction.manualReviewRequired ? `${transaction.pointsUsed || 0} points reserved` : `-${getRefillPointsCharged(transaction)} points`}
+        </p>
+        {getRefillRefundDescription(transaction) && <p>{getRefillRefundDescription(transaction)}</p>}
       </>
     );
   }

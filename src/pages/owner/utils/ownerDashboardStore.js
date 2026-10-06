@@ -1,13 +1,15 @@
+export const DASHBOARD_SCAN_LIMIT = 24;
+
 export const DASHBOARD_SOURCES = {
-  recycling: { collectionName: "recycling_records", label: "scan history", maximum: Infinity },
+  recycling: { collectionName: "recycling_records", label: "scan history", maximum: DASHBOARD_SCAN_LIMIT, recent: true, bounded: true },
   transactions: { collectionName: "transactions", label: "transactions", maximum: 5, recent: true },
   alerts: { collectionName: "machine_alerts", label: "alerts", maximum: 5, recent: true },
   refills: { collectionName: "water_refill_sessions", label: "refill activity", maximum: Infinity },
 };
 
 // Each source can finish, fail, or retry without blocking the other sections.
-export function createOwnerDashboardStore(machineId, listen) {
-  let snapshot = Object.fromEntries(Object.keys(DASHBOARD_SOURCES).map((key) => [key, {
+export function createOwnerDashboardStore(machineId, listen, sources = DASHBOARD_SOURCES) {
+  let snapshot = Object.fromEntries(Object.keys(sources).map((key) => [key, {
     records: [], loading: Boolean(machineId), slow: false, error: "",
   }]));
   const observers = new Set();
@@ -18,7 +20,7 @@ export function createOwnerDashboardStore(machineId, listen) {
     observers.forEach((notify) => notify());
   };
 
-  const start = (key) => {
+  const start = (key, refresh = false) => {
     cleanups.get(key)?.();
     let active = true;
     let unsubscribe = () => {};
@@ -31,19 +33,21 @@ export function createOwnerDashboardStore(machineId, listen) {
       clearTimeout(timer);
       unsubscribe();
     });
-    unsubscribe = listen(DASHBOARD_SOURCES[key], machineId, (records) => {
+    unsubscribe = listen(sources[key], machineId, (records, { loading = false, slow = false } = {}) => {
       if (!active) return;
-      clearTimeout(timer);
-      update(key, { records, loading: false, slow: false, error: "" });
+      if (!loading) clearTimeout(timer);
+      update(key, { records, loading, slow, error: "" });
     }, (error) => {
       if (!active) return;
       clearTimeout(timer);
       console.error(`Unable to load owner ${key}:`, error);
       update(key, {
         loading: false, slow: false,
-        error: `We could not load your ${DASHBOARD_SOURCES[key].label}. Please try again.`,
+        error: error?.code === "failed-precondition" && /index/i.test(error.message)
+          ? `Your ${sources[key].label} needs an administrator to finish its setup.`
+          : `We could not load your ${sources[key].label}. Please try again.`,
       });
-    });
+    }, { refresh });
   };
 
   return {
@@ -51,7 +55,7 @@ export function createOwnerDashboardStore(machineId, listen) {
     subscribe: (notify) => {
       observers.add(notify);
       if (observers.size === 1 && machineId) {
-        Object.keys(DASHBOARD_SOURCES).forEach(start);
+        Object.keys(sources).forEach((key) => start(key));
       }
       return () => {
         observers.delete(notify);
@@ -62,7 +66,7 @@ export function createOwnerDashboardStore(machineId, listen) {
       };
     },
     retry: (keys) => {
-      if (observers.size && machineId) keys.forEach(start);
+      if (observers.size && machineId) keys.forEach((key) => start(key, true));
     },
   };
 }

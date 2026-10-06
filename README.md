@@ -251,7 +251,7 @@ background. New point-funded refills and reward claims still require Firebase.
 
 ### Web app
 
-Use Node.js **22.12 or later** and npm for the frontend; the optional Firebase Functions package specifies Node.js **24**.
+Use Node.js **22.13 or later** and npm for the frontend and its tests; the optional Firebase Functions package specifies Node.js **24**.
 
 1. Install dependencies from the repository root:
 

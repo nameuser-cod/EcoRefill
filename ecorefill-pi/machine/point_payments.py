@@ -117,7 +117,7 @@ class PointPayments:
             balance = owner.get("points", 0)
             if owner.get("role") != "device_owner":
                 continue
-            available = balance if type(balance) is int and 0 <= balance <= MAX_POINTS else 0
+            available = int(balance) if valid_points(balance) else 0
             sellers.append({"availablePoints": available, "machineId": snapshot.id, "machineName": machine.get("machineName") or snapshot.id,
                             "ownerName": machine.get("ownerName") or payment["accountName"], "location": machine.get("location") or ""})
         own = accounts.get(user["id"])
@@ -158,7 +158,7 @@ class PointPayments:
             if owner.get("role") != "device_owner" or payment.get("enabled") is not True:
                 fail("failed-precondition", "This owner is not accepting GCash payments right now.")
             balance = owner.get("points", 0)
-            if type(balance) is not int or not points <= balance <= MAX_POINTS:
+            if not valid_points(balance) or balance < points:
                 fail("failed-precondition", "This owner does not have enough points available. Try a smaller amount or wait for more refills.")
             tx.set(purchase_ref, {
                 "userId": user["id"], "userEmail": user.get("email", ""), "userName": user.get("fullName", ""),
@@ -229,7 +229,7 @@ class PointPayments:
                 owner_balance = owner.get("points", 0)
                 if purchase["userId"] == user["id"] or owner.get("role") != "device_owner":
                     fail("failed-precondition", "This purchase has an invalid seller or buyer.")
-                if type(owner_balance) is not int or not points <= owner_balance <= MAX_POINTS:
+                if not valid_points(owner_balance) or owner_balance < points:
                     fail("failed-precondition", "You do not have enough points to approve this purchase. Your balance grows when water refills complete.")
                 tx.update(owner_ref, {"points": owner_balance - points, "updatedAt": self.timestamp})
                 tx.update(buyer_ref, {"points": balance + points, "updatedAt": self.timestamp})

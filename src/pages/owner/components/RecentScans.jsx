@@ -26,7 +26,7 @@ const BOTTLE_MATERIALS = new Set([
   "plastic bottle", "pet bottle", "plastic", "pet",
 ]);
 
-function RecentScans({ items }) {
+function RecentScans({ items, canLoadMore = false, onLoadMore, loading = false }) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [materialFilter, setMaterialFilter] = useState("all");
   const [page, setPage] = useState(1);
@@ -99,9 +99,10 @@ function RecentScans({ items }) {
 
       <p className="owner-scan-summary" role="status">
         {filteredItems.length > 0
-          ? `Showing ${startIndex + 1}–${startIndex + visibleItems.length} of ${filteredItems.length} scans · Newest first`
-          : "0 scans"}
+          ? `Showing ${startIndex + 1}–${startIndex + visibleItems.length} of ${filteredItems.length}${canLoadMore ? " loaded" : ""} scans · Newest first`
+          : canLoadMore ? "0 matching loaded scans" : "0 scans"}
       </p>
+      {canLoadMore && <p className="owner-scan-summary">Filters apply to loaded scans. Load older scans to search further.</p>}
 
       {items.length === 0 ? (
         <OwnerEmpty
@@ -149,6 +150,11 @@ function RecentScans({ items }) {
             </article>
           ))}
         </div>
+      )}
+      {canLoadMore && (
+        <button type="button" className="view-transactions-button" onClick={onLoadMore} disabled={loading}>
+          {loading ? "Loading older scans..." : "Load older scans"}
+        </button>
       )}
 
       {filteredItems.length > 0 && (

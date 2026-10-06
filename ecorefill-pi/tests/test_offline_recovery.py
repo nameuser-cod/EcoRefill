@@ -11,6 +11,9 @@ from machine.journal import MachineJournal
 from machine.runtime import MachineRuntime
 from machine.routes import create_apps
 from tests.test_point_payments import Database
+from machine.gpio_controller import ControllerSettings, GPIOController
+from itertools import chain, repeat
+from concurrent.futures import ThreadPoolExecutor
 
 
 class OfflineRecoveryTests(unittest.TestCase):
@@ -52,7 +55,7 @@ class OfflineRecoveryTests(unittest.TestCase):
         self.machine.finalize_recycling_session()
         return self.machine.get_state()["sessionId"]
 
-    def request_refill(self, outcome=(True, None)):
+    def request_refill(self, outcome=(True, None), timing=None, controller=None):
         self.db.records["water_refill_sessions/refill"] = {
             "machineId": "machine_001", "status": "waiting_for_user",
         }
@@ -60,7 +63,18 @@ class OfflineRecoveryTests(unittest.TestCase):
             "machineId": "machine_001", "sessionId": "refill", "userId": "buyer",
             "waterAmountMl": 500, "status": "pending",
         }
-        self.machine.run_water_command = Mock(return_value=outcome)
+        def dispense(command, on_dispensing=None, timing=None):
+            timing.update(self.dispense_timing)
+            return outcome
+
+        self.dispense_timing = timing if timing is not None else {
+            "pumpStarted": outcome[0], "pumpOnSeconds": 25.0 if outcome[0] else 0.0,
+            "plannedPumpSeconds": 25.0, "timingReliable": True,
+        }
+        self.machine.run_water_command = Mock(side_effect=dispense)
+        if controller is not None:
+            self.machine.gpio_controller = controller
+            self.machine.run_water_command = Mock(wraps=MachineRuntime.run_water_command.__get__(self.machine))
         self.machine.process_water_refill_request(
             self.db.collection("water_refill_requests").document("request").get())
 
@@ -167,6 +181,116 @@ class OfflineRecoveryTests(unittest.TestCase):
         self.assertEqual(self.db.records["users/buyer"]["points"], 12)
         self.assertEqual(self.db.records["users/owner"]["points"], 2000)
         self.machine.run_water_command.assert_called_once()
+
+    def test_partial_refund_and_owner_credit_survive_lost_commit_response(self):
+        self.request_refill((False, "ERROR WATER_500 CONTAINER_TIMEOUT"), timing={
+            "pumpStarted": True, "pumpOnSeconds": 12.5,
+            "plannedPumpSeconds": 25, "timingReliable": True,
+        })
+        self.lose_response = "settle"
+        with self.assertRaises(TimeoutError):
+            self.sync_refill()
+        self.machine.journal = MachineJournal(self.path)
+        self.machine.journal.recover_refills()
+        self.sync_refill()
+        self.assertEqual(self.db.records["users/buyer"]["points"], 7)
+        self.assertEqual(self.db.records["users/owner"]["points"], 2005)
+        for key in ("water_refill_sessions/refill", "water_refill_requests/request",
+                    "transactions/water-machine_001-request"):
+            record = self.db.records[key]
+            self.assertEqual((record["pointsCharged"], record["pointsRefunded"]), (5, 5))
+            self.assertTrue(record["accountingSettled"])
+        self.assertEqual(self.machine.journal.entries("refill"), [])
+        self.machine.run_water_command.assert_called_once()
+
+    def test_half_point_charge_keeps_owner_balance_usable(self):
+        self.request_refill((False, "CONTAINER_TIMEOUT"), timing={
+            "pumpStarted": True, "pumpOnSeconds": 13,
+            "plannedPumpSeconds": 25, "timingReliable": True,
+        })
+        self.sync_refill()
+        self.assertEqual(self.db.records["users/buyer"]["points"], 6.5)
+        self.assertEqual(self.db.records["users/owner"]["points"], 2005.5)
+
+    def test_actual_controller_timeout_settles_half_of_the_charge(self):
+        hardware = Mock()
+        hardware.distance_cm.side_effect = chain([5, 5, 5], [5] * 125, repeat(20))
+        controller = GPIOController(hardware, ControllerSettings(water_500_seconds=25))
+        clock = [0.0]
+        controller._wait = lambda seconds: clock.__setitem__(0, clock[0] + seconds)
+        with patch("machine.gpio_controller.time.monotonic", side_effect=lambda: clock[0]):
+            self.request_refill(controller=controller)
+        key, record = self.machine.journal.entries("refill")[0]
+        self.assertEqual(record["outcome"], "failed")
+        self.assertEqual(record["pumpOnSeconds"], 12.5)
+        # Competing sync attempts must refund and credit exactly once.
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            list(pool.map(lambda _: self.machine.sync_refill_record(key, record), range(3)))
+        self.assertEqual(self.db.records["users/buyer"]["points"], 7)
+        self.assertEqual(self.db.records["users/owner"]["points"], 2005)
+        self.assertEqual(self.db.records["water_refill_sessions/refill"]["pointsRefunded"], 5)
+
+    def test_legacy_failed_journal_without_timing_requires_review(self):
+        self.request_refill((False, "CONTAINER_TIMEOUT"))
+        key, record = self.machine.journal.entries("refill")[0]
+        for field in ("pumpStarted", "pumpOnSeconds", "plannedPumpSeconds", "timingReliable"):
+            record.pop(field)
+        self.machine.sync_refill_record(key, record)
+        self.assertTrue(self.db.records["water_refill_sessions/refill"]["manualReviewRequired"])
+        self.assertEqual(self.db.records["users/buyer"]["points"], 2)
+
+    def test_no_delivery_refund_does_not_depend_on_owner_balance(self):
+        self.db.records["users/owner"]["points"] = "invalid"
+        self.request_refill((False, "NO_BOTTLE"))
+        self.sync_refill()
+        self.assertEqual(self.db.records["users/buyer"]["points"], 12)
+        self.assertEqual(self.db.records["users/owner"]["points"], "invalid")
+
+    def test_timed_failure_is_available_locally_before_account_sync(self):
+        self.request_refill((False, "CONTAINER_TIMEOUT"), timing={
+            "pumpStarted": True, "pumpOnSeconds": 12.5,
+            "plannedPumpSeconds": 25, "timingReliable": True,
+        })
+        self.machine.db = None
+        create_apps(self.machine)
+        session = self.machine.app.test_client().get("/api/water-refill/session/refill").json["session"]
+        self.assertEqual((session["pointsCharged"], session["pointsRefunded"]), (5, 5))
+        self.assertTrue(session["syncPending"])
+
+    def test_uncertain_hardware_failure_does_not_refund_or_credit_owner(self):
+        self.request_refill((False, "HARDWARE_FAILURE"), timing={
+            "pumpStarted": True, "pumpOnSeconds": 12.5,
+            "plannedPumpSeconds": 25, "timingReliable": False,
+        })
+        self.sync_refill()
+        self.assertEqual(self.db.records["users/buyer"]["points"], 2)
+        self.assertEqual(self.db.records["users/owner"]["points"], 2000)
+        self.assertTrue(self.db.records["water_refill_sessions/refill"]["manualReviewRequired"])
+        self.assertEqual(self.machine.journal.entries("refill")[0][1]["outcome"], "review_required")
+
+    def test_no_refund_after_full_pump_time_settles_only_once(self):
+        self.request_refill((False, "CANCELLED"), timing={
+            "pumpStarted": True, "pumpOnSeconds": 25,
+            "plannedPumpSeconds": 25, "timingReliable": True,
+        })
+        key, record = self.machine.journal.entries("refill")[0]
+        self.machine.sync_refill_record(key, record)
+        self.machine.sync_refill_record(key, record)
+        self.assertEqual(self.db.records["users/buyer"]["points"], 2)
+        self.assertEqual(self.db.records["users/owner"]["points"], 2010)
+        self.assertEqual(self.db.records["water_refill_sessions/refill"]["pointsRefunded"], 0)
+
+    def test_owner_refilling_own_machine_combines_refund_and_credit(self):
+        # The worker records ownership at authorization; this account is also the buyer.
+        self.db.records["machines/machine_001"]["ownerId"] = "buyer"
+        self.db.records["users/buyer"]["role"] = "device_owner"
+        self.request_refill((False, "CONTAINER_TIMEOUT"), timing={
+            "pumpStarted": True, "pumpOnSeconds": 12.5,
+            "plannedPumpSeconds": 25, "timingReliable": True,
+        })
+        self.sync_refill()
+        self.assertEqual(self.db.records["users/buyer"]["points"], 12)
+        self.assertEqual(self.db.records["users/owner"]["points"], 2000)
 
     def test_lost_reservation_response_refunds_without_starting_pump(self):
         self.lose_response = "reserve_refill"

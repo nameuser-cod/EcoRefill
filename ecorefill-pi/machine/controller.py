@@ -21,11 +21,16 @@ class ControllerCommands:
             log("GPIO command failed:", error)
         return ok
 
-    def run_water_command(self, command, on_dispensing=None):
+    def run_water_command(self, command, on_dispensing=None, timing=None):
+        if timing is not None:
+            timing.update(pumpStarted=False, pumpOnSeconds=0.0, timingReliable=True)
         command = command.strip().upper()
         if command not in set(WATER_COMMANDS.values()):
             return False, f"INVALID_COMMAND: {command}"
         if self.gpio_controller is None or self.shutdown_event.is_set():
             return False, "GPIO_CONTROLLER_UNAVAILABLE"
         # Never automatically retry a physical refill.
-        return self.gpio_controller.execute(command, on_dispensing=on_dispensing)
+        options = {"on_dispensing": on_dispensing}
+        if timing is not None:
+            options["timing"] = timing
+        return self.gpio_controller.execute(command, **options)

@@ -5,6 +5,7 @@ import json
 import uuid
 from .config import MACHINE_ID
 from .diagnostics import log
+from .refill_accounting import timed_refund
 
 
 class WaterAPI:
@@ -179,12 +180,29 @@ class WaterAPI:
                 outcome = record["outcome"]
                 status = {"preparing": "processing", "reserved": "processing", "executing": "dispensing",
                           "completed": "completed"}.get(outcome, "failed")
+                accounting = {}
+                message = "Saved on this machine. Account update will sync when connected."
+                if outcome == "failed":
+                    try:
+                        refund = timed_refund(record["pointsUsed"], record)
+                        charged = record["pointsUsed"] - refund
+                        accounting = {"pointsCharged": charged, "pointsRefunded": refund}
+                        message = f"Refill stopped. {charged:g} points charged; {refund:g} points will be refunded when connected."
+                    except ValueError:
+                        accounting["manualReviewRequired"] = True
+                elif outcome in {"uncertain", "review_required"}:
+                    accounting["manualReviewRequired"] = True
+                elif outcome == "completed":
+                    accounting = {"pointsCharged": record["pointsUsed"], "pointsRefunded": 0}
+                if accounting.get("manualReviewRequired"):
+                    message = "Dispensing stopped. Ask the owner to review your charge."
                 return jsonify({"ok": True, "session": {
+                    **accounting,
                     "sessionId": session_id, "machineId": MACHINE_ID,
                     "status": status, "waterAmountMl": record["waterAmountMl"],
                     "pointsUsed": record.get("pointsUsed"),
                     "error": record.get("error"), "syncPending": outcome != "review_required",
-                    "message": "Saved on this machine. Account update will sync when connected.",
+                    "message": message,
                 }})
 
         if self.db is None:
@@ -290,6 +308,10 @@ class WaterAPI:
                             "pointsUsed",
                             0
                         ),
+
+                    "pointsCharged": data.get("pointsCharged"),
+                    "pointsRefunded": data.get("pointsRefunded"),
+                    "manualReviewRequired": data.get("manualReviewRequired", False),
 
                     "remainingPoints":
                         data.get(

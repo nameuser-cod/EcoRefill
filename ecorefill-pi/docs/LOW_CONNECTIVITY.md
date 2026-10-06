@@ -46,6 +46,10 @@ a remote tunnel when the screen is on the Pi.
   `manualReviewRequired: true`. It does not dispense again, automatically refund,
   or credit the owner. An owner must check the delivery and payment before any
   manual adjustment. The local journal retains a `review_required` entry.
+- **Container timeout:** a normal stop with reliable timing refunds unused
+  pump time in 0.5-point increments. Pauses do not count as dispensing time.
+  The owner receives only the retained charge. See [timed refunds](TIMED_REFUNDS.md)
+  for the calculation and uncertainty policy.
 
 Retries reuse record IDs. Cloud transactions prevent duplicate scan counters,
 reward claims, refunds, and owner credits. A lost reservation response never

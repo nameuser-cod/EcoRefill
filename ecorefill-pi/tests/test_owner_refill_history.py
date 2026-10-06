@@ -40,6 +40,12 @@ class RefillHistoryTests(unittest.TestCase):
         self.assertEqual(self.sync()['pointsAdded'], 0)
         self.assertEqual(self.db.records['users/owner']['points'], 0)
 
+    def test_history_sync_preserves_fractional_owner_balance(self):
+        self.db.records['users/owner']['points'] = 0.5
+        self.refill(points=2)
+        self.assertEqual(self.sync()['pointsAdded'], 2)
+        self.assertEqual(self.db.records['users/owner']['points'], 2.5)
+
     def test_duplicate_records_and_repeated_concurrent_syncs_credit_once(self):
         self.refill()
         self.db.records['transactions/duplicate'] = dict(self.db.records['transactions/old-payment'])

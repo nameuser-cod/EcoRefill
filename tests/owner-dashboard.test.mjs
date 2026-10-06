@@ -4,7 +4,7 @@ import { initializeApp, deleteApp } from 'firebase/app';
 import { collection, getFirestore, limit, orderBy, query, queryEqual, where } from 'firebase/firestore';
 import { createOwnerDashboardStore, DASHBOARD_SOURCES } from '../src/pages/owner/utils/ownerDashboardStore.js';
 import { listenToMachineRecords } from '../src/pages/owner/utils/listenToMachineRecords.js';
-import { calculateAnalytics } from '../src/pages/owner/utils/ownerDashboard.js';
+import { calculateAnalytics, getMachineAnalytics } from '../src/pages/owner/utils/ownerDashboard.js';
 import { mergeOwnerActivity } from '../src/pages/owner/utils/ownerActivity.js';
 import { getAlertStatus, updateMachineAlertStatus } from '../src/pages/owner/utils/ownerAlerts.js';
 
@@ -176,9 +176,9 @@ test('small previews retain legacy records with missing dates; genuinely empty r
   assert.deepEqual(results[1], []);
 });
 
-test('analytics and refill activity retain the complete machine history', (t) => {
-  for (const key of ['recycling', 'refills']) {
-    const source = DASHBOARD_SOURCES[key];
+test('monthly details and transaction filters can still read complete history', (t) => {
+  for (const collectionName of ['recycling_records', 'water_refill_sessions']) {
+    const source = { collectionName, maximum: Infinity };
     const { calls, results } = listenerHarness(t, source);
     assert.ok(queryEqual(calls[0].query, baseQuery(source.collectionName)));
     const records = Array.from({ length: 80 }, (_, i) => ({ id: String(i), createdAt: i + 1, accepted: i % 2 === 0 }));
@@ -186,6 +186,34 @@ test('analytics and refill activity retain the complete machine history', (t) =>
     assert.equal(results[0].length, 80);
     assert.equal(calculateAnalytics(results[0]).totalItems, 80);
   }
+});
+
+test('dashboard scan previews stay bounded, including empty results and missing indexes', (t) => {
+  const source = DASHBOARD_SOURCES.recycling;
+  const { calls, results, errors } = listenerHarness(t, source);
+  assert.ok(queryEqual(calls[0].query, query(baseQuery('recycling_records'), orderBy('createdAt', 'desc'), limit(24))));
+  calls[0].next(snapshot([]));
+  assert.equal(calls.length, 1);
+  assert.deepEqual(results, [[]]);
+  const indexError = { code: 'failed-precondition', message: 'The query requires an index.' };
+  calls[0].error(indexError);
+  assert.equal(calls.length, 1); // Never silently download all inline photos.
+  assert.deepEqual(errors, [indexError]);
+});
+
+test('machine counters preserve all-time analytics while only recent photos are loaded', () => {
+  const records = Array.from({ length: 1000 }, (_, i) => ({ accepted: i < 800, category: i < 500 ? 'bottle' : 'can' }));
+  const expected = calculateAnalytics(records);
+  const analytics = getMachineAnalytics({ totalItems: 1000, bottleCount: 500, canCount: 300, rejectedCount: 200 });
+  for (const key of ['totalItems', 'bottleCount', 'canCount', 'acceptedCount', 'rejectedCount', 'acceptanceRate']) {
+    assert.equal(analytics[key], expected[key]);
+  }
+  assert.equal(getMachineAnalytics({ totalItems: 1, bottleCount: 1 }).acceptedCount, 1);
+  assert.equal(getMachineAnalytics({ totalItems: 0 }).totalItems, 0);
+  for (const machine of [
+    {}, { totalItems: 5, bottleCount: 6 }, { totalItems: -1 }, { totalItems: '5' },
+    { totalItems: 1, bottleCount: true }, { totalItems: 1, canCount: Infinity },
+  ]) assert.equal(getMachineAnalytics(machine), null);
 });
 
 test('capping transactions preserves the five newest merged activities and claimed-scan deduplication', () => {

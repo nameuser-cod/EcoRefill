@@ -86,6 +86,22 @@ export const calculateAnalytics = (records) => {
   };
 };
 
+// The Pi commits these cumulative counters with each scan. Missing individual
+// counters mean zero; inconsistent or invalid totals require a history read.
+export function getMachineAnalytics(machine) {
+  if (!machine || !Number.isSafeInteger(machine.totalItems) || machine.totalItems < 0) return null;
+  const counts = [machine.bottleCount ?? 0, machine.canCount ?? 0, machine.rejectedCount ?? 0];
+  if (counts.some((count) => !Number.isSafeInteger(count) || count < 0)) return null;
+  const [bottleCount, canCount, rejectedCount] = counts;
+  if (bottleCount + canCount + rejectedCount !== machine.totalItems) return null;
+  const acceptedCount = bottleCount + canCount;
+  return {
+    bottleCount, canCount, rejectedCount, acceptedCount, totalItems: machine.totalItems,
+    acceptanceRate: machine.totalItems ? Math.round(acceptedCount / machine.totalItems * 100) : 0,
+    rejectedTypes: {},
+  };
+}
+
 export const isRejectedTransaction = (transaction) => {
   const status = normalizeText(transaction.status);
   const type = normalizeText(transaction.type);
@@ -149,7 +165,9 @@ export const getTransactionDescription = (transaction) => {
 
   if (type === "water refill") {
     const action = normalizeText(transaction.status) === "completed" ? "dispensed" : "requested";
-    return `${transaction.waterAmountMl || 0} ml ${action} · Point cost: ${transaction.pointsUsed || 0}`;
+    const charged = transaction.pointsCharged ?? transaction.pointsUsed ?? 0;
+    const refund = transaction.pointsRefunded > 0 ? ` · ${transaction.pointsRefunded} points refunded` : "";
+    return `${transaction.waterAmountMl || 0} ml ${action} · Point cost: ${charged}${refund}`;
   }
 
   if (type === "point purchase") {

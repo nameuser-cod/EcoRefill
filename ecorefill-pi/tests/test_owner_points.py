@@ -71,6 +71,11 @@ class OwnerPointsTests(unittest.TestCase):
         self.complete()
         self.assertEqual(self.db.records['users/owner']['points'], 5)
 
+    def test_completed_refill_preserves_fractional_owner_earnings(self):
+        self.db.records['users/owner']['points'] = 2000.5
+        self.complete()
+        self.assertEqual(self.db.records['users/owner']['points'], 2005.5)
+
     def test_credit_stays_with_owner_at_time_of_refill(self):
         self.db.records['machines/machine_001']['ownerId'] = 'stranger'
         self.complete()
@@ -123,7 +128,11 @@ class WorkerPointsTests(unittest.TestCase):
         )
 
     def process(self, success):
-        self.machine.run_water_command = Mock(return_value=(success, None if success else 'WATER_TIMEOUT'))
+        def dispense(command, on_dispensing=None, timing=None):
+            timing.update(pumpStarted=success, pumpOnSeconds=13.0 if success else 0.0,
+                          plannedPumpSeconds=13.0, timingReliable=True)
+            return success, None if success else 'WATER_TIMEOUT'
+        self.machine.run_water_command = Mock(side_effect=dispense)
         request = self.db.collection('water_refill_requests').document('request').get()
         with patch.dict('sys.modules', {'firebase_admin': SimpleNamespace(firestore=self.firestore)}):
             self.machine.process_water_refill_request(request)

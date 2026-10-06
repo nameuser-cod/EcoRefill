@@ -66,6 +66,7 @@ cp config/inspection.example.json inspection.local.json
 - [HX711 weight sensor](docs/WEIGHT_SENSOR.md)
 - [Visual inspection](docs/INSPECTION.md)
 - [Offline recovery and local kiosk](docs/LOW_CONNECTIVITY.md)
+- [Dispensing time and partial refunds](docs/TIMED_REFUNDS.md)
 - [Public tunnel and phone registration](docs/CLOUDFLARE_TUNNEL.md)
 - [Phone notification installation](docs/PHONE_NOTIFICATIONS.md)
 

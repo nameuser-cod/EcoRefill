@@ -1,3 +1,5 @@
+import { getRefillPointsCharged, getRefillRefundDescription } from "./refillAccounting.js";
+
 export const TRANSACTION_FILTERS = [
   ["all", "All"],
   ["recycling", "Recycling"],
@@ -19,9 +21,13 @@ export const getTransactionDescription = (transaction) => {
   }
 
   if (transaction.type === "water_refill") {
-    return `-${transaction.pointsUsed || 0} points • ${
+    const refund = getRefillRefundDescription(transaction);
+    if (transaction.manualReviewRequired) {
+      return `${transaction.pointsUsed || 0} points reserved • ${refund}`;
+    }
+    return `-${getRefillPointsCharged(transaction)} points • ${
       transaction.waterAmountMl || 0
-    } ml`;
+    } ml${transaction.status === "failed" ? " requested" : ""}${refund ? ` • ${refund}` : ""}`;
   }
 
   if (transaction.type === "point_purchase") {

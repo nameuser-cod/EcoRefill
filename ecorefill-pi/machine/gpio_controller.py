@@ -62,11 +62,44 @@ class GPIOController:
         self.operation_lock = threading.Lock()
         self.reset_pending = False
         self.closed = False
+        self._active_water_timing = None
+        self._pump_started_at = None
+
+    def _record_pump_stop(self):
+        if self._pump_started_at is not None:
+            self._active_water_timing["pumpOnSeconds"] = round(
+                self._active_water_timing["pumpOnSeconds"] + max(
+                    0.0, time.monotonic() - self._pump_started_at,
+                ), 9,
+            )
+            self._pump_started_at = None
+
+    def _pump(self, enabled):
+        # RESET and shutdown use the same lock and record the actual stop time.
+        with self.state_lock:
+            if enabled:
+                self._check_cancel()
+                self._pump_started_at = time.monotonic()
+                self._active_water_timing["pumpStarted"] = True
+            self.hardware.pump(enabled)
+            if not enabled:
+                self._record_pump_stop()
+            return self._pump_started_at
+
+    def _all_off(self):
+        with self.state_lock:
+            try:
+                self.hardware.all_off()
+            except Exception:
+                if self._active_water_timing and self._active_water_timing["pumpStarted"]:
+                    self._active_water_timing["timingReliable"] = False
+                raise
+            self._record_pump_stop()
 
     def open(self):
         self.hardware.open()
         try:
-            self.hardware.all_off()
+            self._all_off()
             self._center()
         except BaseException:
             self.close()
@@ -136,27 +169,23 @@ class GPIOController:
         self._check_cancel()
         self.emit(f"DISPENSING {command}")
         # Serialize the last cancellation check with RESET/close's pump-off.
-        with self.state_lock:
-            self._check_cancel()
-            self.hardware.pump(True)
-        deadline = time.monotonic() + duration
+        started_at = self._pump(True)
+        deadline = started_at + duration
         try:
             while time.monotonic() < deadline:
                 distance = self._distance()
                 if distance is None or distance > s.remove_distance_cm:
-                    self.hardware.pump(False)
+                    self._pump(False)
                     paused_at = time.monotonic()
                     self.emit(f"PAUSED {command} WAITING FOR CONTAINER")
                     self._wait_for_container_return(paused_at)
-                    with self.state_lock:
-                        self._check_cancel()
-                        self.hardware.pump(True)
+                    self._pump(True)
                     # Preserve the remaining pump-on time across every pause.
                     deadline += time.monotonic() - paused_at
                     self.emit(f"DISPENSING {command}")
                 self._wait(max(0, min(0.1, deadline - time.monotonic())))
         finally:
-            self.hardware.pump(False)
+            self._pump(False)
 
     def _wait_for_container_return(self, paused_at):
         deadline = paused_at + self.settings.container_return_seconds
@@ -175,8 +204,16 @@ class GPIOController:
                 return
         raise OperationError("CONTAINER_TIMEOUT")
 
-    def execute(self, command, on_dispensing=None):
+    def execute(self, command, on_dispensing=None, timing=None):
         command = command.strip().upper()
+        water_timing = {
+            "pumpStarted": False, "pumpOnSeconds": 0.0, "timingReliable": True,
+        }
+        if command in {"WATER_250", "WATER_500", "WATER_1000"}:
+            water_timing["plannedPumpSeconds"] = getattr(self.settings, f"{command.lower()}_seconds")
+        if timing is not None:
+            timing.update(water_timing)
+            water_timing = timing
         allowed = {"BOTTLE", "CAN", "REJECT", "RESET", "WATER_250", "WATER_500", "WATER_1000"}
         if command not in allowed:
             return False, f"INVALID_COMMAND: {command}"
@@ -188,9 +225,10 @@ class GPIOController:
             if self.reset_pending or not self.operation_lock.acquire(blocking=False):
                 return False, f"ERROR {command} BUSY"
             self.cancel.clear()
+            self._active_water_timing = water_timing if command.startswith("WATER_") else None
         error = None
         try:
-            self.hardware.all_off()
+            self._all_off()
             if command.startswith("WATER_"):
                 self._water(command, on_dispensing)
             else:
@@ -200,12 +238,19 @@ class GPIOController:
             error = str(failure)
         except Exception as failure:
             error = f"HARDWARE_FAILURE {failure}"
+            if water_timing["pumpStarted"]:
+                water_timing["timingReliable"] = False
         finally:
             try:
-                self.hardware.all_off()
+                self._all_off()
             except Exception as failure:
                 error = f"HARDWARE_FAILURE {failure}"
-            self.operation_lock.release()
+                if water_timing["pumpStarted"]:
+                    water_timing["timingReliable"] = False
+            with self.state_lock:
+                self._active_water_timing = None
+                self._pump_started_at = None
+                self.operation_lock.release()
         response = f"ERROR {command} {error}" if error else f"OK {command}"
         self.emit(response)
         return (False, response) if error else (True, None)
@@ -219,7 +264,7 @@ class GPIOController:
             self.reset_pending = True
             self.cancel.set()
         try:
-            self.hardware.all_off()
+            self._all_off()
             with self.operation_lock:
                 with self.state_lock:
                     if self.closed:
@@ -242,7 +287,7 @@ class GPIOController:
             self.closed = True
             self.cancel.set()
         try:
-            self.hardware.all_off()
+            self._all_off()
         finally:
             with self.operation_lock:
                 self.hardware.close()

@@ -1,7 +1,9 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { ImageOff, X } from "lucide-react";
 import { formatTimestamp, getDetectedMaterial, getTransactionUser, isRejectedTransaction } from "../utils/ownerDashboard";
 import { getRecyclingPhotoItems } from "../utils/recyclingPhotos";
+import useMachineCollection from "../hooks/useMachineCollection";
+import { OwnerError, OwnerLoading } from "./OwnerFeedback";
 
 function ItemPhoto({ item }) {
   const [failedSource, setFailedSource] = useState(null);
@@ -37,7 +39,12 @@ function ItemPhoto({ item }) {
 function RecyclingPhotoDialog({ transaction, records, onClose }) {
   const dialogRef = useRef(null);
   const titleId = useId();
-  const items = getRecyclingPhotoItems(transaction, records);
+  // A batch reward can include scans outside the dashboard's recent preview.
+  // Load complete history only when its photos are opened, then reuse the cache.
+  const needsHistory = transaction.source !== "recycling_records" && transaction.sessionId && transaction.machineId;
+  const history = useMachineCollection("recycling_records", needsHistory ? transaction.machineId : undefined, Infinity);
+  const items = useMemo(() => getRecyclingPhotoItems(transaction, needsHistory ? history.records : records),
+    [transaction, needsHistory, history.records, records]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -58,14 +65,20 @@ function RecyclingPhotoDialog({ transaction, records, onClose }) {
         <div>
           <h2 id={titleId}>Recycling photos</h2>
           <p>{getTransactionUser(transaction)}</p>
-          <p>{items.length} {items.length === 1 ? "item" : "items"}</p>
+          {!history.loading && !history.error && <p>{items.length} {items.length === 1 ? "item" : "items"}</p>}
         </div>
         <button className="close-photos-button" type="button" onClick={onClose} aria-label="Close recycling photos" autoFocus>
           <X size={24} aria-hidden="true" />
         </button>
       </header>
       <div className="owner-photo-gallery">
-        {items.map((item) => <ItemPhoto key={item.id} item={item} />)}
+        {history.loading ? <>
+          <OwnerLoading label="Loading all photos in this batch..." />
+          <button className="retry-dashboard-button" type="button" onClick={history.retry}>Try again</button>
+        </> : history.error ? <>
+          <OwnerError message={history.error} />
+          <button className="retry-dashboard-button" type="button" onClick={history.retry}>Try again</button>
+        </> : items.map((item) => <ItemPhoto key={item.id} item={item} />)}
       </div>
     </dialog>
   );

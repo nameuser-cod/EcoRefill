@@ -9,6 +9,7 @@ export default function useMachineCollection(collectionName, machineId, maximum 
   const result = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   return {
     ...result,
+    retry: store.refresh,
     error: result.error ? `We could not load ${collectionName.replaceAll("_", " ")}.` : "",
   };
 }

@@ -27,7 +27,7 @@ function OwnerDashboard() {
     loading: machineLoading,
     error: machineError,
   } = useOwnerMachine();
-  const dashboard = useOwnerDashboard(machine?.id);
+  const dashboard = useOwnerDashboard(machine?.id, machine);
   const { recycling, transactions, alerts, refills } = dashboard.sections;
   const logoutAction = (
     <LogoutButton
@@ -92,13 +92,21 @@ function OwnerDashboard() {
       <div className="owner-dashboard-layout">
         <div className="owner-dashboard-main">
           <DashboardSection
-            title="Recycling overview and scan history"
+            title="Recycling overview"
+            sources={[dashboard.analyticsSource]}
+            hasContent={!dashboard.analyticsSource.loading && !dashboard.analyticsSource.error}
+            onRetry={dashboard.retryAnalytics}
+          >
+            <RecyclingOverview key={machine.id} analytics={dashboard.analytics} machine={machine} />
+          </DashboardSection>
+          <DashboardSection
+            title="Scan history"
             sources={[recycling]}
             hasContent={dashboard.recentItems.length > 0}
             onRetry={() => dashboard.retry(["recycling"])}
           >
-            <RecyclingOverview key={machine.id} analytics={dashboard.analytics} machine={machine} records={dashboard.recentItems} />
-            <RecentScans key={machine.id} items={dashboard.recentItems} />
+            <RecentScans key={machine.id} items={dashboard.recentItems}
+              canLoadMore={dashboard.canLoadMoreScans} onLoadMore={dashboard.loadMoreScans} loading={recycling.loading} />
           </DashboardSection>
         </div>
 

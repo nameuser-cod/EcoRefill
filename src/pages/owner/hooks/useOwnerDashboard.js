@@ -1,25 +1,27 @@
-import { useMemo, useSyncExternalStore } from "react";
-import { calculateAnalytics } from "../utils/ownerDashboard";
+import { useMemo, useState, useSyncExternalStore } from "react";
+import { calculateAnalytics, getMachineAnalytics } from "../utils/ownerDashboard";
 import { mergeOwnerActivity } from "../utils/ownerActivity";
-import { createOwnerDashboardStore } from "../utils/ownerDashboardStore";
+import { createOwnerDashboardStore, DASHBOARD_SOURCES, DASHBOARD_SCAN_LIMIT } from "../utils/ownerDashboardStore";
 import useOwnerMachine from "./useOwnerMachine";
+import useMachineCollection from "./useMachineCollection";
+import { subscribeToOwnerRecords } from "../utils/machineRecordsStore";
 
-function useOwnerDashboard(machineId) {
+function useOwnerDashboard(machineId, machine) {
   const { getRecordsStore } = useOwnerMachine();
-  const store = useMemo(() => createOwnerDashboardStore(machineId, (source, id, onRecords, onError) => {
-    const records = getRecordsStore(source, id);
-    const publish = () => {
-      const result = records.getSnapshot();
-      if (result.error) onError(result.error);
-      else if (!result.loading) onRecords(result.records);
-    };
-    const stop = records.subscribe(publish);
-    publish();
-    return stop;
-  }), [machineId, getRecordsStore]);
+  const [scanLimit, setScanLimit] = useState(DASHBOARD_SCAN_LIMIT);
+  const sources = useMemo(() => ({
+    ...DASHBOARD_SOURCES,
+    recycling: { ...DASHBOARD_SOURCES.recycling, maximum: scanLimit, recent: Number.isFinite(scanLimit), bounded: Number.isFinite(scanLimit) },
+  }), [scanLimit]);
+  const store = useMemo(() => createOwnerDashboardStore(machineId, (source, id, onRecords, onError, options) =>
+    subscribeToOwnerRecords(getRecordsStore(source, id), onRecords, onError, options), sources),
+  [machineId, getRecordsStore, sources]);
   const sections = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const { recycling, transactions, alerts, refills } = sections;
-  const analytics = useMemo(() => calculateAnalytics(recycling.records), [recycling.records]);
+  const summary = getMachineAnalytics(machine);
+  const history = useMachineCollection("recycling_records", summary ? undefined : machineId, Infinity);
+  const historyAnalytics = useMemo(() => calculateAnalytics(history.records), [history.records]);
+  const analytics = summary || historyAnalytics;
   const recentTransactions = useMemo(
     () => mergeOwnerActivity(transactions.records, recycling.records, refills.records, 5),
     [transactions.records, recycling.records, refills.records]
@@ -27,6 +29,10 @@ function useOwnerDashboard(machineId) {
 
   return {
     analytics,
+    analyticsSource: summary ? { loading: false, error: "" } : history,
+    retryAnalytics: history.retry,
+    canLoadMoreScans: Number.isFinite(scanLimit) && (recycling.records.length >= scanLimit || (summary?.totalItems ?? 0) > recycling.records.length),
+    loadMoreScans: () => setScanLimit((current) => recycling.records.length < current ? Infinity : current + DASHBOARD_SCAN_LIMIT),
     recentItems: recycling.records,
     recentTransactions,
     recentAlerts: alerts.records,

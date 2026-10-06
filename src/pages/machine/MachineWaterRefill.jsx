@@ -143,6 +143,12 @@ function MachineWaterRefill() {
   const retrySession = () => { void createRefillSession(); };
 
   const getFriendlyRefillError = () => {
+    if (session?.manualReviewRequired) {
+      return { title: "Charge awaiting review", message: session.message || "Ask the owner to review your charge." };
+    }
+    if (session?.pointsCharged != null) {
+      return { title: "Refill stopped", message: session.message };
+    }
     const rawError = String(
       session?.error ||
       session?.message ||

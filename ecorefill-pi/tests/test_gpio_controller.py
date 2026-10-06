@@ -51,6 +51,57 @@ class ControllerTests(unittest.TestCase):
         s = ControllerSettings()
         self.assertEqual((s.water_250_seconds, s.water_500_seconds, s.water_1000_seconds), (13, 25, 45))
 
+    def test_reported_pump_time_excludes_multiple_pauses_and_waiting(self):
+        timing = {}
+        self.hardware.distance_cm.side_effect = chain(
+            [5, 5, 5, 5, None, None, 5, 5, 20, 5, 5], repeat(5),
+        )
+        self.assertEqual(self.controller.execute("WATER_250", on_dispensing=Mock(), timing=timing), (True, None))
+        self.assertEqual(timing["plannedPumpSeconds"], 0.5)
+        self.assertAlmostEqual(timing["pumpOnSeconds"], 0.5)
+        self.assertTrue(timing["pumpStarted"])
+        self.assertTrue(timing["timingReliable"])
+        self.assertAlmostEqual(self.now, 1.2)
+
+    def test_partial_timeout_reports_only_pumping_before_removal(self):
+        timing = {}
+        self.hardware.distance_cm.side_effect = chain([5, 5, 5, 5], repeat(20))
+        ok, error = self.controller.execute("WATER_250", on_dispensing=Mock(), timing=timing)
+        self.assertFalse(ok)
+        self.assertIn("CONTAINER_TIMEOUT", error)
+        self.assertAlmostEqual(timing["pumpOnSeconds"], 0.1)
+        self.assertAlmostEqual(self.now, 5.3)
+        self.assertTrue(timing["timingReliable"])
+
+    def test_prestart_callback_failure_proves_no_pumping(self):
+        timing = {}
+        self.controller.execute("WATER_250", on_dispensing=Mock(side_effect=OSError("storage failure")), timing=timing)
+        self.assertFalse(timing["pumpStarted"])
+        self.assertEqual(timing["pumpOnSeconds"], 0)
+        self.assertTrue(timing["timingReliable"])
+
+    def test_hardware_failure_after_start_marks_timing_uncertain(self):
+        timing = {}
+        self.hardware.distance_cm.side_effect = [5, 5, 5, OSError("sensor failed")]
+        self.controller.execute("WATER_250", timing=timing)
+        self.assertTrue(timing["pumpStarted"])
+        self.assertFalse(timing["timingReliable"])
+
+    def test_external_stop_time_excludes_cleanup_delay(self):
+        timing = {}
+        advance = self.controller._wait
+
+        def stop_after_start(seconds):
+            advance(seconds)
+            if self.hardware.pump.called:
+                self.controller.cancel.set()
+                self.controller._all_off()
+                self.now += 10  # slow shutdown cleanup after relay has switched off
+        self.controller._wait = stop_after_start
+        self.assertIn("CANCELLED", self.controller.execute("WATER_250", timing=timing)[1])
+        self.assertAlmostEqual(timing["pumpOnSeconds"], 0.1)
+        self.assertTrue(timing["timingReliable"])
+
     def test_each_water_command_selects_its_own_calibrated_duration(self):
         self.controller.settings = replace(self.settings, water_500_seconds=1, water_1000_seconds=1.5)
         for command, duration in (("WATER_250", 0.5), ("WATER_500", 1), ("WATER_1000", 1.5)):

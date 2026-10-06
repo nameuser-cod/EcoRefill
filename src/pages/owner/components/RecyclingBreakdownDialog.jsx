@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { calculateMonthlyRecycling, getMonthlyMetric, getRecyclingMonth } from "../utils/monthlyRecycling";
+import { OwnerError, OwnerLoading } from "./OwnerFeedback";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const MATERIALS = [
@@ -10,7 +11,7 @@ const MATERIALS = [
 ];
 const formatCount = (count) => count.toLocaleString("en-US");
 
-function RecyclingBreakdownDialog({ metric, records, total, onClose }) {
+function RecyclingBreakdownDialog({ metric, records, total, onClose, loading = false, error = "", onRetry }) {
   const dialogRef = useRef(null);
   const titleId = useId();
   const yearId = useId();
@@ -72,6 +73,11 @@ function RecyclingBreakdownDialog({ metric, records, total, onClose }) {
         </button>
       </header>
       <div className="owner-breakdown-body">
+        {loading || error ? <>
+          {loading && <OwnerLoading label="Loading complete monthly history..." />}
+          <OwnerError message={error} />
+          <button className="retry-dashboard-button" type="button" onClick={onRetry}>Try again</button>
+        </> : <>
         <div className="owner-breakdown-toolbar">
           <label htmlFor={yearId}>Year
             <select id={yearId} value={year} onChange={(event) => {
@@ -130,6 +136,7 @@ function RecyclingBreakdownDialog({ metric, records, total, onClose }) {
           </dl>}
           {selectedCounts.total === 0 && <p className="owner-monthly-empty">No {metric.label.toLowerCase()} recorded this month.</p>}
         </section>
+        </>}
       </div>
     </dialog>
   );

@@ -132,6 +132,29 @@ test('dashboard previews return the newest five records scoped to the selected m
   }
 });
 
+test('dashboard scan previews return only twenty-four recent photos for the selected machine', async () => {
+  await environment.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await Promise.all([
+      ...Array.from({ length: 30 }, (_, i) => setDoc(doc(db, 'recycling_records', `scan-preview-${i}`), {
+        machineId: 'scan-preview-machine', accepted: true, createdAt: new Date(2026, 0, i + 1),
+        imageDataUrl: 'synthetic-photo',
+      })),
+      setDoc(doc(db, 'recycling_records/scan-preview-other'), {
+        machineId: 'other-machine', accepted: true, createdAt: new Date(2027, 0, 1),
+      }),
+    ]);
+  });
+  const makeQuery = (db) => query(collection(db, 'recycling_records'),
+    where('machineId', '==', 'scan-preview-machine'), orderBy('createdAt', 'desc'), limit(24));
+  const db = environment.authenticatedContext('preview-owner').firestore();
+  const snapshot = await assertSucceeds(getDocs(makeQuery(db)));
+  assert.equal(snapshot.size, 24);
+  assert.equal(snapshot.docs[0].id, 'scan-preview-29');
+  assert.equal(snapshot.docs[23].id, 'scan-preview-6');
+  await assertFails(getDocs(makeQuery(environment.unauthenticatedContext().firestore())));
+});
+
 test('owner can set and move a machine pin; signed-in readers see the saved coordinates', async () => {
   const db = environment.authenticatedContext('owner').firestore();
   const ref = doc(db, 'machines/machine_001');

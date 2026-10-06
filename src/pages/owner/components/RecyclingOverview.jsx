@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CheckCircle2, Package, PackageX, Recycle } from "lucide-react";
 import MachineMetrics from "./MachineMetrics";
 import RecyclingBreakdownDialog from "./RecyclingBreakdownDialog";
+import useMachineCollection from "../hooks/useMachineCollection";
+import { calculateAnalytics } from "../utils/ownerDashboard";
 
 const SUMMARY_ITEMS = [
   { key: "bottleCount", label: "Bottles", icon: Package },
@@ -10,7 +12,14 @@ const SUMMARY_ITEMS = [
   { key: "rejectedCount", label: "Rejected", icon: PackageX },
 ];
 
-function RecyclingOverview({ analytics, machine, records = [] }) {
+function MonthlyHistory({ metric, machineId, onClose }) {
+  const history = useMachineCollection("recycling_records", machineId, Infinity);
+  const totals = useMemo(() => calculateAnalytics(history.records), [history.records]);
+  return <RecyclingBreakdownDialog metric={metric} records={history.records}
+    total={totals[metric.key]} loading={history.loading} error={history.error} onRetry={history.retry} onClose={onClose} />;
+}
+
+function RecyclingOverview({ analytics, machine }) {
   const [selectedMetric, setSelectedMetric] = useState(null);
   return (
     <section className="owner-panel owner-analytics-panel">
@@ -46,8 +55,7 @@ function RecyclingOverview({ analytics, machine, records = [] }) {
         </div>
       </div>
       {selectedMetric && (
-        <RecyclingBreakdownDialog metric={selectedMetric} records={records}
-          total={analytics[selectedMetric.key]} onClose={() => setSelectedMetric(null)} />
+        <MonthlyHistory metric={selectedMetric} machineId={machine.id} onClose={() => setSelectedMetric(null)} />
       )}
     </section>
   );

@@ -135,7 +135,7 @@ test("only thirty activity rows are selected, with every old record still reacha
   assert.deepEqual(paginateOwnerActivity([], 5).items, []);
 });
 
-test("dashboard and transaction history share the same machine records", () => {
+test("monthly details and transaction history share the same complete records", () => {
   const cache = createOwnerRecordsCache("owner", "machine", () => () => {});
   const dashboard = cache.getStore({ collectionName: "recycling_records", maximum: Infinity }, "machine");
   const transactions = cache.getStore({ collectionName: "recycling_records", maximum: Infinity, recent: false }, "machine");

@@ -1,4 +1,5 @@
 import { CheckCircle2, CupSoda, LoaderCircle } from "lucide-react";
+import { getRefillPointsCharged } from "../utils/refillAccounting";
 
 const STATUS_CONTENT = {
   waiting_for_user: {
@@ -37,8 +38,8 @@ function RefillStatusCard({ onReturn, selectedOption, session, userPoints }) {
   const content =
     status === "failed"
       ? {
-          title: "Refill Failed",
-          message: session?.error || "The machine could not complete the refill.",
+          title: session?.manualReviewRequired ? "Charge Awaiting Review" : "Refill Stopped",
+          message: session?.message || session?.error || "The machine could not complete the refill.",
         }
       : STATUS_CONTENT[status];
 
@@ -65,9 +66,15 @@ function RefillStatusCard({ onReturn, selectedOption, session, userPoints }) {
         <strong>{session?.waterAmountMl || selectedOption?.waterAmountMl || 0} ml</strong>
       </div>
       <div className="refill-success-details">
-        <span>Points used</span>
-        <strong>{session?.pointsUsed || selectedOption?.pointsRequired || 0}</strong>
+        <span>{session?.manualReviewRequired ? "Points reserved" : "Points charged"}</span>
+        <strong>{getRefillPointsCharged(session, selectedOption?.pointsRequired || 0)}</strong>
       </div>
+      {session?.pointsRefunded != null && session.pointsRefunded > 0 && (
+        <div className="refill-success-details">
+          <span>{session.syncPending ? "Refund pending" : "Points refunded"}</span>
+          <strong>{session.pointsRefunded}</strong>
+        </div>
+      )}
       <div className="refill-success-details">
         <span>Remaining points</span>
         <strong>{userPoints}</strong>

@@ -217,6 +217,15 @@ class PaymentTests(unittest.TestCase):
         self.assertEqual(self.call('getGcashOptions')['sellers'][0]['availablePoints'], 0)
         self.assert_code('failed-precondition', self.create)
 
+    def test_owner_can_sell_whole_points_from_fractional_refill_earnings(self):
+        self.db.records['users/owner']['points'] = 100.5
+        self.assertEqual(self.call('getGcashOptions')['sellers'][0]['availablePoints'], 100)
+        self.create(points=100)
+        self.submit()
+        self.review()
+        self.assertEqual(self.db.records['users/owner']['points'], 0.5)
+        self.assertEqual(self.db.records['users/buyer']['points'], 107)
+
     def test_only_buyer_can_submit(self):
         self.create()
         self.assert_code('permission-denied', lambda: self.submit(uid='other'))

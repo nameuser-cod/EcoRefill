@@ -1,6 +1,7 @@
 """Credit historical completed refills without replaying dispensing or customer charges."""
 import hashlib
 import json
+from .points import valid_points
 
 MAX_POINTS = 9007199254740991
 SYNC_BATCH_SIZE = 25
@@ -61,7 +62,7 @@ def sync_owner_refills(db, timestamp, run_transaction, owner_id, cursor=None):
         owner_ref = db.collection("users").document(owner_id)
         owner = owner_ref.get(transaction=tx).to_dict() or {}
         balance = owner.get("points", 0)
-        if owner.get("role") != "device_owner" or type(balance) is not int or not 0 <= balance <= MAX_POINTS:
+        if owner.get("role") != "device_owner" or not valid_points(balance):
             raise ValueError("Your owner points balance is invalid. Contact an administrator.")
         ownership = {machine.id: db.collection("machines").document(machine.id).get(transaction=tx).to_dict() or {}
                      for machine in machines}
