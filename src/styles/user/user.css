@@ -190,6 +190,14 @@ button.confirm-logout-button:focus-visible {
   box-sizing: border-box;
 }
 
+.user-dashboard-page :is(input, select, textarea),
+.scan-page :is(input, select, textarea),
+.history-page :is(input, select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+  font-size: 16px;
+}
+
 /* ---------- SHARED USER BUTTONS ---------- */
 
 .user-dashboard-page button,
@@ -247,7 +255,7 @@ button.confirm-logout-button:focus-visible {
 .scan-page,
 .history-page {
   min-height: 100dvh;
-  padding: 24px;
+  padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
   background: linear-gradient(90deg, rgba(8, 17, 11, 0.055) 1px, transparent 1px),
     linear-gradient(rgba(8, 17, 11, 0.055) 1px, transparent 1px),
     radial-gradient(circle at 8% 8%, #9cff59, transparent 22%),
@@ -260,7 +268,7 @@ button.confirm-logout-button:focus-visible {
 .scan-container,
 .history-container {
   width: 100%;
-  max-width: 560px;
+  max-width: 480px;
   margin: 0 auto;
   padding-bottom: 36px;
 }
@@ -268,7 +276,7 @@ button.confirm-logout-button:focus-visible {
 .user-page-with-nav .user-dashboard-container,
 .user-page-with-nav .scan-container,
 .user-page-with-nav .history-container {
-  padding-bottom: 112px;
+  padding-bottom: calc(112px + env(safe-area-inset-bottom));
 }
 
 .dashboard-header,
@@ -404,6 +412,12 @@ button.confirm-logout-button:focus-visible {
   font-size: clamp(42px, 12vw, 58px);
   font-weight: 950;
   line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.points-card > div:first-child,
+.history-summary-card > div:first-child {
+  min-width: 0;
 }
 
 .points-card span,
@@ -579,6 +593,11 @@ button.confirm-logout-button:focus-visible {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.section-header > div {
+  min-width: 0;
 }
 
 .view-history-button,
@@ -682,6 +701,7 @@ button.view-history-button {
   font-size: 12px;
   font-weight: 720;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .status-pill,
@@ -734,6 +754,7 @@ button.history-filter-button {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .history-item-top h3 {
@@ -753,6 +774,7 @@ button.history-filter-button {
   font-size: 13px;
   font-weight: 720;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .points-earned {
@@ -1501,6 +1523,8 @@ button.retry-camera-button {
 
 .profile-card h2 {
   margin: 0 0 6px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .profile-card p {
@@ -1508,6 +1532,9 @@ button.retry-camera-button {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .profile-avatar {
@@ -1590,7 +1617,7 @@ button.retry-camera-button {
   left: 50%;
   bottom: max(12px, env(safe-area-inset-bottom));
   z-index: 900;
-  width: min(calc(100% - 24px), 540px);
+  width: min(calc(100% - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)), 456px);
   padding: 8px;
   border: 3px solid #08110b;
   border-radius: 20px;
@@ -1672,7 +1699,7 @@ button.retry-camera-button {
   .user-dashboard-page,
   .scan-page,
   .history-page {
-    padding: 18px 16px;
+    padding: max(18px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   }
 
   .dashboard-header,
@@ -1773,7 +1800,7 @@ button.retry-camera-button {
   }
 
   .user-bottom-nav {
-    width: calc(100% - 16px);
+    width: calc(100% - 16px - env(safe-area-inset-left) - env(safe-area-inset-right));
     bottom: max(8px, env(safe-area-inset-bottom));
     padding: 6px;
     border-radius: 18px;

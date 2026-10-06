@@ -213,7 +213,7 @@ button.confirm-logout-button:focus-visible {
 .owner-app-page {
   color: #08110b;
   min-height: 100dvh;
-  padding: 24px 24px 136px;
+  padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) calc(136px + env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
   font-family: Inter, Arial, Helvetica, sans-serif;
   background: linear-gradient(90deg, rgba(8, 17, 11, 0.055) 1px, transparent 1px),
     linear-gradient(rgba(8, 17, 11, 0.055) 1px, transparent 1px),
@@ -248,9 +248,15 @@ button.confirm-logout-button:focus-visible {
 }
 
 .owner-app-shell {
-  width: min(100%, 1180px);
+  width: 100%;
   margin: 0 auto;
-  max-width: 560px;
+  max-width: 480px;
+}
+
+.owner-app-page :is(input, select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+  font-size: 16px;
 }
 
 .owner-app-header {
@@ -374,6 +380,11 @@ button.view-transactions-button:hover {
 
 .owner-app-header > div {
   min-width: 0;
+}
+
+.owner-app-header-action {
+  flex-shrink: 0;
+  align-self: flex-start;
 }
 
 .owner-app-page button:hover:not(:disabled) {
@@ -620,6 +631,7 @@ button.view-transactions-button:hover {
   display: block;
   font-size: 32px;
   color: #166534;
+  overflow-wrap: anywhere;
 }
 
 .owner-points p {
@@ -1195,9 +1207,8 @@ button.next-page-button {
 }
 
 .owner-scan-status {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+  display: inline-flex;
+  flex-shrink: 0;
   padding: 5px 7px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.92);
@@ -1219,7 +1230,16 @@ button.next-page-button {
   padding: 11px;
 }
 
+.owner-scan-caption-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .owner-scan-info strong {
+  min-width: 0;
+  flex: 1;
   overflow: hidden;
   display: block;
   text-overflow: ellipsis;
@@ -1228,7 +1248,8 @@ button.next-page-button {
   text-transform: capitalize;
 }
 
-.owner-scan-info span {
+.owner-scan-meta span,
+.owner-scan-meta time {
   overflow: hidden;
   display: block;
   text-overflow: ellipsis;
@@ -1288,6 +1309,7 @@ button.next-page-button {
   font-size: 0.72rem;
   font-weight: 600;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .owner-activity-row time,
@@ -1453,7 +1475,7 @@ button.next-page-button {
 
 button.filter-alerts-button,
 button.filter-transactions-button {
-  min-height: 39px;
+  min-height: 44px;
   padding: 9px 14px;
   flex: 0 0 auto;
   border: 3px solid #08110b;
@@ -1482,7 +1504,7 @@ button.reviewed-payments-button {
 
 button.filter-scans-button,
 button.filter-material-button {
-  min-height: 39px;
+  min-height: 44px;
   padding: 9px 14px;
   flex: 0 0 auto;
   border: 3px solid #08110b;
@@ -1702,6 +1724,7 @@ button.resolve-alert-button:focus-visible {
 }
 
 .owner-profile-identity > span {
+  flex-shrink: 0;
   width: 58px;
   height: 58px;
   display: grid;
@@ -1716,6 +1739,11 @@ button.resolve-alert-button:focus-visible {
 .owner-profile-identity h2 {
   margin: 0 0 5px;
   font-size: 1.1rem;
+  overflow-wrap: anywhere;
+}
+
+.owner-profile-identity > div {
+  min-width: 0;
 }
 
 .owner-profile-identity p {
@@ -1726,6 +1754,7 @@ button.resolve-alert-button:focus-visible {
   color: #102719;
   font-size: 0.75rem;
   font-weight: 650;
+  overflow-wrap: anywhere;
 }
 
 .owner-profile-form label {
@@ -1865,7 +1894,7 @@ button.save-owner-profile-button {
   top: auto;
   left: 50%;
   bottom: max(12px, env(safe-area-inset-bottom));
-  width: min(calc(100% - 24px), 540px);
+  width: min(calc(100% - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)), 456px);
   min-height: 0;
   padding: 8px;
   display: block;
@@ -2591,7 +2620,7 @@ fieldset > button.use-location-button {
 @media (max-width: 520px) {
 
   .owner-app-page {
-    padding: 18px 16px 130px;
+    padding: max(18px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) calc(130px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   }
 
   .owner-app-header {
@@ -2692,7 +2721,7 @@ fieldset > button.use-location-button {
   }
 
   .owner-app-nav {
-    width: calc(100% - 16px);
+    width: calc(100% - 16px - env(safe-area-inset-left) - env(safe-area-inset-right));
     bottom: max(8px, env(safe-area-inset-bottom));
     padding: 6px;
   }
