@@ -10,6 +10,15 @@ const fixtures = [
   { id: "blank", coordinates: { latitude: "", longitude: "" } },
 ];
 
+test("map status expires idle machines and returns online after a fresh heartbeat", () => {
+  const now = Date.UTC(2026, 9, 6);
+  const records = [{ ...fixtures[0], machineStatus: "Online", lastHeartbeatAt: { seconds: now / 1000 } }];
+  assert.equal(getLocatedMachines(records, now)[0].status, "Online");
+  assert.equal(getLocatedMachines(records, now + 90_000)[0].status, "Offline");
+  records[0].lastHeartbeatAt = { seconds: (now + 120_000) / 1000 };
+  assert.equal(getLocatedMachines(records, now + 120_000)[0].status, "Online");
+});
+
 test("only valid saved coordinates become pins, including zero and offline machines", () => {
   const machines = getLocatedMachines([...fixtures, { id: "zero", coordinates: { latitude: 0, longitude: 0 } }]);
   assert.deepEqual(machines.map(({ id }) => id), ["near", "far", "zero"]);

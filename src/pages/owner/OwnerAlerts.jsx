@@ -12,9 +12,9 @@ import {
 } from "./components/OwnerFeedback";
 import useMachineCollection from "./hooks/useMachineCollection";
 import useOwnerMachine from "./hooks/useOwnerMachine";
-import { getAlertStatus, updateMachineAlertStatus } from "./utils/ownerAlerts";
+import { getAlertStatus, loadMachineAlertScan, updateMachineAlertStatus } from "./utils/ownerAlerts";
 
-const FILTERS = ["all", "unread", "read", "resolved"];
+const FILTERS = ["all", "unread", "read"];
 
 function OwnerAlerts() {
   useEffect(() => { clearPendingNotification(); }, []);
@@ -57,7 +57,7 @@ function OwnerAlerts() {
               : `${unreadAlerts} unread alert${unreadAlerts === 1 ? "" : "s"}`}
           </span>
         </div>
-        <div className="owner-filter-row" aria-label="Alert filters">
+        <div className="owner-filter-row owner-alert-filters" aria-label="Alert filters">
           {FILTERS.map((filter) => {
             const count = filter === "all"
               ? alerts.length
@@ -95,6 +95,7 @@ function OwnerAlerts() {
               <OwnerAlertRow
                 key={`${machine.id}:${alert.id}`}
                 alert={alert}
+                onViewScan={() => loadMachineAlertScan(db, alert)}
                 onStatusChange={(alertId, status) => updateMachineAlertStatus(db, {
                   alertId, status, machineId: machine.id, userId: currentUser?.uid,
                 })}

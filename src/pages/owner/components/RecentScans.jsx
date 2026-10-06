@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { Camera, ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
 import { OwnerEmpty } from "./OwnerFeedback";
+import PhotoActivityRow from "./PhotoActivityRow";
+import RecyclingPhotoDialog from "./RecyclingPhotoDialog";
 import {
   formatTimestamp,
   getDetectedMaterial,
@@ -30,6 +32,7 @@ function RecentScans({ items, canLoadMore = false, onLoadMore, loading = false }
   const [statusFilter, setStatusFilter] = useState("all");
   const [materialFilter, setMaterialFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const [selectedScan, setSelectedScan] = useState(null);
   const filteredItems = useMemo(() => items.filter((item) => {
     const accepted = item.accepted === true;
     if (statusFilter === "accepted" && !accepted) return false;
@@ -118,37 +121,40 @@ function RecentScans({ items, canLoadMore = false, onLoadMore, loading = false }
         />
       ) : (
         <div className="owner-scan-grid">
-          {visibleItems.map((item) => (
-            <article className="owner-scan-card" key={item.id}>
-              <div className="owner-scan-photo">
-                {item.imageDataUrl || item.imageUrl ? (
-                  <img
-                    src={item.imageDataUrl || item.imageUrl}
-                    alt={getDetectedMaterial(item)}
-                    loading="lazy"
-                  />
-                ) : (
-                  <span>
-                    <ImageOff size={23} />
-                  </span>
-                )}
-                <span
-                  className={`owner-scan-status ${
-                    item.accepted === true ? "accepted" : "rejected"
-                  }`}
-                >
-                  {item.accepted === true ? "Accepted" : "Rejected"}
-                </span>
-              </div>
-              <div className="owner-scan-info">
-                <strong>{getDetectedMaterial(item)}</strong>
-                <span>
-                  {Math.round(Number(item.confidence || 0) * 100)}% ·{" "}
-                  {formatTimestamp(item.createdAt)}
-                </span>
-              </div>
-            </article>
-          ))}
+          {visibleItems.map((item) => {
+            const material = String(getDetectedMaterial(item)).replaceAll("_", " ");
+            return (
+              <PhotoActivityRow className="owner-scan-card" key={item.id}
+                onOpen={() => setSelectedScan({ ...item, source: "recycling_records" })}>
+                <div className="owner-scan-photo">
+                  {item.imageDataUrl || item.imageUrl ? (
+                    <img
+                      src={item.imageDataUrl || item.imageUrl}
+                      alt={`Machine scan of ${material}`}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <span className="owner-scan-missing">
+                      <ImageOff size={23} />
+                    </span>
+                  )}
+                  <span className="owner-scan-photo-hint">View photo</span>
+                </div>
+                <div className="owner-scan-info">
+                  <div className="owner-scan-caption-heading">
+                    <strong>{material}</strong>
+                    <span className={`owner-scan-status ${item.accepted === true ? "accepted" : "rejected"}`}>
+                      {item.accepted === true ? "Accepted" : "Rejected"}
+                    </span>
+                  </div>
+                  <div className="owner-scan-meta">
+                    <span>{Math.round(Number(item.confidence || 0) * 100)}% confidence</span>
+                    <time>{formatTimestamp(item.createdAt)}</time>
+                  </div>
+                </div>
+              </PhotoActivityRow>
+            );
+          })}
         </div>
       )}
       {canLoadMore && (
@@ -179,6 +185,10 @@ function RecentScans({ items, canLoadMore = false, onLoadMore, loading = false }
             Next <ChevronRight size={16} aria-hidden="true" />
           </button>
         </nav>
+      )}
+      {selectedScan && (
+        <RecyclingPhotoDialog transaction={selectedScan}
+          onClose={() => setSelectedScan(null)} />
       )}
     </section>
   );

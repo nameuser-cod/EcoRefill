@@ -31,12 +31,13 @@ from .sync import JournalSync
 from .tunnel import RedemptionTunnel
 from .water_api import WaterAPI
 from .water_worker import WaterRequestWorker
+from .presence import MachinePresence
 
 
 class MachineRuntime(
     MachineState, JournalSync, FirebaseSupport, ControllerCommands, CameraSupport,
     MaterialDetection, RecyclingWorker, WaterRequestWorker,
-    MachineAPI, WaterAPI, RewardsAPI, RedemptionTunnel,
+    MachineAPI, WaterAPI, RewardsAPI, RedemptionTunnel, MachinePresence,
 ):
     def __init__(self):
         self.state_lock = threading.RLock()
@@ -66,6 +67,7 @@ class MachineRuntime(
         self.journal = None
         self.sync_thread = None
         self.notification_thread = None
+        self.presence_thread = None
         self.notifications = None
         self.reward_sync_lock = threading.Lock()
         self._started = False
@@ -247,6 +249,10 @@ class MachineRuntime(
             self.worker_thread.start()
             self.water_request_thread.start()
             self.start_redemption_tunnel()
+            self.presence_thread = threading.Thread(
+                target=self.machine_presence_worker, name="machine-presence", daemon=True,
+            )
+            self.presence_thread.start()
             self._started = True
         except BaseException:
             self.close()

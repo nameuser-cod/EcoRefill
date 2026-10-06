@@ -184,7 +184,9 @@ service cloud.firestore {
           || (currentAlertStatus() == 'read'
             && request.resource.data.status == 'resolved')
         );
-      allow create, delete: if false;
+      allow delete: if ownsMachine(resource.data.machineId)
+        && currentAlertStatus() in ['unread', 'read', 'resolved'];
+      allow create: if false;
     }
 
     // Main transaction history

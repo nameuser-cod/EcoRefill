@@ -10,6 +10,8 @@ import { listenToMachineRecords } from "./utils/listenToMachineRecords";
 import { createActivityNameResolver } from "./utils/activityNameResolver";
 import { callPoints } from "../../firebase/pointPurchases";
 import { createRefillHistorySync } from "./utils/refillHistorySync";
+import { getMachinePresenceStatus } from "./utils/machinePresence";
+import usePresenceClock from "./hooks/usePresenceClock";
 
 const listenRecords = (source, machineId, next, error) =>
   listenToMachineRecords(db, source, machineId, next, error);
@@ -28,6 +30,8 @@ export default function OwnerWorkspace() {
       }, error),
   }), []);
   const account = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+  const now = usePresenceClock();
+  const machineStatus = getMachinePresenceStatus(account.machine, now);
   const machineId = account.machine?.id;
   const ownerId = account.currentUser?.uid;
   const recordCache = useMemo(() => createOwnerRecordsCache(ownerId, machineId, listenRecords), [ownerId, machineId]);
@@ -49,8 +53,10 @@ export default function OwnerWorkspace() {
   }, [account.authReady, account.currentUser, account.owner?.role, navigate]);
 
   const value = useMemo(() => ({
-    ...account, updateOwnerName: store.updateOwnerName, getRecordsStore: recordCache.getStore,
+    ...account,
+    machine: account.machine ? { ...account.machine, machineStatus } : null,
+    updateOwnerName: store.updateOwnerName, getRecordsStore: recordCache.getStore,
     resolveActivityNames, syncRefillHistory,
-  }), [account, store, recordCache, resolveActivityNames, syncRefillHistory]);
+  }), [account, machineStatus, store, recordCache, resolveActivityNames, syncRefillHistory]);
   return <OwnerWorkspaceContext value={value}><Outlet /></OwnerWorkspaceContext>;
 }

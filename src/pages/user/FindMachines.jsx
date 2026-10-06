@@ -7,11 +7,14 @@ import { auth, db } from "../../firebase/firebase";
 import UserBottomNav from "./components/UserBottomNav";
 import MachineFinderMap from "./components/MachineFinderMap";
 import { directionsUrl, findMachines, getLocatedMachines } from "./utils/machineFinder";
+import usePresenceClock from "../owner/hooks/usePresenceClock";
 import "../../styles/user/user.css";
 
 export default function FindMachines() {
   const navigate = useNavigate();
-  const [machines, setMachines] = useState([]);
+  const [machineRecords, setMachineRecords] = useState([]);
+  const now = usePresenceClock();
+  const machines = useMemo(() => getLocatedMachines(machineRecords, now), [machineRecords, now]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
@@ -37,11 +40,11 @@ export default function FindMachines() {
       setLoading(true);
       setError("");
       unsubscribeMachines = onSnapshot(collection(db, "machines"), (snapshot) => {
-        setMachines(getLocatedMachines(snapshot.docs.map((item) => ({ ...item.data(), id: item.id }))));
+        setMachineRecords(snapshot.docs.map((item) => ({ ...item.data(), id: item.id })));
         setLoading(false);
         setError("");
       }, () => {
-        setMachines([]);
+        setMachineRecords([]);
         setError("Could not load machine locations. Check your connection and try again.");
         setLoading(false);
       });

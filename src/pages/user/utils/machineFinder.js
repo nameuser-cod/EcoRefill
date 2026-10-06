@@ -1,8 +1,9 @@
 import { parseCoordinates } from "../../owner/utils/machineLocation.js";
+import { getMachinePresenceStatus } from "../../owner/utils/machinePresence.js";
 
 const cleanText = (value) => typeof value === "string" ? value.trim() : "";
 
-export function getLocatedMachines(machines) {
+export function getLocatedMachines(machines, now = Date.now()) {
   return machines.flatMap((machine) => {
     const coordinates = parseCoordinates(machine.coordinates?.latitude, machine.coordinates?.longitude);
     if (!coordinates) return [];
@@ -11,7 +12,7 @@ export function getLocatedMachines(machines) {
       machineId: cleanText(machine.machineId) || machine.id,
       name: cleanText(machine.machineName) || cleanText(machine.machineId) || machine.id,
       location: cleanText(machine.location) || "Location name not provided",
-      status: cleanText(machine.machineStatus) || "Unknown",
+      status: getMachinePresenceStatus(machine, now),
       coordinates,
     }];
   });

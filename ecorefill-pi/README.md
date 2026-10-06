@@ -26,6 +26,20 @@ ecorefill-pi/
 Keep local `gpio.local.json`, `inspection.local.json`, and Firebase credentials
 in their configured locations. The existing model and queue paths are retained.
 
+## Machine online status
+
+The controller updates `machines/{MACHINE_ID}` with `machineStatus: "Online"`
+and a server timestamp in `lastHeartbeatAt` every 30 seconds, including while
+idle. The owner dashboard, owner profile, and machine finder show **Offline**
+after 90 seconds without a heartbeat (checked every 5 seconds), including after
+power loss or an internet outage. The next successful heartbeat restores
+**Online**. A saved Online status without a heartbeat is treated as Offline.
+
+Install the updated frontend and complete `machine/` package, then restart
+`machine_flow.py` on the Pi. Its configured `MACHINE_ID` must match an existing
+Firestore machine document. Presence uses the existing Firebase Admin
+credentials and does not require a scheduled Cloud Function.
+
 ## Run tests
 
 ```bash

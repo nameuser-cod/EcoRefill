@@ -1,14 +1,39 @@
 import { useRef, useState } from "react";
-import { BellRing, Check, CheckCheck } from "lucide-react";
+import { BellRing, Check, CheckCheck, Image } from "lucide-react";
 import { OwnerError } from "./OwnerFeedback";
+import RecyclingPhotoDialog from "./RecyclingPhotoDialog";
 import { formatTimestamp, getStatusTone } from "../utils/ownerDashboard";
 import { alertUpdateError, getAlertStatus } from "../utils/ownerAlerts";
 
-function OwnerAlertRow({ alert, onStatusChange }) {
+function OwnerAlertRow({ alert, onStatusChange, onViewScan }) {
   const [saving, setSaving] = useState("");
   const [error, setError] = useState("");
   const busy = useRef(false);
+  const scanBusy = useRef(false);
+  const [loadingScan, setLoadingScan] = useState(false);
+  const [scanError, setScanError] = useState("");
+  const [selectedScan, setSelectedScan] = useState(null);
   const status = getAlertStatus(alert);
+  const canViewScan = Boolean(alert.recyclingRecordId && onViewScan);
+  const canChangeStatus = ["unread", "read"].includes(status);
+  const canResolve = canChangeStatus || status === "resolved";
+
+  const viewScan = async () => {
+    if (scanBusy.current) return;
+    scanBusy.current = true;
+    setLoadingScan(true);
+    setScanError("");
+    try {
+      setSelectedScan(await onViewScan());
+    } catch (failure) {
+      setScanError(failure.code === "permission-denied"
+        ? "You do not have permission to view this scan."
+        : failure.message || "Could not load the scan. Please try again.");
+    } finally {
+      scanBusy.current = false;
+      setLoadingScan(false);
+    }
+  };
 
   const changeStatus = async (nextStatus) => {
     if (busy.current) return;
@@ -26,33 +51,51 @@ function OwnerAlertRow({ alert, onStatusChange }) {
   };
 
   return (
-    <article className="owner-record-row" aria-busy={Boolean(saving)}>
-      <span className="owner-record-icon owner-alert-record-icon"><BellRing size={21} /></span>
-      <div>
-        <strong>{alert.alertType?.replaceAll("_", " ") || "Machine alert"}</strong>
-        <p>{alert.message || "No details provided"}</p>
-        <time>{formatTimestamp(alert.createdAt)}</time>
-        {["unread", "read"].includes(status) && (
-          <>
+    <>
+      <article className="owner-record-row owner-alert-row" aria-busy={Boolean(saving) || loadingScan}>
+        <div className="owner-alert-heading">
+          <span className="owner-record-icon owner-alert-record-icon"><BellRing size={21} /></span>
+          <strong>{alert.alertType?.replaceAll("_", " ") || "Machine alert"}</strong>
+          <span className={`owner-status tone-${getStatusTone(status)}`}>{status}</span>
+        </div>
+        <div className="owner-alert-details">
+          <p>{alert.message || "No details provided"}</p>
+          <time>{formatTimestamp(alert.createdAt)}</time>
+          {(canViewScan || canResolve) && (
             <div className="owner-alert-actions">
+              {canViewScan && (
+                <button className="view-scan-button" type="button" disabled={loadingScan}
+                  aria-haspopup="dialog" onClick={viewScan}>
+                  <Image size={16} aria-hidden="true" />
+                  {loadingScan ? "Loading scan…" : "View scan"}
+                </button>
+              )}
               {status === "unread" && (
                 <button className="mark-read-button" type="button" disabled={Boolean(saving)} onClick={() => changeStatus("read")}>
                   <Check size={16} aria-hidden="true" />
                   {saving === "read" ? "Saving…" : "Mark as read"}
                 </button>
               )}
-              <button className="resolve-alert-button" type="button" disabled={Boolean(saving)} onClick={() => changeStatus("resolved")}>
-                <CheckCheck size={16} aria-hidden="true" />
-                {saving === "resolved" ? "Saving…" : "Resolve"}
-              </button>
+              {canResolve && (
+                <button className="resolve-alert-button" type="button" disabled={Boolean(saving)} onClick={() => changeStatus("resolved")}>
+                  <CheckCheck size={16} aria-hidden="true" />
+                  {saving === "resolved" ? "Deleting…" : status === "resolved" ? "Delete alert" : "Resolve"}
+                </button>
+              )}
             </div>
-            <p className="owner-alert-help">Resolve after you have addressed the machine issue.</p>
-          </>
-        )}
-        <OwnerError message={error} />
-      </div>
-      <span className={`owner-status tone-${getStatusTone(status)}`}>{status}</span>
-    </article>
+          )}
+          {canChangeStatus && (
+            <p className="owner-alert-help">Resolve after addressing the machine issue. This deletes the alert.</p>
+          )}
+          <OwnerError message={scanError} />
+          <OwnerError message={error} />
+        </div>
+      </article>
+      {selectedScan && (
+        <RecyclingPhotoDialog transaction={selectedScan}
+          onClose={() => setSelectedScan(null)} />
+      )}
+    </>
   );
 }
 

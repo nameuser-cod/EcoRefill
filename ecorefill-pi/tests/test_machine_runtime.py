@@ -569,8 +569,8 @@ class LifecycleTests(unittest.TestCase):
             thread.return_value.start.side_effect = check_ready
             machine.start()
             machine.start()
-            self.assertEqual(thread.call_count, 5)
-            self.assertEqual(thread.return_value.start.call_count, 5)
+            self.assertEqual(thread.call_count, 6)
+            self.assertEqual(thread.return_value.start.call_count, 6)
             tunnel.assert_called_once_with()
             machine.close()
 

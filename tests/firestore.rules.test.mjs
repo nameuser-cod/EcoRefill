@@ -248,21 +248,25 @@ async function seedAlert(id, data = {}) {
 }
 const alertStatusUpdate = (status, userId = 'owner') => ({ status, statusUpdatedAt: serverTimestamp(), statusUpdatedBy: userId });
 
-test('owner can mark an alert read, then resolve it with a verified actor and timestamp', async () => {
+test('owner can mark an alert read, then resolve it by deleting only the alert', async () => {
   const alertId = 'owner-alert-flow';
-  await seedAlert(alertId);
+  await seedAlert(alertId, { recyclingRecordId: 'owner-alert-scan' });
+  await environment.withSecurityRulesDisabled((context) => setDoc(doc(context.firestore(), 'recycling_records/owner-alert-scan'), {
+    machineId: 'machine_001', accepted: false, imageDataUrl: 'data:image/jpeg;base64,scan',
+  }));
   const db = environment.authenticatedContext('owner').firestore();
   const machineBefore = (await getDoc(doc(db, 'machines/machine_001'))).data();
   const reference = doc(db, 'machine_alerts', alertId);
   const original = (await getDoc(reference)).data();
-  for (const status of ['read', 'resolved']) {
-    await assertSucceeds(updateMachineAlertStatus(db, { alertId, machineId: 'machine_001', userId: 'owner', status }));
-    const saved = (await getDoc(reference)).data();
-    assert.equal(saved.status, status);
-    assert.equal(saved.statusUpdatedBy, 'owner');
-    assert.ok(saved.statusUpdatedAt.toMillis() > 0);
-    for (const key of ['machineId', 'message', 'alertType', 'createdAt']) assert.deepEqual(saved[key], original[key]);
-  }
+  await assertSucceeds(updateMachineAlertStatus(db, { alertId, machineId: 'machine_001', userId: 'owner', status: 'read' }));
+  const saved = (await getDoc(reference)).data();
+  assert.equal(saved.status, 'read');
+  assert.equal(saved.statusUpdatedBy, 'owner');
+  assert.ok(saved.statusUpdatedAt.toMillis() > 0);
+  for (const key of ['machineId', 'message', 'alertType', 'createdAt']) assert.deepEqual(saved[key], original[key]);
+  await assertSucceeds(updateMachineAlertStatus(db, { alertId, machineId: 'machine_001', userId: 'owner', status: 'resolved' }));
+  assert.equal((await getDoc(reference)).exists(), false);
+  assert.equal((await getDoc(doc(db, 'recycling_records/owner-alert-scan'))).data().imageDataUrl, 'data:image/jpeg;base64,scan');
   assert.deepEqual((await getDoc(doc(db, 'machines/machine_001'))).data(), machineBefore);
   // Repeating a successful resolve is harmless across tabs/devices.
   await assertSucceeds(updateMachineAlertStatus(db, { alertId, machineId: 'machine_001', userId: 'owner', status: 'resolved' }));
@@ -270,30 +274,35 @@ test('owner can mark an alert read, then resolve it with a verified actor and ti
 
 test('owner can resolve unread alerts directly and acknowledge legacy status values', async () => {
   const db = environment.authenticatedContext('owner').firestore();
-  for (const [index, status] of ['unread', 'Unread', null, '', '   '].entries()) {
+  for (const [index, status] of ['unread', 'Unread', null, '', '   ', 'read', ' Read ', 'resolved', 'Resolved'].entries()) {
     const alertId = `legacy-alert-${index}`;
     await seedAlert(alertId, { status });
     await assertSucceeds(updateMachineAlertStatus(db, { alertId, machineId: 'machine_001', userId: 'owner', status: 'resolved' }));
+    assert.equal((await getDoc(doc(db, 'machine_alerts', alertId))).exists(), false);
   }
   await seedAlert('missing-alert-status');
   await environment.withSecurityRulesDisabled((context) => updateDoc(doc(context.firestore(), 'machine_alerts/missing-alert-status'), { status: deleteField() }));
   await assertSucceeds(updateMachineAlertStatus(db, { alertId: 'missing-alert-status', machineId: 'machine_001', userId: 'owner', status: 'read' }));
 });
 
-test('other owners, ordinary users, and signed-out clients cannot change alert status', async () => {
+test('other owners, ordinary users, and signed-out clients cannot change or delete alerts', async () => {
   await seedAlert('protected-alert');
   for (const context of [environment.authenticatedContext('other-owner'), environment.authenticatedContext('buyer'), environment.unauthenticatedContext()]) {
     for (const status of ['read', 'resolved']) {
       await assertFails(updateDoc(doc(context.firestore(), 'machine_alerts/protected-alert'), alertStatusUpdate(status)));
     }
+    await assertFails(deleteDoc(doc(context.firestore(), 'machine_alerts/protected-alert')));
   }
   await seedAlert('other-owner-alert', { machineId: 'machine_002' });
   await assertFails(updateDoc(doc(environment.authenticatedContext('owner').firestore(), 'machine_alerts/other-owner-alert'), {
     ...alertStatusUpdate('resolved'), machineId: 'machine_001',
   }));
+  await assertFails(updateMachineAlertStatus(environment.authenticatedContext('owner').firestore(), {
+    alertId: 'other-owner-alert', machineId: 'machine_002', userId: 'owner', status: 'resolved',
+  }));
 });
 
-test('alert status permission rejects forged metadata, alert edits, invalid transitions, creation, and deletion', async () => {
+test('alert status permission rejects forged metadata, alert edits, invalid transitions, and creation', async () => {
   await seedAlert('alert-field-protection');
   const db = environment.authenticatedContext('owner').firestore();
   const reference = doc(db, 'machine_alerts/alert-field-protection');
@@ -310,10 +319,28 @@ test('alert status permission rejects forged metadata, alert edits, invalid tran
   }
   await assertFails(updateDoc(reference, { status: 'read' }));
   await assertFails(setDoc(doc(db, 'machine_alerts/forged-alert'), { machineId: 'machine_001', ...alertStatusUpdate('resolved') }));
-  await assertFails(deleteDoc(reference));
   await assertSucceeds(updateDoc(reference, alertStatusUpdate('resolved')));
   await assertFails(updateDoc(reference, alertStatusUpdate('read')));
   await assertFails(updateDoc(reference, alertStatusUpdate('unread')));
+});
+
+test('owners cannot delete alerts with unsupported statuses', async () => {
+  const db = environment.authenticatedContext('owner').firestore();
+  await seedAlert('invalid-status-alert', { status: 'maintenance' });
+  await assertFails(deleteDoc(doc(db, 'machine_alerts/invalid-status-alert')));
+  await assert.rejects(updateMachineAlertStatus(db, {
+    alertId: 'invalid-status-alert', machineId: 'machine_001', userId: 'owner', status: 'resolved',
+  }), /status cannot be changed/);
+});
+
+test('a stale read action cannot recreate a deleted alert', async () => {
+  const db = environment.authenticatedContext('owner').firestore();
+  await seedAlert('deleted-alert');
+  await updateMachineAlertStatus(db, { alertId: 'deleted-alert', machineId: 'machine_001', userId: 'owner', status: 'resolved' });
+  await assert.rejects(updateMachineAlertStatus(db, {
+    alertId: 'deleted-alert', machineId: 'machine_001', userId: 'owner', status: 'read',
+  }), /no longer exists/);
+  assert.equal((await getDoc(doc(db, 'machine_alerts/deleted-alert'))).exists(), false);
 });
 
 test('a stale action cannot reopen a resolved alert or update a different machine’s record', async () => {
