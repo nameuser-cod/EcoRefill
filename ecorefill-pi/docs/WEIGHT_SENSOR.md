@@ -46,7 +46,7 @@ different acquisition method before integration into the running machine.
 
 **Enabled by default.** The controller initializes the HX711 and requires a
 valid weight reading before accepting a bottle or can. The saved calibration
-and 300 g limits apply automatically.
+and 500 g limits apply automatically.
 
 Copy the updated `machine/` directory to the Pi and restart the controller for
 this change to take effect. Remove any existing `WEIGHT_SENSOR_ENABLED=false`
@@ -78,8 +78,8 @@ detection finishes, so the GPIO sampling loop does not compete with inference.
 
 | Detected material | Passes the weight limit | Rejected |
 | --- | --- | --- |
-| Plastic bottle (`plastic_bottle`, `pet_bottle`) | Up to and including 300 g | Above 300 g |
-| Aluminum can (`aluminum_can`, `aluminium_can`) | Up to and including 300 g | Above 300 g |
+| Plastic bottle (`plastic_bottle`, `pet_bottle`) | Up to and including 500 g | Above 500 g |
+| Aluminum can (`aluminum_can`, `aluminium_can`) | Up to and including 500 g | Above 500 g |
 
 Other material, confidence, and visual rules still apply. When enabled, the weight
 check is required even when visual inspection is `off` or `observe`. Rejected items send
@@ -119,7 +119,7 @@ If initialization fails, fix the connection/dependency and restart the service.
 
 The item must be supported entirely by the weighing plate, clear of the orange
 chute, while the camera verifies it and the sensor samples it. Calibration cannot
-compensate for changing chute contact. Recheck readings near **300 g** on
+compensate for changing chute contact. Recheck readings near **500 g** on
 the running Pi, with the camera/model active. The 3 g spread limit is a movement
 check, not a claim of accuracy; raw precision is retained for threshold decisions.
 
