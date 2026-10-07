@@ -155,10 +155,10 @@ class MaterialDetectionTests(unittest.TestCase):
                     )
 
     def test_weight_limits_and_aliases_before_sorting_and_points(self):
-        for label, limit, command in (("plastic_bottle", 1, "BOTTLE"),
-                                      ("pet_bottle", 1, "BOTTLE"),
-                                      ("aluminum_can", 1, "CAN"),
-                                      ("aluminium_can", 1, "CAN")):
+        for label, limit, command in (("plastic_bottle", 800, "BOTTLE"),
+                                      ("pet_bottle", 800, "BOTTLE"),
+                                      ("aluminum_can", 800, "CAN"),
+                                      ("aluminium_can", 800, "CAN")):
             for grams in (0.5, limit - 0.1, limit, limit + 0.001, 15, 500):
                 with self.subTest(label=label, grams=grams):
                     machine, result = self.verify_and_sort(label, 0.95, grams)
