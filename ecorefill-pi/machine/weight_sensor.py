@@ -148,7 +148,8 @@ class CalibratedScale:
                 # previous-item reading never enters this item's sample window.
                 fresh_raw()
                 values = [fresh_raw() for _ in range(10)]
-                grams = (statistics.median(values) - self.offset) / self.factor
+                raw_median = statistics.median(values)
+                grams = (raw_median - self.offset) / self.factor
                 spread = (max(values) - min(values)) / abs(self.factor)
                 if not math.isfinite(grams) or not math.isfinite(spread):
                     raise WeightReadingError("invalid", "Invalid weight reading")
@@ -157,7 +158,13 @@ class CalibratedScale:
                 if spread > self.max_spread_g:
                     raise WeightReadingError("unstable", "Weight did not settle", reading)
                 if grams <= 0:
-                    raise WeightReadingError("invalid", "No positive item weight detected", reading)
+                    raise WeightReadingError(
+                        "invalid",
+                        f"No positive item weight detected: {grams:.3f} g "
+                        f"(raw={raw_median:g}, offset={self.offset:g}, "
+                        f"counts/gram={self.factor:g})",
+                        reading,
+                    )
                 return reading
             except WeightReadingError:
                 raise
@@ -177,4 +184,3 @@ class CalibratedScale:
                     self.gpio.gpiochip_close(self.handle)
                     self.handle = self.sensor = None
                     self.clock_claimed = False
-

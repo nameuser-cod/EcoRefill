@@ -83,10 +83,20 @@ class CalibratedScaleTests(unittest.TestCase):
         with self.assertRaises(WeightReadingError) as caught:
             scale.read_weight()
         self.assertEqual(caught.exception.status, "unstable")
-        scale = self.scale([-700000] * 11)
-        with self.assertRaises(WeightReadingError) as caught:
-            scale.read_weight()
-        self.assertEqual(caught.exception.status, "invalid")
+        for raw in (-700000, -695343):
+            with self.subTest(raw=raw):
+                scale = self.scale([raw] * 11)
+                with self.assertRaises(WeightReadingError) as caught:
+                    scale.read_weight()
+                error = caught.exception
+                self.assertEqual(error.status, "invalid")
+                grams = (raw + 695343) / 199.538
+                self.assertAlmostEqual(error.reading["grams"], grams)
+                self.assertEqual(error.reading["samples"], 10)
+                self.assertIn(f"{grams:.3f} g", str(error))
+                self.assertIn(f"raw={raw}", str(error))
+                self.assertIn("offset=-695343", str(error))
+                self.assertIn("counts/gram=199.538", str(error))
 
     def test_clock_failure_rejects_then_resets_before_next_measurement(self):
         raw = -695343 + 20 * 199.538
