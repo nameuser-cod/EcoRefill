@@ -1,10 +1,12 @@
 """Protocol and calibration checks without GPIO hardware."""
 
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from io import StringIO
 from itertools import chain, cycle
 from unittest.mock import Mock, patch
 
-from tools.check_weight import calibration_factor
+from tools.check_weight import calibration_factor, main as check_weight_main
 from machine.weight_sensor import HX711, CalibratedScale, WeightReadingError
 
 
@@ -61,6 +63,41 @@ class WeightSensorTests(unittest.TestCase):
                 calibration_factor(1000, 21000, grams, 10)
         with self.assertRaisesRegex(ValueError, "too small"):
             calibration_factor(1000, 1050, 100, 10)
+
+    def test_noisy_calibration_reference_is_rejected_for_both_polarities(self):
+        for loaded in (-552469, -698875):
+            with self.subTest(loaded=loaded):
+                with self.assertRaisesRegex(ValueError, "22.643 g"):
+                    calibration_factor(-625672, loaded, 500, 3315)
+
+    def test_calibration_spread_boundary_and_invalid_tolerance(self):
+        self.assertEqual(calibration_factor(1000, 101000, 500, 600), 200)
+        with self.assertRaisesRegex(ValueError, "unstable"):
+            calibration_factor(1000, 101000, 500, 600.001)
+        for tolerance in (0, -1, float("nan"), float("inf")):
+            with self.subTest(tolerance=tolerance):
+                with self.assertRaisesRegex(ValueError, "maximum spread"):
+                    calibration_factor(1000, 101000, 500, 10, tolerance)
+
+    def test_calibration_diagnostic_does_not_print_coefficients_for_unstable_samples(self):
+        gpio = Mock()
+        gpio.error = RuntimeError
+        stdout, stderr = StringIO(), StringIO()
+        with patch.dict("sys.modules", {"lgpio": gpio}), \
+             patch.dict("os.environ", {"HX711_MAX_SPREAD_G": "3.0"}), \
+             patch("sys.argv", ["check_weight", "--calibrate"]), \
+             patch("tools.check_weight.open_header", return_value=0), \
+             patch("tools.check_weight.HX711") as factory, \
+             patch("builtins.input", side_effect=["", "500", ""]), \
+             redirect_stdout(stdout), redirect_stderr(stderr):
+            factory.return_value.sample.side_effect = [(-625672, 3315), (-552469, 100)]
+            result = check_weight_main()
+        self.assertEqual(result, 1)
+        self.assertIn("Calibration is unstable", stderr.getvalue())
+        self.assertIn("22.643 g", stderr.getvalue())
+        self.assertNotIn("Offset:", stdout.getvalue())
+        self.assertNotIn("Save these numbers", stdout.getvalue())
+        gpio.gpiochip_close.assert_called_once_with(0)
 
 
 class CalibratedScaleTests(unittest.TestCase):

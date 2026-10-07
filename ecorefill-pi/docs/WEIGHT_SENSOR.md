@@ -28,7 +28,10 @@ Next, use a known mass, such as a 100 g calibration weight:
 ```
 
 Follow the prompts to measure the empty platform and the known mass. The script
-prints the offset and signed counts-per-gram factor, then displays grams.
+checks both reference sample ranges using the calculated factor. If either range
+exceeds 3 g (or `HX711_MAX_SPREAD_G`), it reports `Calibration is unstable` and
+exits without printing coefficients to save. Resolve the noise before retrying.
+Otherwise it prints the offset and signed counts-per-gram factor, then displays grams.
 Calibration lasts only for that run; save the printed numbers for later setup.
 Remove the reference mass and verify near-zero readings, then check with a
 different known mass. Displaying tenths of a gram does not establish accuracy.

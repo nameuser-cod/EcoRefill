@@ -2,20 +2,31 @@
 
 import argparse
 import math
+import os
 import sys
 
 from machine.weight_sensor import HX711, open_header
 
 
-def calibration_factor(zero, loaded, grams, noise):
+def calibration_factor(zero, loaded, grams, noise, max_spread_g=3.0):
     if not math.isfinite(grams) or not 0 < grams < 1000:
         raise ValueError("Use a known mass greater than 0 and below 1000 grams.")
+    if not math.isfinite(max_spread_g) or max_spread_g <= 0:
+        raise ValueError("Calibration maximum spread must be finite and positive.")
     if abs(loaded - zero) <= max(1, 10 * noise):
         raise ValueError(
             "Load change is too small compared with noise. Check mounting, "
             "let the platform settle, and retry."
         )
-    return (loaded - zero) / grams
+    factor = (loaded - zero) / grams
+    spread_g = noise / abs(factor)
+    if spread_g > max_spread_g:
+        raise ValueError(
+            f"Calibration is unstable: reference sample spread is {spread_g:.3f} g "
+            f"(maximum {max_spread_g:g} g). Check mounting and wiring, "
+            "then retry when readings are steady."
+        )
+    return factor
 
 
 def main():
@@ -52,7 +63,10 @@ def main():
             input("Place that mass on the platform, let it settle, then press Enter: ")
             sensor.read_raw()
             loaded, loaded_noise = sensor.sample()
-            factor = calibration_factor(zero, loaded, grams, max(empty_noise, loaded_noise))
+            factor = calibration_factor(
+                zero, loaded, grams, max(empty_noise, loaded_noise),
+                max_spread_g=float(os.getenv("HX711_MAX_SPREAD_G", "3.0")),
+            )
             print(f"Offset: {zero}; calibration factor: {factor:.8f} counts/gram")
             print("Save these numbers. Calibration is for this session only.")
             print("Remove the mass: the display should return close to 0 g.")
