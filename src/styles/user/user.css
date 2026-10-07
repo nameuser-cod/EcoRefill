@@ -1499,6 +1499,225 @@ button.retry-camera-button {
   text-align: left;
 }
 
+/* Roomier refill layout using the existing EcoRefill theme. */
+.user-refill-page .user-dashboard-container {
+  max-width: 560px;
+}
+
+.user-refill-page .dashboard-header {
+  justify-content: flex-start;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.user-refill-page .small-title {
+  margin: 0 0 4px;
+  font-size: 12px;
+}
+
+.user-refill-page .dashboard-header h1 {
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -.6px;
+}
+
+.user-refill-page .refill-back-button {
+  width: 44px;
+  height: 44px;
+  flex-basis: 44px;
+}
+
+.refill-balance-card {
+  margin-bottom: 24px;
+  padding: 20px;
+  border: 3px solid #08110b;
+  border-radius: 20px;
+  background: #35d04f;
+  box-shadow: var(--large-shadow-offset) #08110b;
+}
+
+.refill-balance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.refill-balance-row > div {
+  min-width: 0;
+}
+
+.refill-balance-row p {
+  margin: 0 0 6px;
+  color: #08110b;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.refill-balance-row h2 {
+  margin: 0;
+  color: #08110b;
+  font-size: 32px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.refill-balance-row h2 span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #102719;
+}
+
+.user-refill-page .buy-points-button {
+  width: auto;
+  min-height: 44px;
+  margin: 0;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+.refill-balance-card .refill-purchase-note {
+  margin: 16px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid rgba(8, 17, 11, .2);
+  color: #102719;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.user-refill-page .water-selection-section {
+  margin-bottom: 24px;
+  padding: 20px;
+}
+
+.user-refill-page .water-selection-section h2 {
+  margin-bottom: 16px;
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.user-refill-page .water-option-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.user-refill-page .select-water-button {
+  display: grid !important;
+  grid-template-columns: 36px minmax(0, 1fr) auto 22px;
+  gap: 10px;
+  min-height: 76px;
+  padding: 12px !important;
+  border: 3px solid #08110b;
+  border-radius: 14px;
+  background: #fff !important;
+  text-align: left;
+}
+
+.user-refill-page .select-water-button.selected {
+  background: #9cff59 !important;
+  box-shadow: 4px 4px 0 #1f6f3a !important;
+}
+
+.user-refill-page .refill-option-icon,
+.user-refill-page .refill-option-check {
+  display: grid;
+  place-items: center;
+}
+
+.user-refill-page .refill-option-icon {
+  width: 36px;
+  height: 40px;
+}
+
+.user-refill-page .refill-option-amount {
+  display: grid;
+  gap: 4px;
+}
+
+.user-refill-page .refill-option-amount strong {
+  font-size: 20px;
+  white-space: nowrap;
+}
+
+.user-refill-page .refill-option-amount > span {
+  color: #102719;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.user-refill-page .refill-option-cost {
+  color: #102719;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.user-refill-page .refill-option-check {
+  width: 22px;
+  height: 22px;
+  color: #1f6f3a;
+}
+
+.user-refill-page .selected .refill-option-check {
+  border-radius: 50%;
+  background: #1f6f3a;
+}
+
+.user-refill-page .selected .refill-option-check svg {
+  color: #fff;
+}
+
+.user-refill-page .refill-order-summary {
+  margin: 0 0 20px;
+  padding: 18px;
+}
+
+.user-refill-page .refill-order-summary > div {
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.user-refill-page .refill-order-summary strong {
+  font-size: 14px;
+  color: #08110b;
+}
+
+.user-refill-page .refill-safety-note {
+  margin: 0 0 12px;
+  color: #102719;
+  font-size: 13px;
+}
+
+.user-refill-page .confirm-refill-button {
+  min-height: 54px;
+  margin: 0 !important;
+  font-size: 16px;
+}
+
+@media (max-width: 359px) {
+  .refill-balance-row {
+    gap: 12px;
+  }
+
+  .refill-balance-row h2 {
+    font-size: 28px;
+  }
+
+  .user-refill-page .buy-points-button {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .user-refill-page .select-water-button {
+    grid-template-columns: minmax(0, 1fr) auto 22px;
+  }
+
+  .user-refill-page .refill-option-icon {
+    display: none;
+  }
+}
+
 /* ===== User / Profile ===== */
 
 /*

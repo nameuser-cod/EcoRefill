@@ -202,11 +202,6 @@
   color: #a51e28;
 }
 
-.tone-warning .machine-kiosk-hero-icon {
-  background: #fff0b8;
-  color: #714500;
-}
-
 .machine-kiosk-copy {
   min-width: 0;
   max-width: 780px;
@@ -238,17 +233,6 @@
   font-size: 22px;
 }
 
-.machine-kiosk-copy .machine-rejection-weight {
-  font-weight: 800;
-  color: #714500;
-}
-
-.machine-kiosk-copy .machine-rejection-reassurance {
-  font-size: 18px;
-  line-height: 1.4;
-}
-
-.try-another-item-button,
 .reset-machine-button,
 .retry-connection-button,
 .retry-refill-button,
@@ -269,7 +253,6 @@
   cursor: pointer;
 }
 
-.try-another-item-button,
 .reset-machine-button,
 .retry-connection-button,
 .retry-refill-button {
@@ -297,6 +280,14 @@
  */
 
 /* The home screen explains the two ways to start without repeating instructions. */
+
+.machine-home-page .machine-home-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  font-size: 16px;
+  color: #102719;
+}
 
 .machine-home-choices {
   justify-content: center;
@@ -428,6 +419,172 @@
   border-radius: 50%;
   background: #35d04f;
   box-shadow: 0 3px 0 #145527;
+}
+
+.machine-physical-button-blue {
+  background: #38bdf8;
+  border-color: #075985;
+  box-shadow: 0 3px 0 #075985;
+}
+
+.machine-home-footer > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.machine-home-footer .machine-physical-button {
+  width: 20px;
+  height: 20px;
+  flex-basis: 20px;
+  border-width: 2px;
+}
+
+.machine-kiosk-card.machine-ready-card {
+  gap: 28px;
+}
+
+.machine-ready-card .machine-home-heading {
+  flex-direction: column;
+  text-align: center;
+  gap: 14px;
+}
+
+.machine-ready-card .machine-kiosk-hero-icon {
+  width: 64px;
+  height: 64px;
+  flex-basis: 64px;
+}
+
+.machine-ready-card .machine-kiosk-hero-icon svg {
+  width: 40px;
+  height: 40px;
+}
+
+.machine-ready-card .machine-kiosk-copy h2 {
+  font-size: 34px;
+}
+
+.machine-ready-card .machine-kiosk-copy p {
+  margin-top: 8px;
+  font-size: 20px;
+}
+
+.machine-ready-totals {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px 32px;
+  padding: 10px 20px;
+  border-radius: 14px;
+  border: 3px solid #08110b;
+  background: #35d04f;
+  box-shadow: 5px 5px 0 #08110b;
+  color: #08110b;
+  font-size: 18px;
+}
+
+.machine-ready-totals strong {
+  font-size: 24px;
+}
+
+.machine-ready-finish {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  width: min(100%, 560px);
+  padding: 14px 22px;
+  border: 3px solid #08110b;
+  border-radius: 16px;
+  background: #f3ffe8;
+  box-shadow: 5px 5px 0 #08110b;
+  text-align: left;
+}
+
+.machine-ready-finish .machine-physical-button {
+  width: 40px;
+  height: 40px;
+  flex-basis: 40px;
+}
+
+.machine-ready-finish p {
+  font-size: 18px;
+  color: #102719;
+}
+
+.machine-ready-finish strong {
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.machine-ready-page :is(
+  .machine-kiosk-card,
+  .machine-brand-icon,
+  .machine-kiosk-status,
+  .machine-kiosk-hero-icon,
+  .machine-ready-totals,
+  .machine-ready-finish,
+  .machine-physical-button
+) {
+  box-shadow: none;
+}
+
+/* Rejection uses color, a large X, and plain text together. */
+.machine-rejected-page .machine-brand-icon {
+  box-shadow: none;
+}
+
+.machine-kiosk-card.tone-rejected {
+  background: #b91c1c;
+  box-shadow: none;
+  color: #fff;
+  gap: 28px;
+}
+
+.tone-rejected .machine-home-heading {
+  flex-direction: column;
+  gap: 24px;
+  text-align: center;
+}
+
+.tone-rejected .machine-kiosk-hero-icon {
+  width: 144px;
+  height: 144px;
+  flex-basis: 144px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #b91c1c;
+  box-shadow: none;
+}
+
+.tone-rejected .machine-kiosk-hero-icon svg {
+  width: 104px;
+  height: 104px;
+}
+
+.tone-rejected .machine-kiosk-copy h2 {
+  font-size: 40px;
+  line-height: 1.2;
+}
+
+.tone-rejected .machine-kiosk-copy {
+  max-width: 640px;
+}
+
+.tone-rejected .machine-kiosk-copy p {
+  margin-top: 14px;
+  color: #fff;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.machine-rejection-retry {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
 }
 
 .machine-progress {
@@ -1182,4 +1339,109 @@
   .machine-button-guide {
     text-align: left;
   }
+}
+
+@media (max-height: 650px) {
+  .machine-kiosk-card.machine-ready-card {
+    gap: 20px;
+  }
+
+  .machine-ready-card .machine-home-heading {
+    gap: 12px;
+  }
+
+  .machine-ready-card .machine-kiosk-hero-icon {
+    width: 64px;
+    height: 64px;
+    flex-basis: 64px;
+  }
+
+  .machine-ready-card .machine-kiosk-hero-icon svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .machine-ready-card .machine-kiosk-copy h2 {
+    font-size: 28px;
+  }
+
+  .machine-ready-card .machine-kiosk-copy p {
+    font-size: 18px;
+  }
+
+  .machine-ready-totals {
+    padding: 8px 18px;
+  }
+
+  .machine-ready-finish {
+    padding: 12px 18px;
+    gap: 14px;
+  }
+
+  .machine-ready-finish strong {
+    font-size: 22px;
+  }
+
+  .machine-kiosk-card.tone-rejected {
+    gap: 20px;
+    padding: 16px;
+  }
+
+  .tone-rejected .machine-home-heading {
+    gap: 18px;
+  }
+
+  .tone-rejected .machine-kiosk-hero-icon {
+    width: 100px;
+    height: 100px;
+    flex-basis: 100px;
+  }
+
+  .tone-rejected .machine-kiosk-hero-icon svg {
+    width: 76px;
+    height: 76px;
+  }
+
+  .tone-rejected .machine-kiosk-copy h2 {
+    font-size: 32px;
+  }
+
+}
+
+@media (max-height: 520px) {
+  .machine-ready-card .machine-kiosk-hero-icon {
+    width: 48px;
+    height: 48px;
+    flex-basis: 48px;
+  }
+
+  .machine-ready-card .machine-kiosk-hero-icon svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .machine-kiosk-card.tone-rejected {
+    gap: 20px;
+    padding: 12px 16px;
+  }
+
+  .tone-rejected .machine-home-heading {
+    gap: 18px;
+  }
+
+  .tone-rejected .machine-kiosk-hero-icon {
+    width: 96px;
+    height: 96px;
+    flex-basis: 96px;
+  }
+
+  .tone-rejected .machine-kiosk-hero-icon svg {
+    width: 72px;
+    height: 72px;
+  }
+
+  .tone-rejected .machine-kiosk-copy h2 {
+    font-size: 32px;
+  }
+
 }

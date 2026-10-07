@@ -1,4 +1,4 @@
-import { Droplets, LoaderCircle } from "lucide-react";
+import { Check, Circle, Droplets, LoaderCircle } from "lucide-react";
 import { WATER_OPTIONS } from "../constants";
 
 function WaterAmountSelector({
@@ -14,24 +14,22 @@ function WaterAmountSelector({
 }) {
   return (
     <>
-      <section className="points-card">
-        <div>
-          <p>Available Points</p>
-          <h2>{userPoints.toLocaleString()}</h2>
-          <span>Select the amount of water you need.</span>
+      <section className="refill-balance-card" aria-label="Your points balance">
+        <div className="refill-balance-row">
+          <div>
+            <p>Your balance</p>
+            <h2>{userPoints.toLocaleString()} <span>points</span></h2>
+          </div>
           <button type="button" className="buy-points-button" onClick={onBuyPoints} disabled={confirming || !canBuyPoints}>
-            Buy Points
+            Buy points
           </button>
-          <span>1 point = ₱1 via GCash. Owner approval required.</span>
         </div>
-        <div className="points-icon">
-          <Droplets size={42} />
-        </div>
+        <p className="refill-purchase-note">GCash: ₱1 per point. Owner approval required.</p>
       </section>
 
-      <section className="water-selection-section">
-        <h2>Water Amount</h2>
-        <div className="water-option-grid">
+      <section className="water-selection-section" aria-labelledby="water-amount-heading">
+        <h2 id="water-amount-heading">How much water?</h2>
+        <div className="water-option-grid" role="group" aria-labelledby="water-amount-heading">
           {WATER_OPTIONS.map((option) => {
             const selected = selectedAmount === option.waterAmountMl;
 
@@ -41,39 +39,44 @@ function WaterAmountSelector({
                 type="button"
                 className={`select-water-button ${selected ? "selected" : ""}`}
                 onClick={() => onSelect(option.waterAmountMl)}
+                aria-pressed={selected}
+                disabled={confirming}
               >
-                <Droplets size={30} />
-                <span>{option.label}</span>
-                <strong>{option.waterAmountMl.toLocaleString()} ml</strong>
-                <small>{option.pointsRequired} points</small>
+                <span className="refill-option-icon"><Droplets size={24} aria-hidden="true" /></span>
+                <span className="refill-option-amount">
+                  <strong>{option.waterAmountMl.toLocaleString()} ml</strong>
+                  <span>{option.label}</span>
+                </span>
+                <span className="refill-option-cost">{option.pointsRequired} points</span>
+                <span className="refill-option-check" aria-hidden="true">
+                  {selected ? <Check size={18} /> : <Circle size={20} />}
+                </span>
               </button>
             );
           })}
         </div>
       </section>
 
-      <section className="refill-order-summary">
+      <section className="refill-order-summary" aria-label="Refill summary">
         <div>
-          <span>Water amount</span>
-          <strong>{selectedOption?.waterAmountMl || 0} ml</strong>
-        </div>
-        <div>
-          <span>Points required</span>
-          <strong>{selectedOption?.pointsRequired || 0}</strong>
-        </div>
-        <div>
-          <span>Points after refill</span>
+          <span>Balance after refill</span>
           <strong>
-            {Math.max(0, userPoints - (selectedOption?.pointsRequired || 0))}
+            {hasEnoughPoints
+              ? `${(userPoints - (selectedOption?.pointsRequired || 0)).toLocaleString()} points`
+              : "Not enough points"}
           </strong>
         </div>
       </section>
 
       {!hasEnoughPoints && (
         <div className="scan-error-message">
-          <p>You do not have enough points for this amount.</p>
+          <p>You need {Math.max(0, (selectedOption?.pointsRequired || 0) - userPoints)} more points for this amount.</p>
         </div>
       )}
+
+      <p className="refill-safety-note">
+        Place your container under the dispenser first.
+      </p>
 
       <button
         type="button"
@@ -88,12 +91,8 @@ function WaterAmountSelector({
         )}
         {confirming
           ? "Sending Request..."
-          : `Confirm ${selectedOption?.waterAmountMl || 0} ml Refill`}
+          : `Refill ${(selectedOption?.waterAmountMl || 0).toLocaleString()} ml · ${selectedOption?.pointsRequired || 0} points`}
       </button>
-
-      <p className="refill-safety-note">
-        Place your container under the dispenser before confirming.
-      </p>
     </>
   );
 }

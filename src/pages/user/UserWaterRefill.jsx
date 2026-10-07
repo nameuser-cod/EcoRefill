@@ -33,7 +33,7 @@ function UserWaterRefill() {
 
   if (loading) {
     return (
-      <div className="user-dashboard-page">
+      <div className="user-dashboard-page user-refill-page">
         <div className="loading-text">
           <LoaderCircle size={28} className="user-spin" />
           Loading refill session...
@@ -44,7 +44,7 @@ function UserWaterRefill() {
 
   if (purchaseStarted) {
     return (
-      <div className="user-dashboard-page">
+      <div className="user-dashboard-page user-refill-page">
         <div className="user-dashboard-container">
           <RefillStatusCard
             onReturn={() => navigate("/user/dashboard", { replace: true })}
@@ -58,7 +58,7 @@ function UserWaterRefill() {
   }
 
   return (
-    <div className="user-dashboard-page">
+    <div className="user-dashboard-page user-refill-page">
       <div className="user-dashboard-container">
         <header className="dashboard-header">
           <button
@@ -70,8 +70,8 @@ function UserWaterRefill() {
             <ArrowLeft size={22} />
           </button>
           <div>
-            <p className="small-title">EcoRefill Machine</p>
-            <h1>Choose Water Amount</h1>
+            <p className="small-title">EcoRefill</p>
+            <h1>Water refill</h1>
           </div>
         </header>
 

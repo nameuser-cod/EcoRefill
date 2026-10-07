@@ -13,6 +13,7 @@ import {
   Sparkles,
   Wifi,
   WifiOff,
+  X,
 } from "lucide-react";
 import "../../styles/machine/machine.css";
 
@@ -45,6 +46,8 @@ function MachineHome() {
 
   const isBusy = busyPhases.includes(machineState.phase);
   const sizeLabel = connectionError ? null : bottleSizeLabel(machineState);
+  const itemCount = Number(machineState.itemCount || 0);
+  const pointsEarned = Number(machineState.pointsEarned || 0);
 
   useEffect(() => pollMachine(async (signal) => {
     if (actionRef.current) return;
@@ -134,16 +137,17 @@ function MachineHome() {
         };
       case "idle":
         return {
-          eyebrow: "Camera ready",
+          eyebrow: Number(machineState.itemCount || 0) > 0 ? null : "Ready",
           title:
             Number(machineState.itemCount || 0) > 0
-              ? "Add another item"
+              ? "Add another bottle or can"
               : "Insert a bottle or can",
-          message:
-            Number(machineState.itemCount || 0) > 0
-              ? `${machineState.itemCount} item(s) accepted · ${machineState.pointsEarned} EcoPoint(s). Insert another, or press the GREEN button when finished.`
-              : "Insert clean, empty bottles or cans one at a time. When you are finished, press the GREEN button to show one QR code for all your points.",
-          icon: <Eye size={62} />,
+          message: Number(machineState.itemCount || 0) > 0
+            ? "One at a time. Clean and empty."
+            : "Use one empty plastic bottle or aluminum can.",
+          icon: Number(machineState.itemCount || 0) > 0
+            ? <Recycle size={62} />
+            : <Eye size={62} />,
           tone: "idle",
         };
 
@@ -160,7 +164,7 @@ function MachineHome() {
       case "capturing":
         return {
           eyebrow: "Scanning",
-          title: "Taking a quick look 📸",
+          title: "Taking a quick look",
           message:
             "The camera is capturing your item.",
           icon: (
@@ -205,32 +209,25 @@ function MachineHome() {
       case "rejected": {
         const rejection = rejectionMessage(machineState);
         return {
-          eyebrow: "Item not accepted",
           title: rejection.reason,
           message: rejection.action,
-          weightLabel: rejection.weightLabel,
-          icon: <AlertTriangle size={62} />,
-          tone: "warning",
+          icon: <X size={120} strokeWidth={4} />,
+          tone: "rejected",
         };
       }
 
       case "item_accepted":
         return {
-          eyebrow: "Item accepted ✓",
-          title: `${machineState.itemCount || 0} item${
-            Number(machineState.itemCount || 0) === 1 ? "" : "s"
-          } accepted`,
-          message:
-            `${machineState.pointsEarned || 0} EcoPoint${
-              Number(machineState.pointsEarned || 0) === 1 ? "" : "s"
-            } so far. Insert another bottle/can, or press the GREEN button when finished.`,
+          eyebrow: "Item accepted!",
+          title: "Add another bottle or can",
+          message: "One at a time. Clean and empty.",
           icon: <CheckCircle2 size={62} />,
           tone: "success",
         };
 
       case "reward_ready":
         return {
-          eyebrow: "Recycling finished 🎉",
+          eyebrow: "Recycling finished",
           title: "Preparing your reward",
           message:
             "Your total reward QR code is ready.",
@@ -282,6 +279,11 @@ function MachineHome() {
     }
   }, [machineState, connectionError, actionError]);
 
+  const isRejected = screen.tone === "rejected";
+  const showSessionChoices = itemCount > 0 &&
+    ["idle", "item_accepted"].includes(machineState.phase) &&
+    !connectionError && !actionError;
+
   const showWaterChoice =
     machineState.phase === "idle" &&
     Number(machineState.itemCount || 0) === 0 &&
@@ -289,7 +291,7 @@ function MachineHome() {
     !resetting;
 
   return (
-    <div className="machine-page machine-kiosk-page">
+    <div className={`machine-page machine-kiosk-page machine-home-page${isRejected ? " machine-rejected-page" : ""}${showSessionChoices ? " machine-ready-page" : ""}`}>
       <div className="machine-kiosk-shell">
         <header className="machine-kiosk-header">
           <div className="machine-kiosk-brand">
@@ -299,11 +301,11 @@ function MachineHome() {
 
             <div>
               <h1>EcoRefill</h1>
-              <p>Small action. Big impact. 🌱</p>
+              {!isRejected && <p>Small action. Big impact.</p>}
             </div>
           </div>
 
-          <div
+          {!isRejected && <div
             className={`machine-kiosk-status ${
               connectionError
                 ? "is-offline"
@@ -322,40 +324,31 @@ function MachineHome() {
               ? "Connecting"
               : isBusy
               ? "Scanning"
-              : Number(machineState.itemCount || 0) > 0
-              ? `${machineState.itemCount} accepted`
-              : "Camera Active"}
-          </div>
+              : machineState.phase === "paused"
+              ? "Paused"
+              : "Ready"}
+          </div>}
         </header>
 
         <main
-          className={`machine-kiosk-card tone-${screen.tone}${showWaterChoice ? " machine-home-choices" : ""}`}
+          className={`machine-kiosk-card tone-${screen.tone}${showWaterChoice ? " machine-home-choices" : ""}${showSessionChoices ? " machine-ready-card" : ""}`}
         >
           <div className="machine-home-heading">
-            <div className="machine-kiosk-hero-icon">
+            <div className="machine-kiosk-hero-icon" aria-hidden="true">
               {screen.icon}
             </div>
 
             <div className="machine-kiosk-copy" role="status" aria-live="polite" aria-atomic="true">
-              <span className="machine-kiosk-eyebrow">
-                {screen.eyebrow}
-              </span>
+              {screen.eyebrow && (
+                <span className="machine-kiosk-eyebrow">
+                  {screen.eyebrow}
+                  {sizeLabel && machineState.phase !== "rejected" && ` · ${sizeLabel}`}
+                </span>
+              )}
 
               <h2>{screen.title}</h2>
 
               <p>{screen.message}</p>
-              {screen.tone === "warning" && (
-                <>
-                  {screen.weightLabel && (
-                    <p className="machine-rejection-weight">{screen.weightLabel}</p>
-                  )}
-                  <p className="machine-rejection-reassurance">
-                    No points added for this item.
-                    {Number(machineState.itemCount || 0) > 0 && " Your earned points are safe."}
-                  </p>
-                </>
-              )}
-              {sizeLabel && machineState.phase !== "rejected" && <p><strong>{sizeLabel}</strong></p>}
             </div>
           </div>
 
@@ -465,45 +458,32 @@ function MachineHome() {
             </div>
           )}
 
-          {Number(machineState.itemCount || 0) > 0 &&
+          {showSessionChoices && (
+            <div className="machine-ready-totals" aria-label="Your recycling total">
+              <span><strong>{itemCount}</strong> {itemCount === 1 ? "item" : "items"} recycled</span>
+              <span><strong>{pointsEarned}</strong> {pointsEarned === 1 ? "EcoPoint" : "EcoPoints"} earned</span>
+            </div>
+          )}
+
+          {itemCount > 0 && !showSessionChoices && !isRejected &&
             machineState.phase !== "reward_ready" && (
               <div className="machine-detection-pill">
-                Session total: {machineState.itemCount} item(s) ·{" "}
-                {machineState.pointsEarned} EcoPoint(s)
-                {Number(machineState.bottleCount || 0) > 0
-                  ? ` · ${machineState.bottleCount} bottle(s)`
-                  : ""}
-                {Number(machineState.canCount || 0) > 0
-                  ? ` · ${machineState.canCount} can(s)`
-                  : ""}
+                {`${itemCount} item${itemCount === 1 ? "" : "s"} · ${pointsEarned} EcoPoint${pointsEarned === 1 ? "" : "s"}`}
               </div>
             )}
 
-          {Number(machineState.itemCount || 0) > 0 &&
-            ["idle", "item_accepted"].includes(machineState.phase) && (
-              <div className="machine-detection-pill">
-                🟢 Press the GREEN physical button when you are finished
+          {showSessionChoices && (
+            <div className="machine-ready-finish">
+              <span className="machine-physical-button" aria-hidden="true" />
+              <div>
+                <p>Finished?</p>
+                <strong>Press the green button</strong>
               </div>
-            )}
+            </div>
+          )}
 
-          {machineState.phase === "rejected" && (
-            <button
-              className="try-another-item-button"
-              onClick={resetMachine}
-              disabled={resetting}
-            >
-              {resetting ? (
-                <LoaderCircle
-                  size={28}
-                  className="machine-spin"
-                />
-              ) : (
-                <RotateCcw size={28} />
-              )}
-              {resetting
-                ? "Getting ready..."
-                : "Try Again"}
-            </button>
+          {isRejected && (
+            <p className="machine-rejection-retry">Try again</p>
           )}
 
           {machineState.phase === "error" &&
@@ -529,23 +509,17 @@ function MachineHome() {
           )}
         </main>
 
-        <footer className="machine-kiosk-footer machine-home-footer">
-          <span>
-            👁 Insert bottles/cans one at a time
-          </span>
+        {!isRejected && <footer className="machine-kiosk-footer machine-home-footer">
+          {!showSessionChoices && !isRejected && (
+            <span>
+              <PackageOpen size={20} aria-hidden="true" /> One item at a time
+            </span>
+          )}
 
           <span>
-            🟢 Green button = finish & show reward QR
+            <span className="machine-physical-button machine-physical-button-blue" aria-hidden="true" /> Blue button: water
           </span>
-
-          <span>
-            ♻ Clean & empty bottles or cans only
-          </span>
-
-          <span>
-            🔵 Blue button = buy / refill water
-          </span>
-        </footer>
+        </footer>}
       </div>
     </div>
   );

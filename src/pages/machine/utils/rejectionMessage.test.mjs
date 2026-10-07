@@ -8,7 +8,7 @@ test("an overweight scan explains what to do and uses the actual configured limi
     inspection: { weight: { status: "reject", grams: 301.2, limit_g: 300 } },
   });
   assert.equal(message.reason, "This item is too heavy");
-  assert.match(message.action, /empty any liquid or contents/);
+  assert.match(message.action, /Empty it/);
   assert.equal(message.weightLabel, "Maximum weight: 300 g");
   assert.equal(rejectionMessage({
     inspection: { weight: { status: "reject", grams: 151, limit_g: 150 } },
@@ -33,7 +33,7 @@ test("unstable or unavailable weight does not claim the item is too heavy", () =
   for (const status of ["unavailable", "invalid"]) {
     const message = rejectionMessage({ inspection: { weight: { status } } });
     assert.equal(message.reason, "We couldn't check the weight");
-    assert.match(message.action, /ask for help/);
+    assert.match(message.action, /ask for help/i);
   }
 });
 

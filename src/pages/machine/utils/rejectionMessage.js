@@ -1,51 +1,51 @@
 const messages = {
   heavy: {
     reason: "This item is too heavy",
-    action: "Remove it, empty any liquid or contents, and try again.",
+    action: "Empty it, then try again.",
   },
   unstable: {
     reason: "We couldn't get a steady weight",
-    action: "Remove the item, place it back gently, and keep it still.",
+    action: "Place it gently and keep it still.",
   },
   weight: {
     reason: "We couldn't check the weight",
-    action: "Remove the item and try again. If this happens again, ask for help.",
+    action: "Try again. Ask for help if needed.",
   },
   multiple: {
     reason: "One item at a time, please",
-    action: "Remove the items, then insert just one bottle or can.",
+    action: "Put in just one bottle or can.",
   },
   position: {
     reason: "We couldn't see the whole item",
-    action: "Remove it, then place the whole bottle or can in the scanning area.",
+    action: "Move the whole bottle or can into the opening.",
   },
   dirty: {
     reason: "This item needs cleaning",
-    action: "Remove it, empty and rinse it, then try again.",
+    action: "Empty and rinse it, then try again.",
   },
   appearance: {
     reason: "We couldn't check this item clearly",
-    action: "Remove it, then place it back in the scanning area and try again.",
+    action: "Keep the bottle or can still and try again.",
   },
   size: {
     reason: "This size isn't accepted",
-    action: "Remove this item and try a different plastic bottle or aluminum can.",
+    action: "Try a different plastic bottle or aluminum can.",
   },
   uncertainSize: {
     reason: "We couldn't check the size",
-    action: "Remove it, then place the whole item in the scanning area and try again.",
+    action: "Move the whole bottle or can into the opening.",
   },
   uncertain: {
     reason: "We couldn't recognize this item",
-    action: "Remove it, then try one empty plastic bottle or aluminum can. Keep it still.",
+    action: "Try an empty plastic bottle or aluminum can.",
   },
   unsupported: {
     reason: "This item isn't accepted",
-    action: "Remove it. Please use an empty plastic bottle or aluminum can.",
+    action: "Use an empty plastic bottle or aluminum can.",
   },
   unavailable: {
     reason: "We couldn't check this item",
-    action: "Remove it and try again. If this happens again, ask for help.",
+    action: "Try again. Ask for help if needed.",
   },
 };
 
