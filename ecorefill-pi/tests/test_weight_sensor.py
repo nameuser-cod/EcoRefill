@@ -1,6 +1,7 @@
 """Protocol and calibration checks without GPIO hardware."""
 
 import unittest
+from itertools import chain, cycle
 from unittest.mock import Mock, patch
 
 from tools.check_weight import calibration_factor
@@ -78,11 +79,52 @@ class CalibratedScaleTests(unittest.TestCase):
             self.assertEqual(reading["spread_g"], 0)
             self.assertEqual(scale.offset, -695343)  # Never tare with an item present.
 
-    def test_unstable_window_and_negative_weight_are_rejected(self):
-        scale = self.scale([0] + [-695343 + g * 199.538 for g in range(20, 30)])
+    def test_transient_motion_can_settle_in_a_fresh_window(self):
+        for factor in (199.538, -199.538):
+            with self.subTest(factor=factor):
+                moving = [-695343 + g * factor for g in (20, 29)] * 5
+                settled = -695343 + 15 * factor
+                scale = self.scale([123456] + moving + [settled] * 10, factor)
+                reading = scale.read_weight()
+                self.assertAlmostEqual(reading["grams"], 15)
+                self.assertEqual(reading["spread_g"], 0)
+                self.assertEqual(reading["samples"], 10)
+                self.assertEqual(scale.sensor.read_raw.call_count, 21)
+                self.assertEqual(scale.offset, -695343)
+
+    def test_persistent_motion_rejects_with_spread_at_original_deadline(self):
+        clock = [0.0]
+        samples = chain([0], cycle([-695343 + g * 199.538 for g in range(20, 30)]))
+        scale = self.scale([])
+
+        def sample(**_kwargs):
+            clock[0] += 0.125
+            return next(samples)
+
+        scale.sensor.read_raw.side_effect = sample
+        with patch("machine.weight_sensor.time.monotonic", side_effect=lambda: clock[0]):
+            with self.assertRaises(WeightReadingError) as caught:
+                scale.read_weight()
+        error = caught.exception
+        self.assertEqual(error.status, "unstable")
+        self.assertAlmostEqual(error.reading["spread_g"], 9)
+        self.assertEqual(error.reading["samples"], 10)
+        self.assertIn("spread=9.000 g", str(error))
+        self.assertIn("allowed <= 3 g", str(error))
+        self.assertEqual(clock[0], 4.0)
+        self.assertEqual(scale.sensor.read_raw.call_count, 32)
+        self.assertFalse(scale.needs_reset)
+
+    def test_sensor_failure_after_motion_is_unavailable_and_requires_reset(self):
+        moving = [-695343 + g * 199.538 for g in range(20, 30)]
+        scale = self.scale([0] + moving + [TimeoutError("HX711 not ready")])
         with self.assertRaises(WeightReadingError) as caught:
             scale.read_weight()
-        self.assertEqual(caught.exception.status, "unstable")
+        self.assertEqual(caught.exception.status, "unavailable")
+        self.assertIn("HX711 not ready", str(caught.exception))
+        self.assertTrue(scale.needs_reset)
+
+    def test_zero_and_negative_weight_are_rejected(self):
         for raw in (-700000, -695343):
             with self.subTest(raw=raw):
                 scale = self.scale([raw] * 11)

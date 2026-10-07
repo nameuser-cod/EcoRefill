@@ -134,38 +134,55 @@ class CalibratedScale:
                     self.sensor.reset()
                     self.needs_reset = False
                 deadline = time.monotonic() + 4.0
+                last_unstable = None
 
-                def fresh_raw():
+                def remaining_time():
                     remaining = deadline - time.monotonic()
                     if remaining <= 0:
+                        if last_unstable is not None:
+                            raise last_unstable
                         raise TimeoutError("Weight measurement timed out")
+                    return remaining
+
+                def fresh_raw():
+                    remaining = remaining_time()
                     value = self.sensor.read_raw(timeout=min(2.0, remaining))
-                    if time.monotonic() > deadline:
-                        raise TimeoutError("Weight measurement timed out")
+                    remaining_time()
                     return value
 
                 # HX711 holds an unread conversion. Discard it so an empty or
                 # previous-item reading never enters this item's sample window.
                 fresh_raw()
                 values = [fresh_raw() for _ in range(10)]
-                raw_median = statistics.median(values)
-                grams = (raw_median - self.offset) / self.factor
-                spread = (max(values) - min(values)) / abs(self.factor)
-                if not math.isfinite(grams) or not math.isfinite(spread):
-                    raise WeightReadingError("invalid", "Invalid weight reading")
-                reading = {"grams": grams, "spread_g": spread, "samples": len(values),
-                           "measured_at": time.time()}
-                if spread > self.max_spread_g:
-                    raise WeightReadingError("unstable", "Weight did not settle", reading)
-                if grams <= 0:
-                    raise WeightReadingError(
-                        "invalid",
-                        f"No positive item weight detected: {grams:.3f} g "
-                        f"(raw={raw_median:g}, offset={self.offset:g}, "
-                        f"counts/gram={self.factor:g})",
-                        reading,
-                    )
-                return reading
+                while True:
+                    raw_median = statistics.median(values)
+                    grams = (raw_median - self.offset) / self.factor
+                    spread = (max(values) - min(values)) / abs(self.factor)
+                    if not math.isfinite(grams) or not math.isfinite(spread):
+                        raise WeightReadingError("invalid", "Invalid weight reading")
+                    reading = {"grams": grams, "spread_g": spread, "samples": len(values),
+                               "measured_at": time.time()}
+                    if spread > self.max_spread_g:
+                        last_unstable = WeightReadingError(
+                            "unstable",
+                            f"Weight did not settle: {grams:.3f} g, "
+                            f"spread={spread:.3f} g "
+                            f"(allowed <= {self.max_spread_g:g} g)",
+                            reading,
+                        )
+                        # Keep only the latest ten conversions. Transient motion
+                        # can settle within the original acquisition deadline.
+                        values = values[1:] + [fresh_raw()]
+                        continue
+                    if grams <= 0:
+                        raise WeightReadingError(
+                            "invalid",
+                            f"No positive item weight detected: {grams:.3f} g "
+                            f"(raw={raw_median:g}, offset={self.offset:g}, "
+                            f"counts/gram={self.factor:g})",
+                            reading,
+                        )
+                    return reading
             except WeightReadingError:
                 raise
             except Exception as error:

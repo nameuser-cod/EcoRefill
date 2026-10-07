@@ -111,10 +111,12 @@ is not available inside a virtual environment, install it in that environment
 with `python3 -m pip install lgpio` (or use a venv with system site packages).
 
 After the settling delay, each decision discards the buffered conversion and
-takes 10 new samples with a separate 4-second acquisition deadline. A sample
-range above **3 g** is marked unstable
-(`HX711_MAX_SPREAD_G` configures this diagnostic tolerance). Missing hardware,
-timeouts, detected clock-timing errors, saturation, nonpositive weight, and
+takes 10 new samples with a separate 4-second acquisition deadline. If the
+sample range exceeds **3 g**, the controller continues sampling and checks the
+latest 10 readings until they settle or the original deadline expires. Persistent
+instability rejects the item with the measured grams, sample range, and allowed
+range in the error log. `HX711_MAX_SPREAD_G` configures this diagnostic tolerance.
+Missing hardware, timeouts, detected clock-timing errors, saturation, nonpositive weight, and
 unstable readings reject the item instead of accepting without a measurement.
 An acquisition error resets HX711 serial framing on the next measurement.
 If initialization fails, fix the connection/dependency and restart the service.
