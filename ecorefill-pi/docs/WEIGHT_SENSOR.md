@@ -44,22 +44,24 @@ different acquisition method before integration into the running machine.
 
 ## Automatic rejection in the recycling controller
 
-**Temporarily disabled by default.** The controller skips HX711 initialization,
-weight settling, and sampling. It records `inspection.weight.status` as
-`disabled`, without inventing a weight reading. Material and enabled visual
-checks still decide acceptance, sorting, and points. The separate rearm delay
-also remains active.
+**Enabled by default.** The controller initializes the HX711 and requires a
+valid weight reading before accepting a bottle or can. The saved calibration
+and 300 g limits apply automatically.
 
 Copy the updated `machine/` directory to the Pi and restart the controller for
-this change to take effect. To explicitly keep weighing off:
+this change to take effect. Remove any existing `WEIGHT_SENSOR_ENABLED=false`
+override from the controller's environment, or set it to `true`. If a service
+manager starts the controller, update the variable in that service.
+To explicitly disable weighing:
 
 ```bash
 WEIGHT_SENSOR_ENABLED=false python3 machine_flow.py
 ```
 
-To restore weighing later, use `WEIGHT_SENSOR_ENABLED=true` in the controller's
-environment and restart it. The saved calibration and limits are retained.
-If a service manager starts the controller, set the variable in that service.
+When disabled, the controller skips HX711 initialization, weight settling, and
+sampling. It records `inspection.weight.status` as `disabled`. Material and
+enabled visual checks still decide acceptance, sorting, and points. The
+separate rearm delay also remains active.
 
 The following behavior applies **when `WEIGHT_SENSOR_ENABLED=true`**.
 

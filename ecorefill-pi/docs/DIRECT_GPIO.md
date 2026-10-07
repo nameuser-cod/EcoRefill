@@ -49,7 +49,7 @@ datasheet; the HX711 connects to the Pi using the four rows above. Follow the
 module's printed labels, not wire colors. The project's wiring powers the
 HX711 from Pi **3.3 V**, separate from the actuators' external 5 V supply.
 
-Weighing is disabled by default. To enable it with direct GPIO control:
+Weighing is enabled by default. To explicitly enable it with direct GPIO control:
 
 ```sh
 ECOREFILL_GPIO_CONFIG=./gpio.local.json \
