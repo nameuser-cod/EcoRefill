@@ -46,7 +46,7 @@ different acquisition method before integration into the running machine.
 
 **Enabled by default.** The controller initializes the HX711 and requires a
 valid weight reading before accepting a bottle or can. The saved calibration
-and 500 g limits apply automatically. The installed 1 kg load cell's
+and 800 g limits apply automatically. The installed 1 kg load cell's
 capacity includes the platform and container; this software limit does not
 increase its rated capacity.
 
@@ -80,8 +80,8 @@ detection finishes, so the GPIO sampling loop does not compete with inference.
 
 | Detected material | Passes the weight limit | Rejected |
 | --- | --- | --- |
-| Plastic bottle (`plastic_bottle`, `pet_bottle`) | Up to and including 500 g | Above 500 g |
-| Aluminum can (`aluminum_can`, `aluminium_can`) | Up to and including 500 g | Above 500 g |
+| Plastic bottle (`plastic_bottle`, `pet_bottle`) | Up to and including 800 g | Above 800 g |
+| Aluminum can (`aluminum_can`, `aluminium_can`) | Up to and including 800 g | Above 800 g |
 
 Other material, confidence, and visual rules still apply. When enabled, the weight
 check is required even when visual inspection is `off` or `observe`. Rejected items send
