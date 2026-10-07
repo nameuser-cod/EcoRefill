@@ -273,7 +273,7 @@ Use Node.js **22.13 or later** and npm for the frontend and its tests; the optio
    VITE_MACHINE_API_URL=http://127.0.0.1:5000
    ```
 
-   This address works when the browser and machine service run on the Pi. For another device, use the Pi's reachable LAN address. `VITE_REDEMPTION_API_URL` can supply a separate reward endpoint; a trusted tunnel URL saved in the reward record takes precedence. Restart Vite or rebuild after changing these settings.
+   This address works when the browser and machine service run on the Pi. For another device, use the Pi's reachable LAN address. `VITE_REDEMPTION_API_URL` can supply a separate reward endpoint and takes precedence over automatic discovery. Otherwise, claims check the machine's current trusted tunnel URL before the URL saved in the reward. Local redemption requires an explicitly configured `VITE_MACHINE_API_URL`; there is no default LAN address for phone claims. Restart Vite or rebuild after changing these settings.
 
 4. Start the development server:
 

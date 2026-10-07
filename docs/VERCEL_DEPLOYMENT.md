@@ -124,7 +124,7 @@ rules are deployed. Vercel does not deploy Firebase rules or Cloud Functions.
 With the Pi's existing Cloudflare Quick Tunnel running, no additional frontend
 API variables are needed for the current public reward/payment flow:
 
-- Reward redemption reads the trusted HTTPS tunnel URL from the reward document.
+- Reward redemption reads the machine's current trusted HTTPS tunnel URL from Firestore, with the reward document's saved URL as a fallback.
 - Point purchases read `serviceEndpoints/pointPayments` from Firestore.
 - Refill requests use Firestore and are processed by the Pi.
 
@@ -133,7 +133,7 @@ Settings → Environment Variables and redeploy:
 
 | Variable | Value and use |
 | --- | --- |
-| `VITE_REDEMPTION_API_URL` | HTTPS origin of the public Pi redemption service, as a fallback when no trusted tunnel URL is present on the reward. |
+| `VITE_REDEMPTION_API_URL` | HTTPS origin of the public Pi redemption service, overriding automatic tunnel discovery. |
 | `VITE_PAYMENT_API_URL` | HTTPS origin of the public Pi payment service, overriding endpoint discovery from Firestore. |
 
 Use actual endpoint origins without a path. Existing Quick Tunnel URLs change

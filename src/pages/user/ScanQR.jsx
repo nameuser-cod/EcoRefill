@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -10,25 +9,22 @@ import {
   QrCode,
   ScanLine,
 } from "lucide-react";
-import { auth, db } from "../../firebase/firebase";
+import { auth } from "../../firebase/firebase";
+import { redeemRecyclingReward } from "../../firebase/recyclingRewards";
 import CameraScan from "./CameraScan";
 import UserBottomNav from "./components/UserBottomNav";
 import {
   getRecyclingSessionId,
-  getTrustedTunnelUrl,
   getWaterRefillSessionId,
 } from "./utils/qrCodes";
 import "../../styles/user/user.css";
-
-const LOCAL_API_BASE_URL =
-  import.meta.env.VITE_MACHINE_API_URL || "http://192.168.101.23:5000";
-const CONFIGURED_REDEMPTION_URL = import.meta.env.VITE_REDEMPTION_API_URL || "";
 
 function ScanQR() {
   const navigate = useNavigate();
   const location = useLocation();
   const processingRef = useRef(false);
   const handledScannedCodeRef = useRef("");
+  const [lastScannedCode, setLastScannedCode] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -91,40 +87,11 @@ function ScanQR() {
       if (processingRef.current) return;
 
       processingRef.current = true;
+      setLastScannedCode(cleanCode);
       setRedeeming(true);
 
       try {
-        let redemptionApiUrl = String(
-          CONFIGURED_REDEMPTION_URL || LOCAL_API_BASE_URL
-        ).replace(/\/+$/, "");
-
-        try {
-          const rewardSnapshot = await getDoc(
-            doc(db, "redeem_qr_codes", recyclingSessionId)
-          );
-          const tunnelUrl = getTrustedTunnelUrl(
-            rewardSnapshot.data()?.redemptionApiUrl
-          );
-
-          if (tunnelUrl) redemptionApiUrl = tunnelUrl;
-        } catch (endpointError) {
-          console.warn("Could not load the public redemption endpoint:", endpointError);
-        }
-
-        const idToken = await currentUser.getIdToken();
-        const response = await fetch(`${redemptionApiUrl}/api/recycling/redeem`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${idToken}`,
-          },
-          body: JSON.stringify({ code: cleanCode }),
-        });
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "The QR code could not be redeemed.");
-        }
+        const data = await redeemRecyclingReward(currentUser, cleanCode, recyclingSessionId);
 
         setEarnedPoints(Number(data.pointsEarned || 0));
         setMessage(
@@ -133,13 +100,8 @@ function ScanQR() {
         clearRouteScanState();
       } catch (redeemError) {
         console.error("QR redemption error:", redeemError);
-        const serviceUnavailable =
-          redeemError instanceof TypeError && redeemError.message === "Failed to fetch";
-
         setError(
-          serviceUnavailable
-            ? "The public redemption service could not be reached. Please ask the machine operator to check its Cloudflare connection."
-            : redeemError?.message || "The QR code could not be redeemed."
+          redeemError?.message || "The QR code could not be redeemed."
         );
         clearRouteScanState();
       } finally {
@@ -151,6 +113,7 @@ function ScanQR() {
   );
 
   useEffect(() => {
+    if (!scannedCode) handledScannedCodeRef.current = "";
     if (authLoading || !currentUser || !scannedCode) return;
     if (handledScannedCodeRef.current === scannedCode) return;
 
@@ -239,10 +202,22 @@ function ScanQR() {
         )}
 
         {error && (
-          <div className="scan-error-message">
-            <AlertTriangle size={24} />
-            <p>{error}</p>
-          </div>
+          <>
+            <div className="scan-error-message">
+              <AlertTriangle size={24} />
+              <p>{error}</p>
+            </div>
+            {lastScannedCode && (
+              <button
+                className="scan-done-button"
+                type="button"
+                onClick={() => redeemQRCode(lastScannedCode)}
+                disabled={redeeming || authLoading}
+              >
+                Try Again
+              </button>
+            )}
+          </>
         )}
       </div>
 

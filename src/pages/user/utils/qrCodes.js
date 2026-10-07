@@ -8,7 +8,9 @@ export const getTrustedTunnelUrl = (rawUrl) => {
   try {
     const url = new URL(rawUrl);
 
-    if (url.protocol === "https:" && url.hostname.endsWith(".trycloudflare.com")) {
+    if (url.protocol === "https:" && /^[a-z0-9-]+\.trycloudflare\.com$/.test(url.hostname)
+        && !url.username && !url.password && !url.search && !url.hash
+        && url.pathname === "/" && !url.port) {
       return url.origin;
     }
   } catch {

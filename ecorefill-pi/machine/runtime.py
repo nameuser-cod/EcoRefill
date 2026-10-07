@@ -59,6 +59,7 @@ class MachineRuntime(
         self.green_button = None
         self.blue_button = None
         self.redemption_tunnel_url = None
+        self.redemption_published_url = None
         self.redemption_tunnel_process = None
         self.app = None
         self.public_redeem_app = None

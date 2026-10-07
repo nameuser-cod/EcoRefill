@@ -21,6 +21,11 @@ class JournalSync:
             except Exception as error:
                 failed = True
                 log("Reward sync will retry:", error)
+            try:
+                self.publish_redemption_endpoint()
+            except Exception as error:
+                failed = True
+                log("Public endpoint publication will retry:", error)
             for key, record in self.journal.entries("refill"):
                 if record["outcome"] in {"preparing", "reserved", "executing", "review_required"}:
                     continue

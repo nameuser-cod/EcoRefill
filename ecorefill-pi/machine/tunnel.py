@@ -29,9 +29,26 @@ class RedemptionTunnel:
             use_reloader=False,
         )
 
-    def watch_redemption_tunnel(self, process):
-
+    def publish_redemption_endpoint(self):
         from firebase_admin import firestore
+
+        tunnel_url = self.get_redemption_tunnel_url()
+        if not tunnel_url or self.db is None or tunnel_url == self.redemption_published_url:
+            return
+        # Machine-scoped discovery stays current even for rewards published
+        # before the tunnel was ready, or before its URL changed.
+        self.db.collection("machines").document(MACHINE_ID).set({
+            "redemptionApiUrl": tunnel_url,
+            "redemptionApiUpdatedAt": firestore.SERVER_TIMESTAMP,
+        }, merge=True, timeout=5, retry=None)
+        self.db.collection("serviceEndpoints").document("pointPayments").set({
+            "url": tunnel_url,
+            "machineId": MACHINE_ID,
+            "updatedAt": firestore.SERVER_TIMESTAMP,
+        }, timeout=5, retry=None)
+        self.redemption_published_url = tunnel_url
+
+    def watch_redemption_tunnel(self, process):
 
         tunnel_pattern = re.compile(
             r"https://[a-z0-9-]+\.trycloudflare\.com",
@@ -62,16 +79,10 @@ class RedemptionTunnel:
 
                 # Only the Admin SDK may write this discovery document. Clients
                 # read it before sending their ID token to the current Pi endpoint.
-                if self.db is not None:
-                    try:
-                        self.db.collection("serviceEndpoints").document("pointPayments").set({
-                            "url": tunnel_url,
-                            "machineId": MACHINE_ID,
-                            "updatedAt": firestore.SERVER_TIMESTAMP,
-                        })
-                        log("Public GCash payment URL:", tunnel_url)
-                    except Exception as error:
-                        log("Could not publish the payment endpoint:", repr(error))
+                try:
+                    self.publish_redemption_endpoint()
+                except Exception as error:
+                    log("Public endpoint publication will retry:", repr(error))
 
         with self.redemption_tunnel_lock:
             self.redemption_tunnel_url = None

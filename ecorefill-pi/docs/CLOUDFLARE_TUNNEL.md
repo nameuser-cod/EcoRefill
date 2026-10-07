@@ -21,14 +21,30 @@ server on `127.0.0.1:5001`, launches the tunnel automatically, and prints:
 Public recycling redemption URL: https://...trycloudflare.com
 ```
 
-Wait for that message before creating a new recycling reward QR. The Pi saves
-the current tunnel URL in the server-created Firestore reward record, and the
-phone reads that trusted URL before sending its Firebase ID token.
+The Pi publishes its current tunnel URL to `machines/{machineId}.redemptionApiUrl`
+and the existing `serviceEndpoints/pointPayments` discovery document. Failed
+publication retries in the background, including when Firebase connects after
+the tunnel starts. The reward document also retains its creation-time URL.
 
-Quick Tunnel URLs change whenever `cloudflared` restarts. Rewards created before
-a restart may retain an unavailable URL; reset the machine and create a new
-reward in that case. Set `CLOUDFLARE_TUNNEL_ENABLED=false` to disable automatic
-tunneling and use local-network redemption only.
+The phone reads discovery directly from Firestore before each claim or retry,
+checks that legacy discovery belongs to the reward's machine, and prefers the
+current URL over the saved reward URL. This handles rewards created before the
+tunnel was ready or after its URL changed. Each HTTP attempt times out after
+eight seconds; connection errors and gateway outages try the next trusted
+endpoint. Expiry, already-claimed, and authentication responses stop immediately.
+The **Try Again** button refreshes discovery without rescanning. The reward's
+original 60-second expiry and single-claim checks still apply.
+
+Update both the phone frontend (rebuild/reinstall the APK for Android) and the
+Pi's machine code, then restart `machine_flow.py`. Existing Firestore rules
+already allow signed-in users to read these discovery fields and prevent client
+writes. For older Pi software, the frontend can use
+`serviceEndpoints/pointPayments` when its `machineId` matches the reward.
+
+Quick Tunnel URLs change whenever `cloudflared` restarts. Set
+`CLOUDFLARE_TUNNEL_ENABLED=false` to disable automatic tunneling and configure
+`VITE_MACHINE_API_URL` explicitly for local-network redemption. A public website
+opened over HTTPS needs an HTTPS redemption endpoint reachable from the phone.
 
 ## GCash payment connection
 
