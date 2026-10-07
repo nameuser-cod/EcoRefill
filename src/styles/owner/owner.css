@@ -1623,7 +1623,35 @@ button.filter-material-button.active span {
   margin-top: 12px;
 }
 
+.owner-alert-list-panel {
+  min-height: 0;
+}
+
+.owner-record-row.owner-alert-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.owner-alert-heading {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 4px;
+}
+
+.owner-alert-heading strong {
+  overflow-wrap: anywhere;
+  text-transform: capitalize;
+}
+
+.owner-alert-heading .owner-status {
+  justify-self: start;
+}
+
 .owner-alert-record-icon {
+  grid-row: span 2;
   background: #fff4ce;
   color: #8a5a00;
 }
@@ -1635,6 +1663,7 @@ button.filter-material-button.active span {
   margin-top: 14px;
 }
 
+button.view-scan-button,
 button.mark-read-button,
 button.resolve-alert-button {
   display: inline-flex;
@@ -1653,12 +1682,27 @@ button.resolve-alert-button {
   font-weight: 900;
 }
 
+button.view-scan-button {
+  background: #35d04f;
+}
+
+.owner-alert-actions > button {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.owner-alert-actions > button > svg {
+  flex-shrink: 0;
+}
+
+button.view-scan-button:disabled,
 button.mark-read-button:disabled,
 button.resolve-alert-button:disabled {
   cursor: wait;
   opacity: 0.58;
 }
 
+button.view-scan-button:focus-visible,
 button.mark-read-button:focus-visible,
 button.resolve-alert-button:focus-visible {
   outline-offset: 3px;
@@ -2598,6 +2642,22 @@ fieldset > button.use-location-button {
 
   .owner-record-row > .owner-status {
     margin-left: 55px;
+  }
+
+  .owner-alert-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-right: 5px;
+    padding-bottom: 5px;
+    gap: 10px;
+  }
+
+  .owner-alert-actions > .view-scan-button {
+    grid-column: 1 / -1;
+  }
+
+  .owner-alert-actions > button {
+    padding: 9px 8px;
   }
 }
 

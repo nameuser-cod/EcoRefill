@@ -17,6 +17,9 @@ function OwnerAlertRow({ alert, onStatusChange, onViewScan }) {
   const canViewScan = Boolean(alert.recyclingRecordId && onViewScan);
   const canChangeStatus = ["unread", "read"].includes(status);
   const canResolve = canChangeStatus || status === "resolved";
+  const message = alert.alertType === "unknown_item"
+    ? `The machine didn’t recognize this item, so it wasn’t accepted. ${canViewScan ? "View the scan to check the item." : "Please check the machine."}`
+    : alert.message || "No details provided";
 
   const viewScan = async () => {
     if (scanBusy.current) return;
@@ -55,11 +58,11 @@ function OwnerAlertRow({ alert, onStatusChange, onViewScan }) {
       <article className="owner-record-row owner-alert-row" aria-busy={Boolean(saving) || loadingScan}>
         <div className="owner-alert-heading">
           <span className="owner-record-icon owner-alert-record-icon"><BellRing size={21} /></span>
-          <strong>{alert.alertType?.replaceAll("_", " ") || "Machine alert"}</strong>
+          <strong>{alert.alertType === "unknown_item" ? "Item not recognized" : alert.alertType?.replaceAll("_", " ") || "Machine alert"}</strong>
           <span className={`owner-status tone-${getStatusTone(status)}`}>{status}</span>
         </div>
         <div className="owner-alert-details">
-          <p>{alert.message || "No details provided"}</p>
+          <p>{message}</p>
           <time>{formatTimestamp(alert.createdAt)}</time>
           {(canViewScan || canResolve) && (
             <div className="owner-alert-actions">
@@ -85,7 +88,7 @@ function OwnerAlertRow({ alert, onStatusChange, onViewScan }) {
             </div>
           )}
           {canChangeStatus && (
-            <p className="owner-alert-help">Resolve after addressing the machine issue. This deletes the alert.</p>
+            <p className="owner-alert-help">After checking the issue, select Resolve to remove this alert.</p>
           )}
           <OwnerError message={scanError} />
           <OwnerError message={error} />

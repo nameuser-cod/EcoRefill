@@ -78,7 +78,7 @@ function OwnerAlerts() {
         </div>
       </div>
 
-      <section className="owner-panel owner-page-list-panel">
+      <section className="owner-panel owner-page-list-panel owner-alert-list-panel">
         {machineLoading || alertsLoading ? (
           <OwnerLoading label="Loading alerts..." />
         ) : machineError || alertsError ? (
