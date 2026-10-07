@@ -63,33 +63,33 @@ class WeightSensorTests(unittest.TestCase):
 
 
 class CalibratedScaleTests(unittest.TestCase):
-    def scale(self, readings, factor=414.59):
-        scale = CalibratedScale(-639408, factor)
+    def scale(self, readings, factor=203.29):
+        scale = CalibratedScale(-689821, factor)
         scale.sensor = Mock()
         scale.sensor.read_raw.side_effect = readings
         return scale
 
     def test_fresh_window_discards_old_conversion_and_uses_saved_calibration(self):
-        for factor in (414.59, -414.59):
-            raw = -639408 + 40 * factor
+        for factor in (203.29, -203.29):
+            raw = -689821 + 300 * factor
             scale = self.scale([123456] + [raw] * 10, factor)
             reading = scale.read_weight()
-            self.assertAlmostEqual(reading["grams"], 40)
+            self.assertAlmostEqual(reading["grams"], 300)
             self.assertEqual(reading["spread_g"], 0)
-            self.assertEqual(scale.offset, -639408)  # Never tare with an item present.
+            self.assertEqual(scale.offset, -689821)  # Never tare with an item present.
 
     def test_unstable_window_and_negative_weight_are_rejected(self):
-        scale = self.scale([0] + [-639408 + g * 414.59 for g in range(20, 30)])
+        scale = self.scale([0] + [-689821 + g * 203.29 for g in range(20, 30)])
         with self.assertRaises(WeightReadingError) as caught:
             scale.read_weight()
         self.assertEqual(caught.exception.status, "unstable")
-        scale = self.scale([-650000] * 11)
+        scale = self.scale([-700000] * 11)
         with self.assertRaises(WeightReadingError) as caught:
             scale.read_weight()
         self.assertEqual(caught.exception.status, "invalid")
 
     def test_clock_failure_rejects_then_resets_before_next_measurement(self):
-        raw = -639408 + 20 * 414.59
+        raw = -689821 + 20 * 203.29
         scale = self.scale([RuntimeError("timing")] + [raw] * 11)
         with self.assertRaises(WeightReadingError):
             scale.read_weight()
@@ -113,7 +113,7 @@ class CalibratedScaleTests(unittest.TestCase):
         import sys
         gpio = Mock()
         gpio.gpio_claim_output.side_effect = RuntimeError("GPIO busy")
-        scale = CalibratedScale(-639408, 414.59)
+        scale = CalibratedScale(-689821, 203.29)
         with patch.dict(sys.modules, {"lgpio": gpio}), \
              patch("machine.weight_sensor.open_header", return_value=0):
             with self.assertRaisesRegex(RuntimeError, "GPIO busy"):

@@ -45,7 +45,7 @@ class MaterialDetectionTests(unittest.TestCase):
         self.assertEqual(checked["inspection"]["weight"], {"status": "disabled"})
         settle.assert_not_called()
 
-    def verify_and_sort(self, label, confidence, grams=20.0, weight_error=None,
+    def verify_and_sort(self, label, confidence, grams=0.5, weight_error=None,
                         inference_seconds=0):
         machine = MaterialDetection()
         machine.weight_scale = SimpleNamespace(read_weight=Mock(
@@ -107,7 +107,7 @@ class MaterialDetectionTests(unittest.TestCase):
 
     def test_explicit_still_frame_time_includes_capture_work(self):
         machine = MaterialDetection()
-        machine.weight_scale = SimpleNamespace(read_weight=Mock(return_value={"grams": 20}))
+        machine.weight_scale = SimpleNamespace(read_weight=Mock(return_value={"grams": 0.5}))
         with patch("machine.detection.monotonic", return_value=101.5), \
              patch("machine.detection.sleep") as settle:
             result = machine.apply_weight_check(
@@ -155,11 +155,11 @@ class MaterialDetectionTests(unittest.TestCase):
                     )
 
     def test_weight_limits_and_aliases_before_sorting_and_points(self):
-        for label, limit, command in (("plastic_bottle", 500, "BOTTLE"),
-                                      ("pet_bottle", 500, "BOTTLE"),
-                                      ("aluminum_can", 500, "CAN"),
-                                      ("aluminium_can", 500, "CAN")):
-            for grams in (300, 301, limit - 0.1, limit, limit + 0.001, 600):
+        for label, limit, command in (("plastic_bottle", 1, "BOTTLE"),
+                                      ("pet_bottle", 1, "BOTTLE"),
+                                      ("aluminum_can", 1, "CAN"),
+                                      ("aluminium_can", 1, "CAN")):
+            for grams in (0.5, limit - 0.1, limit, limit + 0.001, 15, 500):
                 with self.subTest(label=label, grams=grams):
                     machine, result = self.verify_and_sort(label, 0.95, grams)
                     allowed = grams <= limit

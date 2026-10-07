@@ -132,7 +132,7 @@ class ScanRegionTests(unittest.TestCase):
             boxes=[box], plot=lambda: np.full((bottom-top, right-left, 3), 100, np.uint8),
         )
         machine = MaterialDetection()
-        machine.weight_scale = SimpleNamespace(read_weight=lambda: {"grams": 20.0})
+        machine.weight_scale = SimpleNamespace(read_weight=lambda: {"grams": 0.5})
         machine.model = SimpleNamespace(names={0: "aluminum_can"},
                                         predict=Mock(return_value=[prediction]))
         machine.visual_inspector = SimpleNamespace(apply=Mock(side_effect=lambda result, *_: result))
@@ -156,7 +156,7 @@ class ScanRegionTests(unittest.TestCase):
 
     def test_empty_scan_rejects_and_saves_clean_view_without_scan_box(self):
         machine = MaterialDetection()
-        machine.weight_scale = SimpleNamespace(read_weight=lambda: {"grams": 20.0})
+        machine.weight_scale = SimpleNamespace(read_weight=lambda: {"grams": 0.5})
         machine.model = SimpleNamespace(predict=Mock(return_value=[]))
         machine.send_command = Mock()
         with patch("cv2.imwrite", return_value=True) as write:

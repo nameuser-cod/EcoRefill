@@ -76,7 +76,7 @@ An optional inspection module supports approximate exterior size checks and a se
 - **`observe`:** Record inspection results without rejecting items based on those results.
 - **`enforce`:** Every enabled inspection check must pass before an item is accepted.
 
-Size checking requires camera calibration and measured size profiles. Cleanliness checking requires a separately trained and validated model. Neither visual check is enabled by the example configuration. A required HX711 weight check rejects plastic bottles and aluminum cans above **500 g**, before sorting or awarding points. Exactly 500 g passes the weight limit for either material. Missing, invalid, or unstable weight readings also reject the item. This weight rule applies in every visual-inspection mode.
+Size checking requires camera calibration and measured size profiles. Cleanliness checking requires a separately trained and validated model. Neither visual check is enabled by the example configuration. A required HX711 weight check rejects plastic bottles and aluminum cans above **1 g**, before sorting or awarding points. Exactly 1 g passes the weight limit for either material. Missing, invalid, or unstable weight readings also reject the item. This weight rule applies in every visual-inspection mode.
 
 See [camera inspection setup](ecorefill-pi/docs/INSPECTION.md) and [material model evaluation](MODEL_EVALUATION.md) for configuration, evidence, and measurement limits.
 
@@ -84,7 +84,7 @@ After calibration, the recycling screen can show **Small**, **Medium**, or **Lar
 
 For retraining with TACO and Waste Segregation, follow the [dataset preparation and training guide](DATASET_TRAINING.md). It preserves the deployed model, requires reviewed material labels, and includes a comparison using the machine's detection rules.
 
-For the 1 kg load cell and HX711 wired to a Raspberry Pi 5, use the [weight setup and calibration guide](ecorefill-pi/docs/WEIGHT_SENSOR.md). The controller uses DT on GPIO 5, SCK on GPIO 6, and the supplied calibration of offset **-639408** and **414.59 counts/gram**. Measurements and rejection reasons are recorded with each inspected item.
+For the 1 kg load cell and HX711 wired to a Raspberry Pi 5, use the [weight setup and calibration guide](ecorefill-pi/docs/WEIGHT_SENSOR.md). The controller uses DT on GPIO 5, SCK on GPIO 6, and the supplied calibration of offset **-689821** and **203.29 counts/gram**. Measurements and rejection reasons are recorded with each inspected item.
 
 ## Water refill flow
 
