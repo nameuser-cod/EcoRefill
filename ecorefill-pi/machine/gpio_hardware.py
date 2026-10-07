@@ -6,8 +6,9 @@ Importing this module does not claim pins. See docs/DIRECT_GPIO.md.
 import grp
 import os
 from pathlib import Path
-import threading
 import time
+
+from .ultrasonic import UltrasonicEcho
 
 from machine.weight_sensor import open_header
 
@@ -82,19 +83,14 @@ class HardwareServo:
         self.write("enable", 0)
 
 
-class PiGPIOHardware:
+class PiGPIOHardware(UltrasonicEcho):
     def __init__(self):
+        super().__init__(TRIG_GPIO, ECHO_GPIO)
         self.gpio = None
         self.handle = None
         self.outputs = []
         self.servos = {}
         self.callback = None
-        self.io_lock = threading.RLock()
-        self.echo_lock = threading.Lock()
-        self.echo_done = threading.Event()
-        self.armed_at = None
-        self.rise_at = None
-        self.width_ns = None
 
     def open(self):
         import lgpio
@@ -135,45 +131,10 @@ class PiGPIOHardware:
             if self.handle is not None and RELAY1_GPIO in self.outputs:
                 self.gpio.gpio_write(self.handle, RELAY1_GPIO, RELAY_OFF)
 
-    def _echo_edge(self, chip, gpio, level, timestamp):
-        # lgpio supplies kernel edge timestamps in monotonic nanoseconds.
-        with self.echo_lock:
-            if self.armed_at is None or timestamp < self.armed_at:
-                return
-            if level == 1 and self.rise_at is None:
-                self.rise_at = timestamp
-            elif level == 0 and self.rise_at is not None:
-                self.width_ns = timestamp - self.rise_at
-                self.armed_at = None
-                self.echo_done.set()
-
-    def distance_cm(self):
-        return self._measure_distance_cm()
-
-    def _measure_distance_cm(self):
-        # A pre-existing HIGH or timed-out echo is invalid, never a cached distance.
-        if self.gpio.gpio_read(self.handle, ECHO_GPIO):
-            return None
-        with self.echo_lock:
-            self.echo_done.clear()
-            self.rise_at = self.width_ns = None
-            self.armed_at = time.monotonic_ns()
-        try:
-            self.gpio.tx_pulse(self.handle, TRIG_GPIO, 10, 10, 0, 1)
-            self.echo_done.wait(0.06)  # Allow kernel notification delivery latency.
-            with self.echo_lock:
-                width = self.width_ns
-            if width is None or not 100_000 <= width <= 30_000_000:
-                return None
-            return width / 1_000_000_000 * 34300 / 2
-        finally:
-            with self.echo_lock:
-                self.armed_at = None
-
     def close(self):
         # Attempt every cleanup even if a previous GPIO/PWM write fails.
         errors = []
-        with self.io_lock:
+        with self.io_lock, self.distance_lock:
             for pin in self.outputs:
                 try:
                     # TRIG uses one-shot pulses. Do not send a zero-length

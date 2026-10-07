@@ -34,12 +34,13 @@ from .tunnel import RedemptionTunnel
 from .water_api import WaterAPI
 from .water_worker import WaterRequestWorker
 from .presence import MachinePresence
+from .bin_monitor import BinMonitoring, BinSettings
 
 
 class MachineRuntime(
     MachineState, JournalSync, FirebaseSupport, ControllerCommands, CameraSupport,
     MaterialDetection, RecyclingWorker, WaterRequestWorker,
-    MachineAPI, WaterAPI, RewardsAPI, RedemptionTunnel, MachinePresence,
+    MachineAPI, WaterAPI, RewardsAPI, RedemptionTunnel, MachinePresence, BinMonitoring,
 ):
     def __init__(self):
         self.state_lock = threading.RLock()
@@ -71,6 +72,9 @@ class MachineRuntime(
         self.sync_thread = None
         self.notification_thread = None
         self.presence_thread = None
+        self.bin_thread = None
+        self.bin_sensor = None
+        self.bin_settings = BinSettings.from_file()
         self.notifications = None
         self.reward_sync_lock = threading.Lock()
         self._started = False
@@ -235,6 +239,11 @@ class MachineRuntime(
             self.notifications = MachineAlertNotifications(
                 lambda: self.db, MACHINE_ID, self.recycling_upload_queue.path, self.shutdown_event,
             )
+            if self.bin_settings.enabled:
+                self.bin_thread = threading.Thread(
+                    target=self.bin_monitor_worker, name="bin-monitor", daemon=True,
+                )
+                self.bin_thread.start()
             self.notification_thread = threading.Thread(
                 target=self.notifications.run, name="machine-alert-notifications", daemon=True,
             )
@@ -293,6 +302,13 @@ class MachineRuntime(
                 self.recycling_upload_thread.join(timeout=1)
         if self.notification_thread is not None and self.notification_thread.is_alive():
             self.notification_thread.join(timeout=1)
+        if self.bin_thread is not None and self.bin_thread.is_alive():
+            self.bin_thread.join(timeout=1)
+        if self.bin_sensor is not None:
+            try:
+                self.bin_sensor.close()
+            except Exception as error:
+                log("Could not close bin sensor during shutdown:", error)
         if self.weight_scale is not None:
             try:
                 self.weight_scale.close()

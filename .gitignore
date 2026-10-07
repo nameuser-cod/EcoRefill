@@ -37,6 +37,7 @@ cleanliness_dataset/
 ecorefill-pi/inspection.local.json
 ecorefill-pi/inference.local.json
 ecorefill-pi/gpio.local.json
+ecorefill-pi/bin.local.json
 ecorefill-pi/data/
 
 # EcoRefill datasets

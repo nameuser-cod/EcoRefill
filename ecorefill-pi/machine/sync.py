@@ -26,6 +26,11 @@ class JournalSync:
             except Exception as error:
                 failed = True
                 log("Public endpoint publication will retry:", error)
+            try:
+                self.sync_bin_alerts()
+            except Exception as error:
+                failed = True
+                log("Bin alert remains queued:", error)
             for key, record in self.journal.entries("refill"):
                 if record["outcome"] in {"preparing", "reserved", "executing", "review_required"}:
                     continue
