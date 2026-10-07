@@ -3,7 +3,7 @@
 Production site: [ecorefill-app-five.vercel.app](https://ecorefill-app-five.vercel.app).
 
 The project is linked to Vercel on this computer. Future CLI deployments can use
-`npx vercel --prod` from this directory. The first successful production
+`npx vercel deploy --prod --scope deb-ed0a` from this directory. The first successful production
 deployment completed on October 2, 2026 (Asia/Manila). GitHub automatic
 deployment is not connected: Vercel could not access the repository during setup.
 
@@ -37,20 +37,74 @@ Phone push alerts require owner sign-in, notification permission, and an online
 Pi. The Android app bundles its interface locally; Vercel serves the browser
 dashboards. Refill requests travel through Firestore and are processed by the Pi.
 
+## Download the Android application
+
+Download [EcoRefill.apk](https://ecorefill-app-five.vercel.app/downloads/EcoRefill.apk)
+on an Android phone. Open the downloaded file, allow installation from that
+browser when Android asks, and tap **Install**. The app installs as
+`com.ecorefill.app` and bundles its interface on the phone. Firebase and Pi
+features still require connectivity.
+
+The current APK is version **1.0.1** (version code **2**), signed with the existing
+Android debug certificate for direct installation and testing. Play Store
+publication requires a separately configured release signing key and app bundle.
+
+To refresh the downloadable APK from this computer:
+
+```bash
+npm run build
+npx cap sync android
+cd android
+JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :app:assembleDebug
+cd ..
+cp android/app/build/outputs/apk/debug/app-debug.apk release-artifacts/EcoRefill.apk
+npx vercel deploy --prod --scope deb-ed0a
+```
+
+Vercel runs `scripts/publish-android-download.mjs` after the web build to publish
+the APK under `/downloads/`. `.vercelignore` includes only this APK from
+`release-artifacts/`. The APK stays outside `public/` so future native builds
+do not bundle another APK inside the app. Build or copy
+`release-artifacts/EcoRefill.apk` before deploying from another computer;
+release artifacts are not tracked in Git.
+
+## Install the web app on a phone
+
+The hosted site includes a web app manifest, phone icons, and standalone display
+settings. The welcome page offers **Install EcoRefill**.
+In supported browsers this opens the browser's installation prompt. Otherwise,
+it shows home-screen installation instructions:
+
+- **Android:** Open the production link in Chrome, tap **⋮**, then **Add to Home
+  screen** or **Install app**.
+- **iPhone:** Open the production link in Safari, tap **Share**, then **Add to
+  Home Screen**.
+
+The installed web app launches from its EcoRefill icon in its own window.
+Accounts, points, scanning, payments, and refills still need an internet
+connection. A service worker stores only a generic offline help page, not
+account records or API responses. Application pages and assets use the network
+so returning online loads the deployed version. Native Android builds do not
+register this worker and do not show the browser install control.
+
+Owner push alerts remain available through the native Android APK. Browser
+installation does not enable web push notifications.
+
 ## Deploy from this computer
 
 From the repository root:
 
 ```bash
 npx vercel login
-npx vercel --prod
+npx vercel deploy --prod --scope deb-ed0a
 ```
 
 Select your Vercel account, create or link the `ecorefill-app` project, and use
 `./` as the project directory. The repository's `vercel.json` selects Vite,
-installs web dependencies with `npm ci`, runs `npm run build`, publishes `dist`,
+installs web dependencies with `npm ci`, builds the web app, copies the Android
+download into `dist/downloads`, publishes `dist`,
 and rewrites client routes to `index.html`.
-The `.vercelignore` excludes machine code, datasets, Android builds, local
+The `.vercelignore` excludes machine code, datasets, native build directories, local
 environment files, and other files that the web deployment does not need.
 Python requirements are also excluded so Vercel does not try to install Pi
 camera and GPIO packages for the web frontend.

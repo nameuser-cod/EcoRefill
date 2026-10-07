@@ -1,0 +1,11 @@
+.install-app { color: #36523d; font-size: 13px; line-height: 1.5; text-align: center; }
+.install-app-button,
+.install-app summary { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; width: 100%; padding: 8px 12px; border: 1px solid #b9d7aa; border-radius: 12px; background: #f3ffe8; color: #1f6f3a; font: inherit; font-weight: 750; cursor: pointer; box-sizing: border-box; }
+.install-app summary { list-style: none; }
+.install-app summary::-webkit-details-marker { display: none; }
+.install-app-button:focus-visible,
+.install-app summary:focus-visible { outline: 3px solid #1f6f3a; outline-offset: 3px; }
+.install-app-button:disabled { cursor: wait; opacity: 0.7; }
+.install-app details[open] { padding-bottom: 8px; }
+.install-app p { margin: 10px 8px 0; }
+.auth-shell > .install-app { margin-top: 16px; }

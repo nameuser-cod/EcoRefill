@@ -22,6 +22,10 @@ export default defineConfig([
     },
   },
   {
+    files: ['public/sw.js'],
+    languageOptions: { globals: globals.serviceworker },
+  },
+  {
     files: ['functions/**/*.{js,cjs}'],
     extends: [js.configs.recommended],
     languageOptions: {

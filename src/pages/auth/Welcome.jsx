@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowRight, Coins, Droplets, Leaf, Recycle } from "lucide-react";
 import { auth } from "../../firebase/firebase";
 import { readRememberedEmail } from "./rememberedLogin";
+import InstallApp from "../../components/InstallApp";
 import "../../styles/auth/auth.css";
 
 const WELCOME_COMPLETED_KEY = "ecorefill.welcomeCompleted";
@@ -103,6 +104,7 @@ export default function Welcome() {
               Get started <ArrowRight size={20} aria-hidden="true" />
             </Link>
             <p className="welcome-login-prompt">Already have an account? <Link to="/login" className="welcome-login-button" onClick={rememberWelcome}>Log in</Link></p>
+            <InstallApp />
           </div>
         </div>
         <footer className="welcome-footer"><Leaf size={15} aria-hidden="true" /> A little less waste. A little more possibility.</footer>

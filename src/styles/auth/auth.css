@@ -3,11 +3,13 @@
 /* ===== New user / Welcome ===== */
 
 .welcome-page {
+  box-sizing: border-box;
   position: fixed;
   inset: 0;
   height: 100vh;
   height: 100dvh;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   overscroll-behavior: none;
   display: grid;
   place-items: center;

@@ -1,5 +1,4 @@
-import { ArrowLeft, Recycle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Recycle } from "lucide-react";
 import "../../styles/auth/auth.css";
 
 export default function AuthLayout({ title, description, footer, children }) {
@@ -17,9 +16,6 @@ export default function AuthLayout({ title, description, footer, children }) {
             <p className="switch-text">{footer}</p>
           </footer>
         </div>
-        <Link className="auth-welcome-link" to="/welcome">
-          <ArrowLeft size={16} aria-hidden="true" /> Back to welcome
-        </Link>
       </div>
     </main>
   );

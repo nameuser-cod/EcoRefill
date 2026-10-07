@@ -11,7 +11,8 @@ datasets
 ecorefill_dataset
 yolo-env
 runs
-release-artifacts
+release-artifacts/*
+!release-artifacts/EcoRefill.apk
 tests
 docs
 *.py
