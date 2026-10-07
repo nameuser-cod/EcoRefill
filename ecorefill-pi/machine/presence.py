@@ -18,6 +18,7 @@ class MachinePresence:
                     self.db.collection("machines").document(MACHINE_ID).update({
                         "machineStatus": "Online",
                         "lastHeartbeatAt": firestore.SERVER_TIMESTAMP,
+                        **self.get_water_level_fields(),
                     }, retry=None, timeout=10)
                 except Exception as error:
                     log("Could not publish machine heartbeat:", error)

@@ -4,13 +4,20 @@ import { clampPercentage } from "../utils/ownerDashboard";
 function MachineMetrics({ machine }) {
   const waterLevel = machine.waterLevel == null || machine.waterLevel === ""
     ? null : clampPercentage(machine.waterLevel);
+  const assumedFull = ["no_echo_assumed_full", "blind_zone_assumed_full"].includes(machine.waterLevelStatus);
+  const description = waterLevel === null
+    ? (["unavailable", "invalid", "stale"].includes(machine.waterLevelStatus)
+      ? "Water sensor unavailable" : "No reading received")
+    : assumedFull
+      ? "Estimated full · water surface not detected"
+      : "of tank capacity remaining";
 
   return (
     <div className="owner-analytics-water">
       <Droplets size={20} aria-hidden="true" />
       <span>Water level</span>
       <strong>{waterLevel === null ? "—" : `${waterLevel}%`}</strong>
-      <p>{waterLevel === null ? "No reading received" : "of tank capacity remaining"}</p>
+      <p>{description}</p>
       {waterLevel !== null && (
         <div
           className="owner-meter"

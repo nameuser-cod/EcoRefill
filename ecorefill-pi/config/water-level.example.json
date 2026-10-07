@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "trig_gpio": 12,
+  "echo_gpio": 13,
+  "full_distance_cm": 20,
+  "first_distance_cm": 21,
+  "first_percent": 85,
+  "empty_distance_cm": 38,
+  "confirm_readings": 3,
+  "poll_seconds": 2
+}

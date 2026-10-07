@@ -35,7 +35,7 @@ class UltrasonicEcho:
         with self.distance_lock, _PING_LOCK:
             if self.handle is None:
                 return None
-            # Both the water and bin sensor share this quiet interval.
+            # Container, bin and gallon-level sensors share this quiet interval.
             delay = _NEXT_PING_AT - time.monotonic()
             if delay > 0:
                 time.sleep(delay)
@@ -102,3 +102,10 @@ class BinUltrasonicSensor(UltrasonicEcho):
                         self.gpio.gpiochip_close(self.handle)
                     self.handle = self.callback = None
                     self.trigger_claimed = False
+
+
+class WaterLevelUltrasonicSensor(BinUltrasonicSensor):
+    """Own only the gallon sensor's pins, separate from container detection."""
+
+    def __init__(self, trig_gpio=12, echo_gpio=13):
+        super().__init__(trig_gpio, echo_gpio)

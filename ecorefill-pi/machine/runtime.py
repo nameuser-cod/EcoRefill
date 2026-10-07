@@ -35,12 +35,14 @@ from .water_api import WaterAPI
 from .water_worker import WaterRequestWorker
 from .presence import MachinePresence
 from .bin_monitor import BinMonitoring, BinSettings
+from .water_level import WaterLevelMonitoring, WaterLevelSettings
 
 
 class MachineRuntime(
     MachineState, JournalSync, FirebaseSupport, ControllerCommands, CameraSupport,
     MaterialDetection, RecyclingWorker, WaterRequestWorker,
     MachineAPI, WaterAPI, RewardsAPI, RedemptionTunnel, MachinePresence, BinMonitoring,
+    WaterLevelMonitoring,
 ):
     def __init__(self):
         self.state_lock = threading.RLock()
@@ -75,6 +77,12 @@ class MachineRuntime(
         self.bin_thread = None
         self.bin_sensor = None
         self.bin_settings = BinSettings.from_file()
+        self.water_level_thread = None
+        self.water_level_sensor = None
+        self.water_level_reading = None
+        self.water_level_observed_at = None
+        self.water_level_settings = WaterLevelSettings.from_file()
+        self.water_level_settings.validate_bin_pins(self.bin_settings)
         self.notifications = None
         self.reward_sync_lock = threading.Lock()
         self._started = False
@@ -244,6 +252,11 @@ class MachineRuntime(
                     target=self.bin_monitor_worker, name="bin-monitor", daemon=True,
                 )
                 self.bin_thread.start()
+            if self.water_level_settings.enabled:
+                self.water_level_thread = threading.Thread(
+                    target=self.water_level_worker, name="water-level", daemon=True,
+                )
+                self.water_level_thread.start()
             self.notification_thread = threading.Thread(
                 target=self.notifications.run, name="machine-alert-notifications", daemon=True,
             )
@@ -309,6 +322,13 @@ class MachineRuntime(
                 self.bin_sensor.close()
             except Exception as error:
                 log("Could not close bin sensor during shutdown:", error)
+        if self.water_level_thread is not None and self.water_level_thread.is_alive():
+            self.water_level_thread.join(timeout=1)
+        if self.water_level_sensor is not None:
+            try:
+                self.water_level_sensor.close()
+            except Exception as error:
+                log("Could not close water-level sensor during shutdown:", error)
         if self.weight_scale is not None:
             try:
                 self.weight_scale.close()

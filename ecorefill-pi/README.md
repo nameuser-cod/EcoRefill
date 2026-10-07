@@ -64,6 +64,7 @@ python3 -m tools.direct_gpio --config gpio.local.json --distance
 python3 -m tools.check_servos --diagnose-only
 python3 -m tools.check_buttons
 python3 -m tools.check_bin --config bin.local.json
+python3 -m tools.check_water_level --config water-level.local.json
 /usr/bin/python3 -m tools.check_weight --calibrate
 ```
 
@@ -82,6 +83,7 @@ cp config/inspection.example.json inspection.local.json
 - [GPIO wiring and calibration](docs/DIRECT_GPIO.md)
 - [HX711 weight sensor](docs/WEIGHT_SENSOR.md)
 - [Center bin ultrasonic sensor and full-bin alerts](docs/BIN_SENSOR.md)
+- [Upright gallon water-level sensor and percentage calibration](docs/WATER_LEVEL.md)
 - [Visual inspection](docs/INSPECTION.md)
 - [Offline recovery and local kiosk](docs/LOW_CONNECTIVITY.md)
 - [Dispensing time and partial refunds](docs/TIMED_REFUNDS.md)
