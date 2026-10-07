@@ -75,6 +75,8 @@ cp config/inspection.example.json inspection.local.json
 
 ## Guides
 
+- [Installed Pi detection settings and measurements](docs/PI_INFERENCE_RESULTS_20261007.md)
+- [NCNN inference, CPU limits, benchmarking and model comparison](docs/INFERENCE_PERFORMANCE.md)
 - [Controller debugging and file map](docs/DEBUGGING.md)
 - [GPIO wiring and calibration](docs/DIRECT_GPIO.md)
 - [HX711 weight sensor](docs/WEIGHT_SENSOR.md)

@@ -1,5 +1,119 @@
 # Bottle and can evaluation — September 5, 2026
 
+## October 7, 2026 — Raspberry Pi 5 verification
+
+SSH verification used the installed Raspberry Pi 5 with 8 GB RAM, Python
+3.13.5, Ultralytics 8.4.113, PyTorch 2.13.0, OpenCV 5.0.0.93 and NCNN
+1.0.20260526. Existing Python packages were retained; only NCNN was added.
+The controller and kiosk browser were stopped during these offline tests;
+the desktop, nginx and normal background services remained running.
+
+The initial NCNN run using default ARM precision incorrectly accepted one
+food-scene negative as `aluminum_can` at confidence 0.650390625. The original
+PyTorch decision rejected it. Disabling NCNN's implicit FP16 packing, storage,
+arithmetic and BF16 storage before reloading the network resolved that difference.
+**Use full-precision NCNN; the reduced-precision run is not an activation candidate.**
+
+The full-precision comparisons used the same 62 public validation images, with
+machine cropping disabled and weight/visual inspection bypassed. Each run used
+two warmup scans and three timing repeats. Both full-precision NCNN settings
+and PyTorch made all 62 expected decisions correctly, with no wrong-material
+acceptances. Repeats do not add independent accuracy samples.
+
+| Pi format | Threads | Median decision | p95 decision | Process CPU, one-core scale | Maximum sampled temperature |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Existing PyTorch, 416 | 2 | 131.13 ms | 135.75 ms | 244.6% | 57.3°C |
+| Full-precision NCNN, 416 | 2 | 67.01 ms | 73.95 ms | 190.7% | 56.8°C |
+| Full-precision NCNN, 416 | 1 | 96.30 ms | 100.24 ms | 102.3% | 55.1°C |
+
+**Recommended lower-load candidate: full-precision NCNN, size 416, one thread.**
+It used approximately one CPU core and still had lower median decision latency
+than the two-thread PyTorch baseline. Process CPU includes preprocessing,
+decoding and monitoring; thread settings do not cap total application CPU.
+No throttle flags were reported. These short runs do not establish sustained
+temperature behavior or responsiveness with the live kiosk/controller running.
+Starting temperatures and run durations differed; temperature maxima are
+observations, not a controlled cooling comparison.
+
+A separate camera-only test verified RGB888 lores support on this Pi. With
+OpenCV limited to one thread in both paths, ten-second motion loops used
+approximately 6.8% of one CPU core with main-stream copies and 4.8% with lores
+copies. Motion frames changed from 1280x960 to 640x480, while main images
+remained 1280x960. Neither test operated GPIO, the pump or sorting gates.
+
+The final **287-test** suite passed on the Pi both in staging and after
+installation, with no skips. Persistent settings in
+`/home/rpi/EcoRefill/ecorefill-pi/inference.local.json` select full-precision
+NCNN 416, one thread, and the smaller motion stream for the next normal
+controller start. The original PyTorch checkpoint was preserved. Previous
+source files were backed up to
+`/home/rpi/ecorefill-inference-stage-20261007/pre-update-source.tar.gz`.
+
+The user then provided one physical plastic bottle and one aluminum can for
+camera-only checks. Original 1280x960 images were captured without GPIO. Both
+the original model and full-precision NCNN correctly accepted each item using
+the actual machine crop and unchanged thresholds. Installed NCNN confidence
+was **0.93075 for the bottle** and **0.95118 for the can**. These are model
+scores for two samples, not overall accuracy. The installed configuration was
+rechecked on both saved images without starting the controller, sorting,
+dispensing, awarding points, or connecting to Firebase. More independent
+machine examples are needed for broad recognition claims or YOLO26n training.
+
+Local copies of the Pi reports are under
+`release-artifacts/pi-inference-results/`: `pi-pytorch-416-threads2.json`,
+`pi-ncnn-fp32-416-threads2.json`, `pi-ncnn-fp32-416-threads1.json`, and
+`pi-camera-streams.json`. `pi-ncnn-416-threads2.json` records the rejected
+reduced-precision candidate for diagnostic comparison.
+`installed-live-smoke.json` records the installed configuration's decisions on
+the two user-provided objects; original images are retained on the Pi and in
+the local ignored `release-artifacts/pi-inference-results/machine-validation/`.
+
+## October 7, 2026 — NCNN export and CPU limit verification
+
+The deployed checkpoint was exported to separate NCNN directories at 416 and
+320. Its original SHA-256 remains
+`a7d59d7aacd1c84c4400354aa37bc98755ecb68725f3efa98897ce03f8810ac2`.
+The runtime still defaults to the original checkpoint at 416; no replacement
+model was activated and no YOLO26n model was trained in this change.
+
+Local smoke benchmarks used the Apple M1 Mac, Ultralytics 8.4.83, NCNN
+1.0.20260526 and PNNX 20250430. They used the same 62 public validation images
+described below, with the machine crop disabled and weight/visual checks
+bypassed. These are short workstation checks, not Pi performance results or
+independent machine-camera accuracy measurements.
+
+| Format | Input | Threads | Median decision | p95 decision | Average process CPU, one-core scale |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Existing PyTorch | 416 | 2 | 28.40 ms | 30.88 ms | 196.6% |
+| Existing weights exported to NCNN | 416 | 2 | 11.62 ms | 12.20 ms | 199.9% |
+| Existing weights exported to NCNN | 416 | 1 | 19.90 ms | 25.78 ms | 98.7% |
+| Existing weights exported to NCNN | 320 | 2 | 7.54 ms | 8.02 ms | 199.2% |
+
+Each format/settings combination made all 62 expected decisions correctly
+(34 plastic bottles, 17 aluminum cans, 11 food-scene negatives). Repeats were
+used for timing, not counted as additional accuracy samples. This small public
+subset does not show that 320 is sufficient inside the machine or that the
+reported can-as-bottle errors are fixed. Temperatures/throttle flags were
+unavailable on the Mac. Retain 416 pending machine validation.
+
+The initial NCNN diagnostic revealed that changing `net.opt.num_threads`
+after loading leaves convolution pipelines using their original thread count.
+The loader now clears and reloads the network with options set before loading
+its parameter/weight files. The corrected two-thread run used approximately
+two cores; the one-thread run used approximately one. The earlier report
+`runs/inference_ncnn_mac_416.json` is superseded and must not be treated as a
+verified two-thread result.
+
+Verified local reports are `runs/inference_baseline_mac_416.json`,
+`runs/inference_ncnn_mac_416_threads2.json`,
+`runs/inference_ncnn_mac_416_threads1.json`, and
+`runs/inference_ncnn_mac_320_threads2.json`. NCNN exports are retained under
+`ecorefill-pi/models/ecorefill_416_ncnn_model` and
+`ecorefill-pi/models/ecorefill_320_ncnn_model`, outside Git.
+
+See the [Pi performance guide](ecorefill-pi/docs/INFERENCE_PERFORMANCE.md) for
+benchmarking, activation, rollback and the machine-photo training workflow.
+
 ## September 28, 2026 — TACO and Waste Segregation candidate
 
 The user confirmed that the existing dataset's aluminum-can labels are verified

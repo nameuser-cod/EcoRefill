@@ -210,6 +210,11 @@ The Pi also writes local scan information to `sessions_log.txt`. Local logging i
 
 The frontend uses **React 19**, **Vite 8**, **React Router**, and custom CSS. QR generation uses `qrcode.react`; scanning uses `html5-qrcode`. **Capacitor** provides the Android wrapper. The machine service uses **Python**, **Flask**, **OpenCV**, **Ultralytics YOLO**, **Picamera2**, **gpiozero**, **lgpio**, and the **Firebase Admin SDK**.
 
+The Pi detector supports optional **NCNN** exports with configurable CPU thread
+limits. Pi 5 motion checks use a secondary 640x480 camera stream; detection and
+history retain the main camera resolution. See the [inference performance guide](ecorefill-pi/docs/INFERENCE_PERFORMANCE.md)
+for export, model comparison, Pi measurements, activation and rollback.
+
 ```text
 ecorefill-app/
 ├── src/

@@ -531,7 +531,7 @@ class LifecycleTests(unittest.TestCase):
     def test_partial_startup_failure_closes_initialized_resources(self):
         machine = MachineRuntime()
         camera = Mock()
-        with patch.dict(sys.modules, {"ultralytics": SimpleNamespace(YOLO=Mock())}), \
+        with patch("machine.runtime.load_detection_model", return_value=Mock()), \
              patch("machine.runtime.os.path.exists", return_value=True), \
              patch.object(machine, "initialize_firebase", return_value=None), \
              patch.object(machine, "initialize_camera", return_value=camera), \
@@ -547,7 +547,7 @@ class LifecycleTests(unittest.TestCase):
 
     def test_start_initializes_before_workers_and_is_idempotent(self):
         machine = MachineRuntime()
-        with patch.dict(sys.modules, {"ultralytics": SimpleNamespace(YOLO=Mock())}), \
+        with patch("machine.runtime.load_detection_model", return_value=Mock()), \
              patch("machine.runtime.os.path.exists", return_value=True), \
              patch.object(machine, "initialize_firebase", return_value=None), \
              patch.object(machine, "initialize_camera", return_value=Mock()), \

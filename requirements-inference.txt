@@ -1,0 +1,5 @@
+# Optional NCNN runtime and offline benchmark tools. Install alongside the
+# existing Pi requirements; pnnx is needed only on the export workstation.
+ultralytics==8.4.83
+ncnn==1.0.20260526
+psutil

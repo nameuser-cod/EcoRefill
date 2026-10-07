@@ -9,6 +9,7 @@ from .config import (
     MOTION_FRAME_DELAY,
     MOTION_FRAME_SIZE,
     MOTION_MIN_AREA,
+    MOTION_LOW_RES,
     MOTION_PIXEL_THRESHOLD,
     MOTION_TRIGGER_FRAMES,
     REARM_SETTLE_MIN_SECONDS,
@@ -45,6 +46,8 @@ class CameraSupport:
             camera_config = camera.create_preview_configuration(
                 main={"size": (CAMERA_WIDTH, CAMERA_HEIGHT), "format": "RGB888"},
                 raw={"size": mode["size"], "format": mode["format"]},
+                **({"lores": {"size": MOTION_FRAME_SIZE, "format": "RGB888"}}
+                   if MOTION_LOW_RES else {}),
             )
             camera.configure(camera_config)
             camera.start()
@@ -85,19 +88,25 @@ class CameraSupport:
 
             return False
 
-    def capture_camera_array(self):
+    def capture_camera_array(self, stream="main"):
         """Capture one frame and automatically recover the camera once."""
 
         if self.picam2 is None and not self.restart_camera():
             raise RuntimeError("Camera is unavailable.")
 
         try:
-            return self.picam2.capture_array()
+            return self.picam2.capture_array(stream)
         except Exception as first_error:
             log("Camera capture error:", first_error)
             if not self.restart_camera():
                 raise RuntimeError("Camera recovery failed.") from first_error
-            return self.picam2.capture_array()
+            return self.picam2.capture_array(stream)
+
+    def capture_motion_array(self):
+        """Copy only the 640x480 secondary stream while waiting, on Pi 5."""
+        if MOTION_LOW_RES:
+            return self.capture_camera_array("lores")
+        return self.capture_camera_array()
 
     def capture_image(self):
         import cv2
@@ -167,7 +176,7 @@ class CameraSupport:
         """
         time.sleep(REARM_SETTLE_MIN_SECONDS)
 
-        previous_frame = self.capture_camera_array()
+        previous_frame = self.capture_motion_array()
         previous_gray = self.prepare_motion_frame(previous_frame)
 
         # ---------------------------------------------------------
@@ -179,7 +188,7 @@ class CameraSupport:
             if self.recycling_paused.is_set() or self.finish_session_event.is_set():
                 return None
 
-            current_frame = self.capture_camera_array()
+            current_frame = self.capture_motion_array()
             has_motion, current_gray, largest_area = self.frame_has_motion(
                 previous_gray,
                 current_frame,
@@ -203,7 +212,7 @@ class CameraSupport:
             return None
 
         # Fresh baseline AFTER the sorter has completely stopped.
-        previous_frame = self.capture_camera_array()
+        previous_frame = self.capture_motion_array()
         previous_gray = self.prepare_motion_frame(previous_frame)
 
         # ---------------------------------------------------------
@@ -219,7 +228,7 @@ class CameraSupport:
             if self.recycling_paused.is_set() or self.finish_session_event.is_set():
                 return None
 
-            current_frame = self.capture_camera_array()
+            current_frame = self.capture_motion_array()
             has_motion, current_gray, largest_area = self.frame_has_motion(
                 previous_gray,
                 current_frame,
@@ -258,7 +267,11 @@ class CameraSupport:
 
                     if (stable_frames >= STABLE_FRAMES_REQUIRED
                             and now - stable_since >= SCAN_STABLE_SECONDS):
-                        return latest_frame
+                        if self.shutdown_event.is_set() or self.recycling_paused.is_set() or self.finish_session_event.is_set():
+                            return None
+                        # Preserve full-resolution inference, inspection and
+                        # history photos; motion frames never reach the model.
+                        return self.capture_camera_array() if MOTION_LOW_RES else latest_frame
 
             time.sleep(MOTION_FRAME_DELAY)
 

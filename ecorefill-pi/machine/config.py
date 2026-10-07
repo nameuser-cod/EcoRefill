@@ -1,8 +1,30 @@
 """Machine settings. Keep pricing, pins, thresholds, and timeouts here."""
 
+import json
 import os
+from pathlib import Path
 
-MODEL_PATH = "models/ecorefill_best.pt"
+
+def _inference_defaults():
+    path = Path(os.getenv("ECOREFILL_INFERENCE_CONFIG", str(
+        Path(__file__).resolve().parents[1] / "inference.local.json")))
+    if not path.exists() and "ECOREFILL_INFERENCE_CONFIG" not in os.environ:
+        return {}
+    settings = json.loads(path.read_text())
+    types = {"model_path": str, "image_size": int, "threads": int, "motion_low_res": bool}
+    if not isinstance(settings, dict) or any(key not in types or type(value) is not types[key]
+                                              for key, value in settings.items()):
+        raise ValueError(f"Invalid inference settings in {path}; expected model_path, image_size, threads, motion_low_res.")
+    if "model_path" in settings and not settings["model_path"].strip():
+        raise ValueError("Inference model_path cannot be empty.")
+    return settings
+
+
+_INFERENCE_DEFAULTS = _inference_defaults()
+
+MODEL_PATH = os.getenv("ECOREFILL_MODEL_PATH", _INFERENCE_DEFAULTS.get("model_path", "models/ecorefill_best.pt"))
+# Bound inference CPU use; benchmark on the Pi before increasing this.
+INFERENCE_THREADS = int(os.getenv("ECOREFILL_INFERENCE_THREADS", _INFERENCE_DEFAULTS.get("threads", 2)))
 # Keep the OV5647's 4:3 aspect ratio; avoid a widescreen crop of the bottle.
 CAMERA_WIDTH = int(os.getenv("CAMERA_WIDTH", "1280"))
 CAMERA_HEIGHT = int(os.getenv("CAMERA_HEIGHT", "960"))
@@ -10,7 +32,12 @@ CAMERA_HEIGHT = int(os.getenv("CAMERA_HEIGHT", "960"))
 MOTION_FRAME_SIZE = (640, 480)
 # Match this checkpoint's training resolution. See MODEL_EVALUATION.md for
 # validation results; re-evaluate this setting when replacing the model.
-INFERENCE_IMAGE_SIZE = 416
+INFERENCE_IMAGE_SIZE = int(os.getenv("ECOREFILL_INFERENCE_SIZE", _INFERENCE_DEFAULTS.get("image_size", 416)))
+if INFERENCE_THREADS < 1 or INFERENCE_IMAGE_SIZE < 32 or INFERENCE_IMAGE_SIZE % 32:
+    raise ValueError("Inference threads must be positive and size a positive multiple of 32.")
+# Pi 5 supports RGB on the secondary stream, retaining existing motion thresholds.
+MOTION_LOW_RES = os.getenv("ECOREFILL_MOTION_LOW_RES", str(
+    _INFERENCE_DEFAULTS.get("motion_low_res", True))).lower() in {"1", "true", "yes"}
 # Center tray, estimated from the machine-camera screenshots.
 # Fractions of the full frame: (left, top, right, bottom). Set None for full view.
 DETECTION_REGION = (0.33, 0.04, 0.65, 0.96)

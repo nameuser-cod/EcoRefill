@@ -17,7 +17,9 @@ from .config import (
     HX711_OFFSET, HX711_COUNTS_PER_GRAM, HX711_MAX_SPREAD_G,
     BOTTLE_MAX_WEIGHT_G, CAN_MAX_WEIGHT_G,
     WEIGHT_SENSOR_ENABLED,
+    INFERENCE_IMAGE_SIZE, INFERENCE_THREADS,
 )
+from .inference import load_detection_model
 from .detection import MaterialDetection
 from .diagnostics import log
 from .firebase import FirebaseSupport
@@ -197,14 +199,14 @@ class MachineRuntime(
         if self._started:
             return
         try:
-            from ultralytics import YOLO
             from machine.visual_inspection import VisualInspector
 
             self.db = self.initialize_firebase()
             if not os.path.exists(MODEL_PATH):
                 raise FileNotFoundError(f"Model not found: {os.path.abspath(MODEL_PATH)}")
             log("Loading EcoRefill model...")
-            self.model = YOLO(MODEL_PATH)
+            self.model = load_detection_model(MODEL_PATH, INFERENCE_IMAGE_SIZE, INFERENCE_THREADS)
+            log(f"Inference: CPU; threads={INFERENCE_THREADS}; image size={INFERENCE_IMAGE_SIZE}")
             log("Model classes:", self.model.names)
             self.visual_inspector = VisualInspector.from_file(
                 os.getenv("ECOREFILL_INSPECTION_CONFIG")

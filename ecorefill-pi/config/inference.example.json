@@ -1,0 +1,6 @@
+{
+  "model_path": "models/ecorefill_416_ncnn_model",
+  "image_size": 416,
+  "threads": 1,
+  "motion_low_res": true
+}

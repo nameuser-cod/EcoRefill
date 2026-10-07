@@ -28,12 +28,14 @@ release-artifacts/
 # Python / YOLO
 yolo-env/
 runs/
+*_ncnn_model/
 
 __pycache__/
 *.pyc
 inspection_samples/
 cleanliness_dataset/
 ecorefill-pi/inspection.local.json
+ecorefill-pi/inference.local.json
 ecorefill-pi/gpio.local.json
 ecorefill-pi/data/
 

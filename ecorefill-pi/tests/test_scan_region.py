@@ -15,6 +15,9 @@ from machine.scan_region import scan_region_bounds
 
 class ScanRegionTests(unittest.TestCase):
     def setUp(self):
+        legacy = patch("machine.camera.MOTION_LOW_RES", False)
+        legacy.start()
+        self.addCleanup(legacy.stop)
         self.frame = np.zeros((480, 640, 3), dtype=np.uint8)
         self.bounds = scan_region_bounds(self.frame)
 
