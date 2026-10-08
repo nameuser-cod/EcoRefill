@@ -186,13 +186,12 @@ class MachineRuntime(
             scale = CalibratedScale(HX711_OFFSET, HX711_COUNTS_PER_GRAM, HX711_MAX_SPREAD_G)
             scale.open()
             self.weight_scale = scale
-            log(f"Weight check ready: bottles <={BOTTLE_MAX_WEIGHT_G:g} g, "
-                f"cans <={CAN_MAX_WEIGHT_G:g} g.",
+            log(f"Weight check ready: bottles <{BOTTLE_MAX_WEIGHT_G:g} g, "
+                f"cans <{CAN_MAX_WEIGHT_G:g} g (zero/negative readings allowed).",
                 f"offset={HX711_OFFSET}, counts/gram={HX711_COUNTS_PER_GRAM}")
         except Exception as error:
-            # Keep the kiosk/water service available, but reject recyclables
-            # until the sensor is available. Never fall back to material only.
-            log("Weight sensor unavailable; recycling items will be rejected:", error)
+            # Continue recycling using material and enabled visual checks.
+            log("Weight sensor unavailable; weight checks will be bypassed:", error)
 
     def initialize_controller(self):
         from .gpio_controller import ControllerSettings, GPIOController

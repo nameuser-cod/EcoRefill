@@ -250,7 +250,7 @@ class MaterialDetection:
         return result
 
     def apply_weight_check(self, result, settling_started=None):
-        """Enforce weight limits before sorting/rewards when the sensor is enabled."""
+        """Reject only verified weights at the limit; bypass failed measurements."""
         report = dict(result.get("inspection") or {})
         result = dict(result, inspection=report)
         if not WEIGHT_SENSOR_ENABLED:
@@ -277,25 +277,24 @@ class MaterialDetection:
             reading = scale.read_weight()
             log(f"Scan timing: weight sampling={monotonic() - weight_started:.3f}s")
             grams = reading["grams"]
-            if not math.isfinite(grams) or grams <= 0:
+            if not math.isfinite(grams):
                 raise WeightReadingError("invalid", "Invalid item weight")
-            # Compare full precision. Exactly the limit is allowed; never round
-            # a slightly overweight reading down before making the decision.
-            overweight = grams > limit
+            # Compare full precision: reaching the threshold also rejects.
+            overweight = grams >= limit
             report["weight"] = dict(reading, status="reject" if overweight else "pass",
                                     limit_g=limit)
             log("Weight inspection:", f"{label}: {grams:.3f} g, limit={limit:g} g")
             if not overweight:
                 return result
-            reason = f"{label} exceeds the {limit:g} g weight limit. Please remove the item."
+            reason = f"{label} reaches or exceeds the {limit:g} g weight limit. Please remove the item."
         except Exception as error:
-            log("Weight check failed:", error)
+            log("Weight check bypassed; continuing with material/visual result:", error)
             status = error.status if isinstance(error, WeightReadingError) else "unavailable"
             reading = error.reading if isinstance(error, WeightReadingError) else {}
-            report["weight"] = dict(reading, status=status, limit_g=limit, detail=str(error))
-            reason = ("Weight is unstable. Please reposition the item and try again."
-                      if status == "unstable" else
-                      "Unable to verify the item's weight. Please remove the item and try again.")
+            report["weight"] = dict(reading, status="pass", bypassed=True,
+                                    measurement_status=status, limit_g=limit,
+                                    detail=str(error))
+            return result
         result.update(accepted=False, category="reject", points=0, rejection_reason=reason)
         return result
 

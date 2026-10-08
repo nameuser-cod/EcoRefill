@@ -155,15 +155,15 @@ class MaterialDetectionTests(unittest.TestCase):
                     )
 
     def test_weight_limits_and_aliases_before_sorting_and_points(self):
-        for label, limit, command in (("plastic_bottle", 1300, "BOTTLE"),
-                                      ("pet_bottle", 1300, "BOTTLE"),
-                                      ("aluminum_can", 1300, "CAN"),
-                                      ("aluminium_can", 1300, "CAN")):
-            for grams in (0.5, 15, 300, 301, 500, 501, 800, 801,
-                          1000, 1001, limit - 0.1, limit, limit + 0.001, 1400):
+        for label, limit, command in (("plastic_bottle", 255, "BOTTLE"),
+                                      ("pet_bottle", 255, "BOTTLE"),
+                                      ("aluminum_can", 255, "CAN"),
+                                      ("aluminium_can", 255, "CAN")):
+            for grams in (-100, -3.351, -1, 0, 0.5, 15, 254,
+                          limit - 0.001, limit, limit + 0.001, 300):
                 with self.subTest(label=label, grams=grams):
                     machine, result = self.verify_and_sort(label, 0.95, grams)
-                    allowed = grams <= limit
+                    allowed = grams < limit
                     self.assertEqual(result["accepted"], allowed)
                     self.assertEqual(result["points"], 0.5 if allowed else 0)
                     machine.send_command.assert_called_once_with(command if allowed else "REJECT")
@@ -173,30 +173,45 @@ class MaterialDetectionTests(unittest.TestCase):
                         self.assertEqual(result["category"], "reject")
                         self.assertIn(f"{limit} g", result["rejection_reason"])
 
-    def test_failed_and_invalid_readings_cannot_award_points(self):
-        for label in ("plastic_bottle", "aluminum_can"):
+    def test_failed_and_invalid_readings_preserve_acceptance_sorting_and_points(self):
+        for label, command in (("plastic_bottle", "BOTTLE"), ("aluminum_can", "CAN")):
             for error in (TimeoutError("unplugged"), RuntimeError("clock timing"),
-                          WeightReadingError("unstable", "moving", {"spread_g": 8})):
+                          WeightReadingError("invalid", "ADC saturated"),
+                          WeightReadingError("unstable", "moving", {"grams": 300, "spread_g": 8})):
                 with self.subTest(label=label, error=error), \
                      self.assertLogs("ecorefill.machine", level="ERROR"):
                     machine, result = self.verify_and_sort(label, 0.95, weight_error=error)
-                    self.assertFalse(result["accepted"])
-                    self.assertEqual(result["points"], 0)
-                    machine.send_command.assert_called_once_with("REJECT")
-            for grams in (float("nan"), float("inf"), -1, 0):
+                    self.assertTrue(result["accepted"])
+                    self.assertEqual(result["points"], 0.5)
+                    machine.send_command.assert_called_once_with(command)
+                    weight = result["inspection"]["weight"]
+                    self.assertEqual(weight["status"], "pass")
+                    self.assertTrue(weight["bypassed"])
+                    self.assertEqual(weight["measurement_status"],
+                                     error.status if isinstance(error, WeightReadingError) else "unavailable")
+                    self.assertEqual(weight["detail"], str(error))
+                    if isinstance(error, WeightReadingError):
+                        for key, value in error.reading.items():
+                            self.assertEqual(weight[key], value)
+            for grams in (float("nan"), float("inf"), float("-inf")):
                 with self.subTest(label=label, grams=grams), \
                      self.assertLogs("ecorefill.machine", level="ERROR"):
                     machine, result = self.verify_and_sort(label, 0.95, grams)
-                    self.assertFalse(result["accepted"])
-                    machine.send_command.assert_called_once_with("REJECT")
+                    self.assertTrue(result["accepted"])
+                    self.assertEqual(result["points"], 0.5)
+                    machine.send_command.assert_called_once_with(command)
+                    self.assertTrue(result["inspection"]["weight"]["bypassed"])
+                    self.assertEqual(result["inspection"]["weight"]["measurement_status"], "invalid")
 
-    def test_missing_sensor_cannot_fall_back_to_material_acceptance(self):
+    def test_missing_sensor_preserves_material_acceptance(self):
         machine = MaterialDetection()
         with self.assertLogs("ecorefill.machine", level="ERROR"):
             result = machine.apply_weight_check({"accepted": True, "category": "bottle", "points": 1})
-        self.assertFalse(result["accepted"])
-        self.assertEqual(result["points"], 0)
-        self.assertEqual(result["inspection"]["weight"]["status"], "unavailable")
+        self.assertTrue(result["accepted"])
+        self.assertEqual(result["points"], 1)
+        self.assertEqual(result["inspection"]["weight"]["status"], "pass")
+        self.assertTrue(result["inspection"]["weight"]["bypassed"])
+        self.assertEqual(result["inspection"]["weight"]["measurement_status"], "unavailable")
 
     def test_weight_pass_cannot_override_visual_rejection(self):
         machine = MaterialDetection()

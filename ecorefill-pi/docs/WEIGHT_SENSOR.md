@@ -47,12 +47,11 @@ different acquisition method before integration into the running machine.
 
 ## Automatic rejection in the recycling controller
 
-**Enabled by default.** The controller initializes the HX711 and requires a
-valid weight reading before accepting a bottle or can. The saved calibration
-and 1300 g (1.3 kg) limits apply automatically. The installed 1 kg load cell's
+**Enabled by default.** The controller initializes the HX711 and rejects a bottle
+or can only when a valid, stable weight reaches 255 g or more. The saved calibration
+and 255 g rejection thresholds apply automatically. The installed 1 kg load cell's
 capacity includes the platform and container; this software limit does not
-increase its rated capacity. Weighing items up to 1300 g requires a higher-capacity
-load cell with room for the platform and container, and a new calibration.
+increase its rated capacity.
 
 Copy the updated `machine/` directory to the Pi and restart the controller for
 this change to take effect. Remove any existing `WEIGHT_SENSOR_ENABLED=false`
@@ -84,11 +83,11 @@ detection finishes, so the GPIO sampling loop does not compete with inference.
 
 | Detected material | Passes the weight limit | Rejected |
 | --- | --- | --- |
-| Plastic bottle (`plastic_bottle`, `pet_bottle`) | Up to and including 1300 g | Above 1300 g |
-| Aluminum can (`aluminum_can`, `aluminium_can`) | Up to and including 1300 g | Above 1300 g |
+| Plastic bottle (`plastic_bottle`, `pet_bottle`) | Below 255 g, including zero and negative readings | 255 g or more |
+| Aluminum can (`aluminum_can`, `aluminium_can`) | Below 255 g, including zero and negative readings | 255 g or more |
 
 Other material, confidence, and visual rules still apply. When enabled, the weight
-check is required even when visual inspection is `off` or `observe`. Rejected items send
+check runs even when visual inspection is `off` or `observe`. Rejected items send
 `REJECT` to the Pi GPIO controller and earn zero points; existing session totals are retained.
 The kiosk displays the weight-limit rejection reason. Local logs and Firestore
 recycling records include `inspection.weight` with grams, limit, status, spread,
@@ -119,19 +118,23 @@ After the settling delay, each decision discards the buffered conversion and
 takes 10 new samples with a separate 4-second acquisition deadline. If the
 sample range exceeds **3 g**, the controller continues sampling and checks the
 latest 10 readings until they settle or the original deadline expires. Persistent
-instability rejects the item with the measured grams, sample range, and allowed
-range in the error log. `HX711_MAX_SPREAD_G` configures this diagnostic tolerance.
-Missing hardware, timeouts, detected clock-timing errors, saturation, nonpositive weight, and
-unstable readings reject the item instead of accepting without a measurement.
+instability bypasses the weight check, preserving the material/visual result.
+The measured grams, sample range, and allowed range remain in the error log and
+inspection record. `HX711_MAX_SPREAD_G` configures this diagnostic tolerance.
+Missing hardware, timeouts, detected clock-timing errors, saturation, nonfinite weight, and
+unstable readings also bypass the weight check. The inspection record uses
+`status: pass`, `bypassed: true`, `measurement_status` (`unavailable`, `invalid`,
+or `unstable`), and `detail` to distinguish a bypass from a verified weight pass.
+An unstable reading is bypassed even if its provisional grams reach 255 g.
 An acquisition error resets HX711 serial framing on the next measurement.
 If initialization fails, fix the connection/dependency and restart the service.
 
-`No positive item weight detected` means the measured weight is zero or negative;
-the maximum-weight limit has not been applied. The error includes the calculated
-grams, raw median, offset, and counts-per-gram factor. Check that the empty plate
-returns near zero and a known mass gives a stable positive reading. Recalibrate
-with an empty plate only after resolving any drift or contact with the chute,
-then update the controller's calibration environment variables and restart it.
+Zero and negative finite readings pass the weight check and retain their signed
+grams in the inspection record. They do not produce `No positive item weight detected`.
+The weight rule rejects at exactly 255 g or more without rounding; material and
+enabled visual checks still decide whether an item is accepted. Check calibration
+if a known mass does not give the expected reading, then update the controller's
+calibration environment variables and restart it.
 
 The item must be supported entirely by the weighing plate, clear of the orange
 chute, while the camera verifies it and the sensor samples it. Calibration cannot

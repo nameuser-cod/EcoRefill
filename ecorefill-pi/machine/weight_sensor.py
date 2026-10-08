@@ -174,14 +174,7 @@ class CalibratedScale:
                         # can settle within the original acquisition deadline.
                         values = values[1:] + [fresh_raw()]
                         continue
-                    if grams <= 0:
-                        raise WeightReadingError(
-                            "invalid",
-                            f"No positive item weight detected: {grams:.3f} g "
-                            f"(raw={raw_median:g}, offset={self.offset:g}, "
-                            f"counts/gram={self.factor:g})",
-                            reading,
-                        )
+                    # Preserve zero/negative readings for the upper-limit check.
                     return reading
             except WeightReadingError:
                 raise

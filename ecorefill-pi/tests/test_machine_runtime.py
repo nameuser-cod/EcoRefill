@@ -524,8 +524,10 @@ class LifecycleTests(unittest.TestCase):
         self.assertIsNone(machine.weight_scale)
         with self.assertLogs("ecorefill.machine", level="ERROR"):
             result = machine.apply_weight_check({"accepted": True, "category": "can", "points": 1})
-        self.assertFalse(result["accepted"])
-        self.assertEqual(result["points"], 0)
+        self.assertTrue(result["accepted"])
+        self.assertEqual(result["points"], 1)
+        self.assertTrue(result["inspection"]["weight"]["bypassed"])
+        self.assertEqual(result["inspection"]["weight"]["measurement_status"], "unavailable")
         machine.close()
 
     def test_partial_startup_failure_closes_initialized_resources(self):
@@ -650,8 +652,8 @@ class RecyclingWeightTests(unittest.TestCase):
         self.addCleanup(enabled.stop)
 
     def test_overweight_item_is_recorded_and_rejected_without_changing_batch_totals(self):
-        for category, item, grams in (("bottle", "plastic_bottle", 1301),
-                                      ("can", "aluminum_can", 1301)):
+        for category, item, grams in (("bottle", "plastic_bottle", 255),
+                                      ("can", "aluminum_can", 255)):
             with self.subTest(category=category):
                 machine = MachineRuntime()
                 machine.update_state(itemCount=2, pointsEarned=2, bottleCount=1,

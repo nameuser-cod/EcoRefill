@@ -161,21 +161,15 @@ class CalibratedScaleTests(unittest.TestCase):
         self.assertIn("HX711 not ready", str(caught.exception))
         self.assertTrue(scale.needs_reset)
 
-    def test_zero_and_negative_weight_are_rejected(self):
+    def test_zero_and_negative_weight_are_returned_for_upper_limit_check(self):
         for raw in (-700000, -695343):
             with self.subTest(raw=raw):
                 scale = self.scale([raw] * 11)
-                with self.assertRaises(WeightReadingError) as caught:
-                    scale.read_weight()
-                error = caught.exception
-                self.assertEqual(error.status, "invalid")
+                reading = scale.read_weight()
                 grams = (raw + 695343) / 199.538
-                self.assertAlmostEqual(error.reading["grams"], grams)
-                self.assertEqual(error.reading["samples"], 10)
-                self.assertIn(f"{grams:.3f} g", str(error))
-                self.assertIn(f"raw={raw}", str(error))
-                self.assertIn("offset=-695343", str(error))
-                self.assertIn("counts/gram=199.538", str(error))
+                self.assertAlmostEqual(reading["grams"], grams)
+                self.assertEqual(reading["samples"], 10)
+                self.assertEqual(reading["spread_g"], 0)
 
     def test_clock_failure_rejects_then_resets_before_next_measurement(self):
         raw = -695343 + 20 * 199.538
