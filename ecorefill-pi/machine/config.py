@@ -110,10 +110,10 @@ WEIGHT_SENSOR_ENABLED = (
     in {"1", "true", "yes"}
 )
 # HX711 wiring: DT=BCM5/pin29, SCK=BCM6/pin31.
-# Latest measured calibration from the installed 1 kg load cell.
+# Measured 2026-10-08 using a 255 g reference on the installed 1 kg load cell.
 # Do not auto-tare at startup or per item: an item may already be on the scale.
-HX711_OFFSET = float(os.getenv("HX711_OFFSET", "-695343"))
-HX711_COUNTS_PER_GRAM = float(os.getenv("HX711_COUNTS_PER_GRAM", "199.538"))
+HX711_OFFSET = float(os.getenv("HX711_OFFSET", "-647096"))
+HX711_COUNTS_PER_GRAM = float(os.getenv("HX711_COUNTS_PER_GRAM", "725.54509804"))
 HX711_MAX_SPREAD_G = float(os.getenv("HX711_MAX_SPREAD_G", "3.0"))
 WEIGHT_SETTLE_SECONDS = 2.0
 # Weighing up to this limit requires a load cell rated above the total load,

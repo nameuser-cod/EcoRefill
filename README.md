@@ -84,7 +84,7 @@ After calibration, the recycling screen can show **Small**, **Medium**, or **Lar
 
 For retraining with TACO and Waste Segregation, follow the [dataset preparation and training guide](DATASET_TRAINING.md). It preserves the deployed model, requires reviewed material labels, and includes a comparison using the machine's detection rules.
 
-For the 1 kg load cell and HX711 wired to a Raspberry Pi 5, use the [weight setup and calibration guide](ecorefill-pi/docs/WEIGHT_SENSOR.md). The controller uses DT on GPIO 5, SCK on GPIO 6, and the supplied calibration of offset **-695343** and **199.538 counts/gram**. Measurements and rejection reasons are recorded with each inspected item.
+For the 1 kg load cell and HX711 wired to a Raspberry Pi 5, use the [weight setup and calibration guide](ecorefill-pi/docs/WEIGHT_SENSOR.md). The controller uses DT on GPIO 5, SCK on GPIO 6, and the supplied calibration of offset **-647096** and **725.54509804 counts/gram**, measured on October 8, 2026 using a 255 g reference. Measurements and rejection reasons are recorded with each inspected item.
 
 ## Water refill flow
 

@@ -94,14 +94,15 @@ The kiosk displays the weight-limit rejection reason. Local logs and Firestore
 recycling records include `inspection.weight` with grams, limit, status, spread,
 and measurement time when a reading is available.
 
-The defaults in `machine/config.py` use the latest supplied calibration:
-**offset -695343**, **199.538 counts/gram**, DT on GPIO 5 and SCK on GPIO 6.
+The defaults in `machine/config.py` use the calibration measured on October 8,
+2026 with a 255 g reference: **offset -647096**, **725.54509804 counts/gram**,
+DT on GPIO 5 and SCK on GPIO 6.
 The controller never automatically tares at startup or while weighing an item.
 To use a later calibration, export both values before starting the controller:
 
 ```bash
-export HX711_OFFSET=-695343
-export HX711_COUNTS_PER_GRAM=199.538
+export HX711_OFFSET=-647096
+export HX711_COUNTS_PER_GRAM=725.54509804
 export WEIGHT_SENSOR_ENABLED=true
 python3 machine_flow.py
 ```
