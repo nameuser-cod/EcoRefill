@@ -104,9 +104,9 @@ GREEN_BUTTON_BOUNCE_SECONDS = 0.15
 BLUE_BUTTON_GPIO = int(os.getenv("BLUE_BUTTON_GPIO", "27"))
 BLUE_BUTTON_BOUNCE_SECONDS = 0.15
 
-# Enabled by default. Set WEIGHT_SENSOR_ENABLED=false to disable weighing.
+# Disabled by default. Set WEIGHT_SENSOR_ENABLED=true to enable weighing.
 WEIGHT_SENSOR_ENABLED = (
-    os.getenv("WEIGHT_SENSOR_ENABLED", "true").strip().lower()
+    os.getenv("WEIGHT_SENSOR_ENABLED", "false").strip().lower()
     in {"1", "true", "yes"}
 )
 # HX711 wiring: DT=BCM5/pin29, SCK=BCM6/pin31.

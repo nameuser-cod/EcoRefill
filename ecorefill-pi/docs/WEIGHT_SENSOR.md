@@ -47,15 +47,16 @@ different acquisition method before integration into the running machine.
 
 ## Automatic rejection in the recycling controller
 
-**Enabled by default.** The controller initializes the HX711 and rejects a bottle
-or can only when a valid, stable weight reaches 255 g or more. The saved calibration
-and 255 g rejection thresholds apply automatically. The installed 1 kg load cell's
+**Disabled by default.** Set `WEIGHT_SENSOR_ENABLED=true` to enable weighing.
+When enabled, the controller initializes the HX711 and rejects a bottle or can
+only when a valid, stable weight reaches 255 g or more. The saved calibration
+and 255 g rejection thresholds then apply. The installed 1 kg load cell's
 capacity includes the platform and container; this software limit does not
 increase its rated capacity.
 
 Copy the updated `machine/` directory to the Pi and restart the controller for
-this change to take effect. Remove any existing `WEIGHT_SENSOR_ENABLED=false`
-override from the controller's environment, or set it to `true`. If a service
+this change to take effect. Remove any existing `WEIGHT_SENSOR_ENABLED=true`
+override from the controller's environment, or set it to `false`. If a service
 manager starts the controller, update the variable in that service.
 To explicitly disable weighing:
 
