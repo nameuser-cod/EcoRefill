@@ -10,12 +10,13 @@ from PIL import Image, ImageDraw, ImageFont
 
 OUT = Path(__file__).resolve().parent
 W, H, SCALE = 4450, 2260, 2
-INK = "#242424"
+INK = "#111111"
+STROKE = 4
 img = Image.new("RGB", (W*SCALE, H*SCALE), "white")
 draw = ImageDraw.Draw(img)
 svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-labelledby="title desc">',
        '<title id="title">EcoRefill updated activity diagram</title>',
-       '<desc id="desc">Three swimlanes: User / EcoRefill App, EcoRefill Machine, and Device Owner / EcoRefill App. The revised user flow requires scanning the machine QR before buying points or water. Points purchases require owner approval. Matching letter connectors indicate communication across lanes.</desc>',
+       '<desc id="desc">Three swimlanes: User / EcoRefill App, EcoRefill Machine, and Device Owner / EcoRefill App. The revised user flow requires scanning the machine QR before buying points or water. Points purchases require owner approval.</desc>',
        f'<rect width="{W}" height="{H}" fill="white"/>']
 font_dir = next(p for p in [Path("/System/Library/Fonts/Supplemental"), Path("/usr/share/fonts/truetype/dejavu")] if p.exists())
 
@@ -25,7 +26,7 @@ def font(size, bold=False):
     return ImageFont.truetype(str(font_dir/name), size*SCALE)
 
 
-def text(x, y, value, size=21, bold=False, label=False):
+def text(x, y, value, size=22, bold=True, label=False):
     f = font(size, bold)
     if label:
         b = draw.textbbox((x*SCALE,y*SCALE), value, font=f, anchor="mm")
@@ -42,30 +43,33 @@ def line(points, dashed=False):
             length = hypot(b[0]-a[0],b[1]-a[1])
             for t in range(0,int(length),14):
                 p = [(a[0]+(b[0]-a[0])*u/length,a[1]+(b[1]-a[1])*u/length) for u in (t,min(t+8,length))]
-                draw.line([(x*SCALE,y*SCALE) for x,y in p],fill=INK,width=2*SCALE)
+                draw.line([(x*SCALE,y*SCALE) for x,y in p],fill=INK,width=STROKE*SCALE)
     else:
-        draw.line([(x*SCALE,y*SCALE) for x,y in points],fill=INK,width=2*SCALE)
-    svg.append(f'<polyline points="{" ".join(f"{x},{y}" for x,y in points)}" fill="none" stroke="{INK}" stroke-width="2"'+(' stroke-dasharray="8 6"' if dashed else '')+'/>')
+        draw.line([(x*SCALE,y*SCALE) for x,y in points],fill=INK,width=STROKE*SCALE)
+    svg.append(f'<polyline points="{" ".join(f"{x},{y}" for x,y in points)}" fill="none" stroke="{INK}" stroke-width="{STROKE}"'+(' stroke-dasharray="8 6"' if dashed else '')+'/>')
 
 
 def polygon(points, fill="white"):
     p = [(x*SCALE,y*SCALE) for x,y in points]
     draw.polygon(p,fill=fill)
-    draw.line(p+[p[0]],fill=INK,width=2*SCALE)
-    svg.append(f'<polygon points="{" ".join(f"{x},{y}" for x,y in points)}" fill="{fill}" stroke="{INK}" stroke-width="2"/>')
+    draw.line(p+[p[0]],fill=INK,width=STROKE*SCALE)
+    svg.append(f'<polygon points="{" ".join(f"{x},{y}" for x,y in points)}" fill="{fill}" stroke="{INK}" stroke-width="{STROKE}"/>')
 
 
 def arrow(points, dashed=False):
     line(points,dashed)
     a,b = points[-2:]
     angle = atan2(b[1]-a[1],b[0]-a[0])
-    polygon([b,(b[0]-12*cos(angle)+5*sin(angle),b[1]-12*sin(angle)-5*cos(angle)),(b[0]-12*cos(angle)-5*sin(angle),b[1]-12*sin(angle)+5*cos(angle))],INK)
+    polygon([b,(b[0]-14*cos(angle)+7*sin(angle),b[1]-14*sin(angle)-7*cos(angle)),(b[0]-14*cos(angle)-7*sin(angle),b[1]-14*sin(angle)+7*cos(angle))],INK)
 
 
 def box(x,y,value,width=240,height=60):
     polygon([(x-width/2,y-height/2),(x+width/2,y-height/2),(x+width/2,y+height/2),(x-width/2,y+height/2)])
     for i,s in enumerate(value.split("\n")):
-        text(x,y+(i-(len(value.split("\n"))-1)/2)*25,s)
+        size = 22
+        while font(size, True).getlength(s) > (width-20)*SCALE:
+            size -= 1
+        text(x,y+(i-(len(value.split("\n"))-1)/2)*25,s,size)
 
 
 def decision(x,y,value,width=200,height=110):
@@ -75,8 +79,8 @@ def decision(x,y,value,width=200,height=110):
 
 
 def circle(x,y,r=13,fill=INK,value=None):
-    draw.ellipse(((x-r)*SCALE,(y-r)*SCALE,(x+r)*SCALE,(y+r)*SCALE),fill=fill,outline=INK,width=2*SCALE)
-    svg.append(f'<circle cx="{x}" cy="{y}" r="{r}" fill="{fill}" stroke="{INK}" stroke-width="2"/>')
+    draw.ellipse(((x-r)*SCALE,(y-r)*SCALE,(x+r)*SCALE,(y+r)*SCALE),fill=fill,outline=INK,width=STROKE*SCALE)
+    svg.append(f'<circle cx="{x}" cy="{y}" r="{r}" fill="{fill}" stroke="{INK}" stroke-width="{STROKE}"/>')
     if value:
         text(x,y,value,18,True)
 
@@ -84,14 +88,6 @@ def circle(x,y,r=13,fill=INK,value=None):
 def terminal(x,y):
     circle(x,y,13,"white")
     circle(x,y,8)
-
-
-def connector(x,y,value,target=None,source=None):
-    if target:
-        arrow([(x+(20 if target[0] > x else -20),y),target],True)
-    if source:
-        arrow([source,(x+(20 if source[0] > x else -20),y)],True)
-    circle(x,y,20,"white",value)
 
 
 # Embed the existing user drawing as vector paths and a matching raster layer.
@@ -128,7 +124,6 @@ arrow([(2550,585),(2500,585),(2500,420),(2250,420),(2250,440)])
 arrow([(2250,550),(2250,600)])
 text(2280,575,"Yes",18,label=True)
 box(2250,630,"Show machine QR")
-connector(2430,630,"Q",source=(2370,630))
 arrow([(2250,660),(2250,700),(1850,700),(1850,730)])
 arrow([(2250,660),(2250,730)])
 arrow([(2250,660),(2250,700),(2670,700),(2670,730)])
@@ -155,7 +150,6 @@ arrow([(2030,1185),(2030,1460),(1970,1460)])
 
 arrow([(2250,790),(2250,830)])
 box(2250,860,"Detect bottle")
-connector(2075,860,"W",target=(2130,860))
 arrow([(2250,890),(2250,975)])
 decision(2250,1030,"Bottle\nready?")
 arrow([(2350,1030),(2430,1030),(2430,1110)])
@@ -170,7 +164,6 @@ arrow([(2430,1170),(2430,1460),(2370,1460)])
 
 arrow([(2670,790),(2670,830)])
 box(2670,860,"Scan QR")
-connector(2495,860,"R",target=(2550,860))
 arrow([(2670,890),(2670,930)])
 box(2670,960,"Validate")
 arrow([(2670,990),(2670,1045)])
@@ -222,7 +215,6 @@ for x,steps in [(3050,["View status","View water","View quality","View activity"
 
 arrow([(4180,830),(4180,870)])
 box(4180,900,"View requests")
-connector(4005,900,"P",target=(4060,900))
 arrow([(4180,930),(4180,970)])
 box(4180,1000,"Verify payment")
 arrow([(4180,1030),(4180,1075)])
@@ -239,26 +231,17 @@ arrow([(4310,1270),(4310,1310)])
 box(4310,1340,"Update points",width=190)
 arrow([(4310,1370),(4310,1410)])
 box(4310,1440,"Notify user",width=190)
-connector(4130,1440,"O",source=(4215,1440))
 arrow([(4000,1370),(4000,2000),(3660,2000),(3660,2090)])
 arrow([(4310,1470),(4310,2000),(3660,2000),(3660,2090)])
 box(3660,2120,"Log out")
 arrow([(3660,2150),(3660,2172)])
 terminal(3660,2185)
 
-# Matching circles indicate communication across lanes without long crossings.
-connector(915,760,"Q",target=(965,760))
-connector(470,985,"R",source=(415,985))
-connector(1080,1280,"P",source=(1015,1280))
-connector(1560,1340,"W",source=(1515,1340))
-connector(1080,1590,"O",target=(1015,1590))
-
 # Frame and swimlane rules are drawn last so embedded art cannot cover them.
 line([(25,85),(4425,85),(4425,2205),(25,2205),(25,85)])
 line([(25,145),(4425,145)])
 line([(1640,85),(1640,2205)])
 line([(2885,85),(2885,2205)])
-text(W/2,2235,"Matching connectors: Q = machine QR · R = recycling reward claim · W = refill request · P = payment request · O = owner approval · B = resume user refill",22)
 svg.append('</svg>')
 (OUT/"ecorefill-activity-flow-updated.svg").write_text("\n".join(svg))
 img.save(OUT/"ecorefill-activity-flow-updated.png")

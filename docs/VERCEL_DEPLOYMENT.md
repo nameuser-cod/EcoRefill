@@ -39,6 +39,22 @@ dashboards. Refill requests travel through Firestore and are processed by the Pi
 
 ## Download the Android application
 
+Share [the EcoRefill introduction and installation page](https://ecorefill-app-five.vercel.app/download)
+with new users. It explains recycling rewards, includes an interactive app
+preview, and provides Android APK and iPhone home-screen installation steps.
+The existing welcome page links to it through **Explore the app & download**.
+
+The installation QR opens `/download`, so visitors can explore the app before
+installing. Download the printable [SVG](../public/downloads/EcoRefill-landing-qr.svg)
+or [PNG](../public/downloads/EcoRefill-landing-qr.png), also served under
+`/downloads/` on the production website. This is an introduction QR; machine
+reward and refill QR codes keep their existing behavior.
+
+The public destination is defined in `src/config/appLinks.js`. If the domain
+changes, update it and run `node scripts/generate-install-qr.mjs` to regenerate
+the SVG before deploying. Regenerate the PNG from the new SVG as well before
+printing or sharing it.
+
 Download [EcoRefill.apk](https://ecorefill-app-five.vercel.app/downloads/EcoRefill.apk)
 on an Android phone. Open the downloaded file, allow installation from that
 browser when Android asks, and tap **Install**. The app installs as

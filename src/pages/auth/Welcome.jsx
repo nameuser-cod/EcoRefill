@@ -104,6 +104,7 @@ export default function Welcome() {
               Get started <ArrowRight size={20} aria-hidden="true" />
             </Link>
             <p className="welcome-login-prompt">Already have an account? <Link to="/login" className="welcome-login-button" onClick={rememberWelcome}>Log in</Link></p>
+            <Link to="/download" className="welcome-download-link">Explore the app &amp; download <ArrowRight size={14} aria-hidden="true" /></Link>
             <InstallApp />
           </div>
         </div>

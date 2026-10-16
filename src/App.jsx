@@ -5,6 +5,7 @@ import PhoneNotificationBridge from "./components/PhoneNotificationBridge";
 import Welcome from "./pages/auth/Welcome";
 
 const Login = lazy(() => import("./pages/auth/Login"));
+const DownloadPage = lazy(() => import("./pages/landing/Download"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const UserDashboard = lazy(() => import("./pages/user/UserDashboard"));
 const OwnerDashboard = lazy(() => import("./pages/owner/OwnerDashboard"));
@@ -31,6 +32,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Welcome />} />
           <Route path="/welcome" element={<Welcome />} />
+          <Route path="/download" element={<DownloadPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/user/dashboard" element={<UserDashboard />} />

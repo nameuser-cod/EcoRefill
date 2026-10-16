@@ -6,7 +6,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 OUT = Path(__file__).resolve().parent
 W, H, SCALE = 1600, 2080, 2
-INK = "#242424"
+INK = "#111111"
+STROKE = 4
 img = Image.new("RGB", (W * SCALE, H * SCALE), "white")
 draw = ImageDraw.Draw(img)
 svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-labelledby="title desc">',
@@ -24,7 +25,7 @@ def font(size, bold=False):
     return ImageFont.truetype(str(font_dir / name), size * SCALE)
 
 
-def text(x, y, value, size=21, bold=False, label=False):
+def text(x, y, value, size=22, bold=True, label=False):
     f = font(size, bold)
     if label:
         bounds = draw.textbbox((x*SCALE, y*SCALE), value, font=f, anchor="mm")
@@ -35,7 +36,7 @@ def text(x, y, value, size=21, bold=False, label=False):
     svg.append(f'<text x="{x}" y="{y}" fill="{INK}" font-family="Arial,Helvetica,sans-serif" font-size="{size}" font-weight="{700 if bold else 400}" text-anchor="middle" dominant-baseline="central">{escape(value)}</text>')
 
 
-def polygon(points, fill="white", width=2):
+def polygon(points, fill="white", width=STROKE):
     scaled = [(x*SCALE, y*SCALE) for x, y in points]
     draw.polygon(scaled, fill=fill)
     draw.line(scaled + [scaled[0]], fill=INK, width=width*SCALE)
@@ -45,7 +46,10 @@ def polygon(points, fill="white", width=2):
 def box(x, y, lines, width=290, height=60):
     polygon([(x-width/2,y-height/2),(x+width/2,y-height/2),(x+width/2,y+height/2),(x-width/2,y+height/2)])
     for i, value in enumerate(lines.split("\n")):
-        text(x, y+(i-(len(lines.split("\n"))-1)/2)*25, value)
+        size = 22
+        while font(size, True).getlength(value) > (width-20)*SCALE:
+            size -= 1
+        text(x, y+(i-(len(lines.split("\n"))-1)/2)*25, value, size)
 
 
 def decision(x, y, lines, width=230, height=100):
@@ -55,18 +59,18 @@ def decision(x, y, lines, width=230, height=100):
 
 
 def circle(x, y, radius=13, fill=INK, value=None):
-    draw.ellipse(((x-radius)*SCALE,(y-radius)*SCALE,(x+radius)*SCALE,(y+radius)*SCALE),fill=fill,outline=INK,width=2*SCALE)
-    svg.append(f'<circle cx="{x}" cy="{y}" r="{radius}" fill="{fill}" stroke="{INK}" stroke-width="2"/>')
+    draw.ellipse(((x-radius)*SCALE,(y-radius)*SCALE,(x+radius)*SCALE,(y+radius)*SCALE),fill=fill,outline=INK,width=STROKE*SCALE)
+    svg.append(f'<circle cx="{x}" cy="{y}" r="{radius}" fill="{fill}" stroke="{INK}" stroke-width="{STROKE}"/>')
     if value:
         text(x,y,value,18,True)
 
 
 def arrow(points):
-    draw.line([(x*SCALE,y*SCALE) for x,y in points],fill=INK,width=2*SCALE)
-    svg.append(f'<polyline points="{" ".join(f"{x},{y}" for x,y in points)}" fill="none" stroke="{INK}" stroke-width="2"/>')
+    draw.line([(x*SCALE,y*SCALE) for x,y in points],fill=INK,width=STROKE*SCALE)
+    svg.append(f'<polyline points="{" ".join(f"{x},{y}" for x,y in points)}" fill="none" stroke="{INK}" stroke-width="{STROKE}"/>')
     a,b = points[-2:]
     angle = atan2(b[1]-a[1], b[0]-a[0])
-    polygon([b,(b[0]-12*cos(angle)+5*sin(angle),b[1]-12*sin(angle)-5*cos(angle)),(b[0]-12*cos(angle)-5*sin(angle),b[1]-12*sin(angle)+5*cos(angle))],fill=INK,width=1)
+    polygon([b,(b[0]-14*cos(angle)+7*sin(angle),b[1]-14*sin(angle)-7*cos(angle)),(b[0]-14*cos(angle)-7*sin(angle),b[1]-14*sin(angle)+7*cos(angle))],fill=INK,width=1)
 
 
 text(800,42,"User / EcoRefill App — Revised Activity Flow",30,True)
@@ -126,7 +130,6 @@ arrow([(970,900),(850,900),(850,970)])
 text(854,882,"Buy points",20,label=True)
 arrow([(1230,900),(1350,900),(1350,970)])
 text(1350,882,"Buy water",20,label=True)
-circle(1350,938,18,"white","B")
 
 box(850,1000,"Enter number of points")
 arrow([(850,1030),(850,1060)])
@@ -150,8 +153,6 @@ decision(850,1690,"Buy water\nnow?")
 arrow([(850,1740),(850,1760)])
 text(880,1750,"Yes",18,label=True)
 box(850,1800,"Return to refill /\nrescan if QR expired",height=80)
-arrow([(995,1800),(1060,1800)])
-circle(1080,1800,20,"white","B")
 
 box(1350,1000,"Select water amount")
 arrow([(1350,1030),(1350,1060)])
@@ -166,7 +167,7 @@ box(1350,1370,"Machine checks container\nand points; dispenses water",height=100
 arrow([(1350,1420),(1350,1460)])
 box(1350,1500,"View refill result / history",height=80,width=330)
 
-# Completed activities merge; B returns to the existing refill options above.
+# Completed activities merge.
 arrow([(250,1230),(250,1880),(900,1880),(900,1900)])
 arrow([(535,1490),(535,1880),(900,1880),(900,1900)])
 arrow([(735,1690),(705,1690),(705,1880),(900,1880),(900,1900)])

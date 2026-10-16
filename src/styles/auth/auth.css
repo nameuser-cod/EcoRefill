@@ -2,6 +2,9 @@
 
 /* ===== New user / Welcome ===== */
 
+.welcome-download-link { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 32px; color: #1f6f3a; font-size: 12px; font-weight: 650; text-underline-offset: 3px; }
+.welcome-download-link:focus-visible { outline: 3px solid #1f6f3a; outline-offset: 3px; border-radius: 4px; }
+
 .welcome-page {
   box-sizing: border-box;
   position: fixed;
